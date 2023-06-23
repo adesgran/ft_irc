@@ -15,6 +15,13 @@ Description des fonctions autorisées
 ```c
   #include <sys/socket.h>
 ```
+
+#### Prototype
+
+```c
+  int socket(int domain, int type, int protocol);
+```
+
 #### Parameter
 
 | Parameter | Type     | Description                |
@@ -46,6 +53,13 @@ Description des fonctions autorisées
   #include <sys/types.h>
   #include <sys/socket.h>
 ```
+
+#### Prototype
+
+```c
+  int setsockopt(int sockfd, int level, int optname, const void *optval, socklen_t optlen);
+```
+
 #### Parameter
 
 | Parameter | Type     | Description                |
@@ -60,7 +74,7 @@ Description des fonctions autorisées
 
 | Return | Type     | Description                |
 | :-------- | :------- | :------------------------- |
-| `error` | `int` | `0` on success, `-1` on error |
+| `error` | `int` | On success, `0` is returned.  On error, `-1` is returned, and `errno` is set to indicate the error. |
 
 #### Description
 
@@ -68,6 +82,43 @@ Description des fonctions autorisées
     `errno` set to indicate the error
     see https://pubs.opengroup.org/onlinepubs/000095399/functions/setsockopt.html for more
 
+
+
+
+
+
+# **_getsockname_**
+
+#### Include
+
+```c
+  #include <sys/socket.h>
+```
+
+#### Prototype
+
+```c
+  int getsockname(int sockfd, struct sockaddr *restrict addr, socklen_t *restrict addrlen);
+```
+
+#### Parameter
+
+| Parameter | Type     | Description                |
+| :-------- | :------- | :------------------------- |
+| `sockfd` | `int` | socket file descriptor |
+| `addr` | `struct sockaddr *restrict` |   |
+| `addrlen` | `socklen_t *restrict` | amount of space (in bytes) pointed to by addr |
+
+
+#### Return
+
+| Return | Type     | Description                |
+| :-------- | :------- | :------------------------- |
+| `error` | `int` | On success, `0` is returned.  On error, `-1` is returned, and `errno` is set to indicate the error. |
+
+#### Description
+
+    G
 
 
 
@@ -81,6 +132,13 @@ Description des fonctions autorisées
 ```c
   #include <sys/types.h>
 ```
+
+#### Prototype
+
+```c
+  void f(void);
+```
+
 #### Parameter
 
 | Parameter | Type     | Description                |
