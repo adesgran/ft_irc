@@ -8,7 +8,7 @@ Description des fonctions autorisées
 
 
 
-## socket
+# **_socket_**
 
 #### Include
 
@@ -38,7 +38,7 @@ Description des fonctions autorisées
 
 
 
-## setsockopt
+# **_setsockopt_**
 
 #### Include
 
@@ -72,7 +72,7 @@ Description des fonctions autorisées
 
 
 
-## template
+# **_template_**
 
 #### Include
 
