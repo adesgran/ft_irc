@@ -4,6 +4,10 @@
 Description des fonctions autorisées
 
 
+
+
+
+
 ## socket
 
 #### Include
@@ -28,6 +32,11 @@ Description des fonctions autorisées
 #### Description
 
     Generate socket file descriptor
+
+
+
+
+
 
 ## setsockopt
 
@@ -56,6 +65,11 @@ Description des fonctions autorisées
 #### Description
 
     Manipulate options for the socket referred to by the file descriptor sockfd
+
+
+
+
+
 
 
 ## template
