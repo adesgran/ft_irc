@@ -51,8 +51,8 @@ Description des fonctions autorisées
 | Parameter | Type     | Description                |
 | :-------- | :------- | :------------------------- |
 | `sockfd` | `int` | socket file descriptor |
-| `level` | `int` |  |
-| `optname` | `int` |  |
+| `level` | `int` | level at which the option resides |
+| `optname` | `int` | specify option to set |
 | `optval` | `const void *` |  |
 | `optlen` | `socklen_t` |  |
 
@@ -65,6 +65,8 @@ Description des fonctions autorisées
 #### Description
 
     Manipulate options for the socket referred to by the file descriptor sockfd
+    `errno` set to indicate the error
+    see https://pubs.opengroup.org/onlinepubs/000095399/functions/setsockopt.html for more
 
 
 
