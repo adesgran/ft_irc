@@ -8,7 +8,7 @@ Description des fonctions autorisées
 
 #### Include
 
-```http
+```c
   #include <sys/socket.h>
 ```
 #### Parameter
@@ -33,7 +33,7 @@ Description des fonctions autorisées
 
 #### Include
 
-```http
+```c
   #include <sys/types.h>
   #include <sys/socket.h>
 ```
@@ -62,7 +62,7 @@ Description des fonctions autorisées
 
 #### Include
 
-```http
+```c
   #include <sys/types.h>
 ```
 #### Parameter
