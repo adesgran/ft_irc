@@ -185,12 +185,260 @@ Description des fonctions autorisées
 
 | Return | Type     | Description                |
 | :-------- | :------- | :------------------------- |
-| `res` | `struct hostent *` |  |
+| `res` | `struct hostent *` | Struct containing host informations |
 
 #### Description
 
     Return the host struct required by the `name`, and `NULL` for an error.
     Error is described by `h_errno`
+
+
+
+
+
+# **_template_**
+
+#### Include
+
+```c
+  #include <sys/types.h>
+  #include <sys/socket.h>
+  #include <netdb.h>
+```
+
+#### Prototype
+
+```c
+  int getaddrinfo(const char *restrict node,
+                  const char *restrict service,
+                  const struct addrinfo *restrict hints, 
+                  struct addrinfo **restrict res);
+```
+
+#### Parameter
+
+| Parameter | Type     | Description                |
+| :-------- | :------- | :------------------------- |
+| `node` | `const char *restrict` | Internet host identifier |
+| `service` | `const char *restrict` | Internet host service |
+| `hints` | `const struct addrinfo *restrict` | points to an addrinfo structure that specifies criteria for selecting the socket address structures returned |
+| `res` | `struct addrinfo **restrict` | Pointer to the start of a linked list |
+
+
+#### Return
+
+| Return | Type     | Description                |
+| :-------- | :------- | :------------------------- |
+| `error` | `int` | Return 0 if it succeds or error's macro |
+
+#### Description
+
+    Given node and service, which identify an Internet host and a 
+    service, getaddrinfo() returns one or more addrinfo structures in res.
+
+#### Struct
+
+```c
+struct addrinfo {
+               int              ai_flags;
+               int              ai_family;
+               int              ai_socktype;
+               int              ai_protocol;
+               socklen_t        ai_addrlen;
+               struct sockaddr *ai_addr;
+               char            *ai_canonname;
+               struct addrinfo *ai_next;
+           };
+```
+
+
+
+
+
+
+# **_freeaddrinfo_**
+
+#### Include
+
+```c
+  #include <sys/socket.h>
+  #include <netdb.h>
+```
+
+#### Prototype
+
+```c
+  void freeaddrinfo(struct addrinfo *ai);
+```
+
+#### Parameter
+
+| Parameter | Type     | Description                |
+| :-------- | :------- | :------------------------- |
+| `ai` | `(struct addrinfo *` | ai struct to free |
+
+#### Description
+
+    Free the entire list of structure.
+
+
+
+
+
+
+# **_bind_**
+
+#### Include
+
+```c
+  #include <sys/socket.h>
+```
+
+#### Prototype
+
+```c
+  int bind(int sockfd, const struct sockaddr *addr, socklen_t addrlen);
+```
+
+#### Parameter
+
+| Parameter | Type     | Description                |
+| :-------- | :------- | :------------------------- |
+| `sockfd` | `int` | Socket file descriptor |
+| `addr` | `const struct sockaddr *` | Addresse of the structure to fill |
+| `addrlen` | `socklen_t` | amount of space (in bytes) pointed to by addr |
+
+
+#### Return
+
+| Return | Type     | Description                |
+| :-------- | :------- | :------------------------- |
+| `erro` | `int` | On success, `0` is returned.  On error, `-1` is returned, and `errno` is set to indicate the error. |
+
+#### Description
+
+    bind() assigns the address specified by addr to the socket referred to by the file descriptor sockfd.
+
+#### Struct
+
+```c
+struct sockaddr {
+    sa_family_t sa_family;
+    char        sa_data[14];
+}
+```
+
+
+
+
+
+# **_connect_**
+
+#### Include
+
+```c
+  #include <sys/socket.h>
+```
+
+#### Prototype
+
+```c
+  int connect(int sockfd, const struct sockaddr *addr, socklen_t addrlen);
+```
+
+#### Parameter
+
+| Parameter | Type     | Description                |
+| :-------- | :------- | :------------------------- |
+| `sockfd` | `int` | Socket file descriptor |
+| `addr` | `const struct sockaddr *` | address to connect with |
+| `addrlen` | `socklen_t` | amount of space (in bytes) pointed to by addr |
+
+
+#### Return
+
+| Return | Type     | Description                |
+| :-------- | :------- | :------------------------- |
+| `error` | `int` | On success, `0` is returned.  On error, `-1` is returned, and `errno` is set to indicate the error. |
+
+#### Description
+
+    The connect() system call connects the socket referred to by the file descriptor sockfd to the address specified by addr.
+
+
+
+
+
+
+# **_listen_**
+
+#### Include
+
+```c
+  #include <sys/socket.h>
+```
+
+#### Prototype
+
+```c
+  int listen(int sockfd, int backlog);
+```
+
+#### Parameter
+
+| Parameter | Type     | Description                |
+| :-------- | :------- | :------------------------- |
+| `sockfd` | `int` | Socket file descriptor |
+| `backlog` | `int` | maximum length to which the queue of pending connections for sockfd may grow |
+
+
+#### Return
+
+| Return | Type     | Description                |
+| :-------- | :------- | :------------------------- |
+| `error` | `int` | On success, `0` is returned.  On error, `-1` is returned, and `errno` is set to indicate the error. |
+
+#### Description
+
+    listen() marks the socket referred to by sockfd as a passive socket, that is, as a socket that will be used to accept incoming connection requests using accept().
+
+
+
+
+
+# **_accept_**
+
+#### Include
+
+```c
+  #include <sys/socket.h>
+```
+
+#### Prototype
+
+```c
+  int accept(int sockfd, struct sockaddr *restrict addr, socklen_t *restrict addrlen);
+```
+
+#### Parameter
+
+| Parameter | Type     | Description                |
+| :-------- | :------- | :------------------------- |
+| `sockfd` | `int` | Socket file descriptor |
+| `addr` | `struct sockaddr *` | Address of the socket struct |
+| `addrlen` | `socklen_t *restrict` | amount of space (in bytes) pointed to by addr |
+
+
+#### Return
+
+| Return | Type     | Description                |
+| :-------- | :------- | :------------------------- |
+| `new sockfd` | `int` | New socket file descriptor |
+
+#### Description
+
+    accept() extracts the first connection request on the queue of pending connections for the listening socket, sockfd, creates a new connected socket, and  returns a new file descriptor referring to that socket.
+
 
 
 
