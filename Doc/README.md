@@ -67,8 +67,8 @@ Description des fonctions autorisées
 | `sockfd` | `int` | socket file descriptor |
 | `level` | `int` | level at which the option resides |
 | `optname` | `int` | specify option to set |
-| `optval` | `const void *` |  |
-| `optlen` | `socklen_t` |  |
+| `optval` | `const void *` | content to set for the option |
+| `optlen` | `socklen_t` | amount of space (in bytes) pointed to by optval |
 
 #### Return
 
@@ -80,7 +80,7 @@ Description des fonctions autorisées
 
     Manipulate options for the socket referred to by the file descriptor sockfd
     `errno` set to indicate the error
-    see https://pubs.opengroup.org/onlinepubs/000095399/functions/setsockopt.html for more
+    see <https://pubs.opengroup.org/onlinepubs/000095399/functions/setsockopt.html> for more
 
 
 
@@ -106,7 +106,7 @@ Description des fonctions autorisées
 | Parameter | Type     | Description                |
 | :-------- | :------- | :------------------------- |
 | `sockfd` | `int` | socket file descriptor |
-| `addr` | `struct sockaddr *restrict` |   |
+| `addr` | `struct sockaddr *restrict` | buffer for the socket name |
 | `addrlen` | `socklen_t *restrict` | amount of space (in bytes) pointed to by addr |
 
 
@@ -118,8 +118,79 @@ Description des fonctions autorisées
 
 #### Description
 
-    G
+    Fill the `addr` buffer with the name of the socket, and rewrite addrlen with the size of addr
 
+
+
+
+
+# **_getprotobyname_**
+
+#### Include
+
+```c
+  #include <netdb.h>
+```
+
+#### Prototype
+
+```c
+  struct protoent *getprotobyname(const char *name);
+```
+
+#### Parameter
+
+| Parameter | Type     | Description                |
+| :-------- | :------- | :------------------------- |
+| `name` | `const char *` | The name of the protocol |
+
+
+#### Return
+
+| Return | Type     | Description                |
+| :-------- | :------- | :------------------------- |
+| `res` | `struct protoent *` | Protocol that match `name` |
+
+#### Description
+
+    Return the prototype required by the `name`, and `NULL` for an error
+
+
+
+
+
+
+# **_gethostbyname_**
+
+#### Include
+
+```c
+  #include <netdb.h>
+```
+
+#### Prototype
+
+```c
+  struct hostent *gethostbyname(const char *name);
+```
+
+#### Parameter
+
+| Parameter | Type     | Description                |
+| :-------- | :------- | :------------------------- |
+| `name` | `const char *` |  The name of the host |
+
+
+#### Return
+
+| Return | Type     | Description                |
+| :-------- | :------- | :------------------------- |
+| `res` | `struct hostent *` |  |
+
+#### Description
+
+    Return the host struct required by the `name`, and `NULL` for an error.
+    Error is described by `h_errno`
 
 
 
