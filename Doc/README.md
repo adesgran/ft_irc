@@ -196,7 +196,7 @@ Description des fonctions autorisées
 
 
 
-# **_template_**
+# **_getaddrinfo_**
 
 #### Include
 
