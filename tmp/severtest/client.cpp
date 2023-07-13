@@ -6,7 +6,7 @@
 /*   By: adesgran <marvin@42.fr>                    +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2023/06/24 16:56:19 by adesgran          #+#    #+#             */
-/*   Updated: 2023/06/24 18:35:16 by adesgran         ###   ########.fr       */
+/*   Updated: 2023/07/13 12:42:43 by adesgran         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -21,14 +21,14 @@
 #include <arpa/inet.h>
 #include <unistd.h>
 
-#define PORT 9090
+#define PORT 6697
 
 
 int main(int argc, char const* argv[])
 {
     int status, valread, client_fd;
     struct sockaddr_in serv_addr;
-    char* hello = "USER adesgran * localhost :purple";
+    char* hello = "PASS 123\n";//USER bbbbbruh 8 * :Bubble\nNICK bruh\n";
     char buffer[1024] = { 0 };
     if ((client_fd = socket(AF_INET, SOCK_STREAM, 0)) < 0) {
         printf("\n Socket creation error \n");
@@ -40,7 +40,7 @@ int main(int argc, char const* argv[])
 
     // Convert IPv4 and IPv6 addresses from text to binary
     // form
-    if (inet_pton(AF_INET, "104.152.54.212", &serv_addr.sin_addr)
+    if (inet_pton(AF_INET, "46.101.34.200", &serv_addr.sin_addr)
         <= 0) {
         printf(
             "\nInvalid address/ Address not supported \n");
@@ -55,11 +55,17 @@ int main(int argc, char const* argv[])
         return -1;
     }
     send(client_fd, hello, strlen(hello), 0);
-    printf("Hello message sent\n");
+    printf("%s\n", hello);
 	while (1)
 	{
+		buffer[0] = '\0';
     	valread = recv(client_fd, buffer, 1024, MSG_DONTWAIT);
-   		printf("%s\n", buffer);
+		if (buffer[0])
+		{
+			std::cout << "buffer not empty" << std::endl;
+			//buffer[valread] = '\0';
+   			printf("%s", buffer);
+		}
 	}
 
     // closing the connected socket
