@@ -1,19 +1,25 @@
 NAME = irc
 
 CC = c++
-C_FLAGS = -Wall -Wextra -Werror -std=c++98
+CXX_FLAGS = -Wall -Wextra -Werror
+CXX_FLAGS += -std=c++98
+CPP_FLAGS = -MMD
 
-SRCS = main.cpp Message.cpp User.cpp Channel.cpp Server.cpp
-CPP_FILES = $(addprefix srcs/, ${SRCS})
-O_FILES = $(CPP_FILES:.cpp=.o)
+CXX_SRCS = main Message User Channel Server
+CXX_FILES = $(addsuffix .cpp, $(addprefix srcs/, ${CXX_SRCS}))
+
+O_FILES = $(CXX_FILES:.cpp=.o)
+D_FILES = $(O_FILES:.o=.d)
 
 INCLUDES = -I includes
 
+all: ${NAME}
+
+-include : $(D_FILES)
+
 %.o: %.cpp
 	@printf "\033[0;33mGenerating ${NAME} objects... %-33.33s\r\033[0m" $@
-	@${CC} ${C_FLAGS} ${INCLUDES} -c $< -o $@
-
-all: ${NAME}
+	@${CC} ${CXX_FLAGS} ${CPP_FLAGS} ${INCLUDES} -c $< -o $@
 
 ${NAME}: ${O_FILES} 
 	@echo "\n\n\033[0;34mCompiling ${NAME}...\033[0m\n"
@@ -21,7 +27,7 @@ ${NAME}: ${O_FILES}
 
 clean:
 	@echo "\n\033[0;31mRemoving objects files...\033[0m"
-	@rm -f ${O_FILES}
+	@rm -f ${O_FILES} ${D_FILES}
 
 fclean: clean
 	@echo "\n\033[0;31mRemoving ${NAME} executable...\033[0m\n"
