@@ -6,7 +6,7 @@
 /*   By: adesgran <marvin@42.fr>                    +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2023/07/02 12:03:38 by adesgran          #+#    #+#             */
-/*   Updated: 2023/07/13 16:16:24 by adesgran         ###   ########.fr       */
+/*   Updated: 2023/07/19 08:53:45 by adesgran         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -52,7 +52,7 @@ Server::Server(void)
 		throw std::runtime_error(strerror(errno));
 	}
 
-	fcntl(this->_serverfd, F_SETFL, O_NONBLOCK);
+	this->_pfds_init();
 
 	std::cout << "Server ON" << std::endl;
 }
@@ -114,6 +114,26 @@ void	Server::addUser( const User &user )
 	this->_users.push_back( User(user) );
 }
 
+void	Server::_remove_user( int fd )
+{
+	for ( 
+			std::vector<Channel>::iterator it = this->_channels.begin(); 
+			it != this->_channels.end(); 
+			it++ )
+		it->removeUser(fd);
+	for ( 
+			std::vector<User>::iterator it = this->_users.begin(); 
+			it != this->_users.end(); 
+			it++ )
+	{
+		if ( it->getSockfd() == fd )
+		{
+			this->_users.erase(it);
+			return ;
+		}
+	}
+}
+
 Channel	&Server::getChannel( const std::string name )
 {
 	for (
@@ -129,6 +149,46 @@ Channel	&Server::getChannel( const std::string name )
 	return (this->_channels.back());
 }
 
+void	Server::_pfds_init( void )
+{
+	this->_nfds = 1;
+	this->_pfds = new struct pollfd [this->_nfds];
+	this->_pfds[0].fd = this->_serverfd;
+	this->_pfds[0].events = POLLIN;
+}
+
+void	Server::_pfds_add( int fd )
+{
+	struct pollfd *new_pfds = new struct pollfd [this->_nfds + 1];
+	for ( nfds_t n = 0; n < this->_nfds; n++ )
+		new_pfds[n] = this->_pfds[n];
+	new_pfds[this->_nfds].fd = fd;
+	new_pfds[this->_nfds].events = POLLIN;
+	delete this->_pfds;
+	this->_pfds = new_pfds;
+	this->_nfds++;
+}
+
+void	Server::_pfds_remove( int fd )
+{
+	struct pollfd *new_pfds = new struct pollfd [this->_nfds - 1];
+	nfds_t i = 0, n = 0;
+	while ( n < this->_nfds )
+	{
+		if ( this->_pfds[n].fd != fd )
+		{
+			new_pfds[i] = this->_pfds[n];
+			i++;
+			n++;
+		}
+		else
+			n++;
+	}
+	delete this->_pfds;
+	this->_pfds = new_pfds;
+	this->_nfds--;
+}
+
 
 void	Server::_listenConnect( void )
 {
@@ -138,31 +198,23 @@ void	Server::_listenConnect( void )
 					(struct sockaddr*)&this->_sockaddr, 
 					(socklen_t*)&this->_addrlen) ) < 1 )
 	{
-		if ( errno == EAGAIN || errno == EWOULDBLOCK )
-			return;
 		std::cout << "Error on connection acceptation : " << strerror(errno) << std::endl;
 		throw std::runtime_error(strerror(errno));
 	}
-	std::cout << "New Connection Set" << std::endl;
-	this->_fdvector.push_back(new_sock);
+	std::cout << "New Connection Set   fd : " << new_sock << std::endl;
+	this->_pfds_add( new_sock );
 	this->_users.push_back(User(new_sock));
 }
 
-void	Server::_listenMessage( void )
+void	Server::_listenMessage( int fd )
 {
-	for ( 
-			std::vector<int>::iterator it = this->_fdvector.begin(); 
-			it != this->_fdvector.end(); 
-			it++ )
+	ssize_t	len;
+	this->_buffer[0] = '\0';
+	len = recv(fd, this->_buffer, BUFFER_SIZE, 0);
+	this->_buffer[len] = '\0';
+	if ( len )
 	{
-		int	len;
-		this->_buffer[0] = '\0';
-		len = recv(*it, this->_buffer, BUFFER_SIZE, MSG_DONTWAIT);
-		this->_buffer[len] = '\0';
-		if ( len )
-		{
-			std::cout << this->_buffer;
-		}
+		std::cout << "fd : " << fd << " >> " << this->_buffer;
 	}
 }
 
@@ -183,8 +235,35 @@ void	Server::run( void )
 	signal(SIGINT, sigintHandle);
 	while ( 1 )
 	{
-		this->_listenConnect();
-		this->_listenMessage();
+		int ready = poll(this->_pfds, this->_nfds, 1000);
+		if ( ready == -1 )
+			throw Server::PollException();
+		if ( ready )
+		{
+			if ( this->_pfds[0].revents & POLLIN )
+			{
+				this->_listenConnect();
+			}
+			for ( nfds_t n = 1; n < this->_nfds; n++ )
+			{
+				if ( this->_pfds[n].revents & POLLERR )
+				{
+					std::cout << "POLLERR" << std::endl;
+					throw Server::PollException();
+				}
+				else if ( this->_pfds[n].revents & POLLIN )
+					this->_listenMessage(this->_pfds[n].fd);
+				else if ( this->_pfds[n].revents & POLLHUP )
+				{
+					std::cout << "Close fd : " << this->_pfds[n].fd << std::endl;
+					this->_remove_user(this->_pfds[n].fd);
+					close(this->_pfds[n].fd);
+					this->_pfds_remove(this->_pfds[n].fd);
+					n--;
+				}
+
+			}
+		}
 	}
 }
 
