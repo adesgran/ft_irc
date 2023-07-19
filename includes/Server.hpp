@@ -6,7 +6,7 @@
 /*   By: adesgran <marvin@42.fr>                    +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2023/07/02 11:59:06 by adesgran          #+#    #+#             */
-/*   Updated: 2023/07/19 08:51:13 by adesgran         ###   ########.fr       */
+/*   Updated: 2023/07/19 09:09:42 by adesgran         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -18,6 +18,7 @@
 # include <vector>
 # include <User.hpp>
 # include <Channel.hpp>
+# include <Log.hpp>
 # include <stdlib.h>
 # include <stdio.h>
 # include <cstring>

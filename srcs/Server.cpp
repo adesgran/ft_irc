@@ -6,7 +6,7 @@
 /*   By: adesgran <marvin@42.fr>                    +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2023/07/02 12:03:38 by adesgran          #+#    #+#             */
-/*   Updated: 2023/07/19 08:53:45 by adesgran         ###   ########.fr       */
+/*   Updated: 2023/07/19 09:29:39 by adesgran         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -53,6 +53,8 @@ Server::Server(void)
 	}
 
 	this->_pfds_init();
+
+	fcntl(this->_serverfd, F_SETFL, O_NONBLOCK);
 
 	std::cout << "Server ON" << std::endl;
 }
@@ -198,6 +200,8 @@ void	Server::_listenConnect( void )
 					(struct sockaddr*)&this->_sockaddr, 
 					(socklen_t*)&this->_addrlen) ) < 1 )
 	{
+		if ( errno == EAGAIN || errno == EWOULDBLOCK )
+			return ;
 		std::cout << "Error on connection acceptation : " << strerror(errno) << std::endl;
 		throw std::runtime_error(strerror(errno));
 	}
@@ -210,7 +214,7 @@ void	Server::_listenMessage( int fd )
 {
 	ssize_t	len;
 	this->_buffer[0] = '\0';
-	len = recv(fd, this->_buffer, BUFFER_SIZE, 0);
+	len = recv(fd, this->_buffer, BUFFER_SIZE, MSG_DONTWAIT);
 	this->_buffer[len] = '\0';
 	if ( len )
 	{
