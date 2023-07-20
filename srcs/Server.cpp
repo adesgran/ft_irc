@@ -6,7 +6,7 @@
 /*   By: adesgran <marvin@42.fr>                    +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2023/07/02 12:03:38 by adesgran          #+#    #+#             */
-/*   Updated: 2023/07/19 08:53:45 by adesgran         ###   ########.fr       */
+/*   Updated: 2023/07/20 11:07:41 by adesgran         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -14,6 +14,7 @@
 
 Server::Server(void)
 {
+	Log log;
 	this->_opt = 1;
 	this->_addrlen = sizeof(this->_sockaddr);
 
@@ -54,7 +55,13 @@ Server::Server(void)
 
 	this->_pfds_init();
 
-	std::cout << "Server ON" << std::endl;
+	fcntl(this->_serverfd, F_SETFL, O_NONBLOCK);
+
+	_log.debug("Hello !");
+	_log.info("Server is ready");
+	_log.warning("Take care !");
+	_log.error("Oh no ! It's too late !");
+
 }
 
 Server::Server(const Server &server)
@@ -198,6 +205,8 @@ void	Server::_listenConnect( void )
 					(struct sockaddr*)&this->_sockaddr, 
 					(socklen_t*)&this->_addrlen) ) < 1 )
 	{
+		if ( errno == EAGAIN || errno == EWOULDBLOCK )
+			return ;
 		std::cout << "Error on connection acceptation : " << strerror(errno) << std::endl;
 		throw std::runtime_error(strerror(errno));
 	}
@@ -210,7 +219,7 @@ void	Server::_listenMessage( int fd )
 {
 	ssize_t	len;
 	this->_buffer[0] = '\0';
-	len = recv(fd, this->_buffer, BUFFER_SIZE, 0);
+	len = recv(fd, this->_buffer, BUFFER_SIZE, MSG_DONTWAIT);
 	this->_buffer[len] = '\0';
 	if ( len )
 	{
