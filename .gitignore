@@ -1,5 +1,7 @@
 # Irc
 irc
+log
+*.swp
 
 # Prerequisites
 *.d

@@ -6,7 +6,7 @@
 /*   By: adesgran <marvin@42.fr>                    +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2023/07/19 09:08:13 by adesgran          #+#    #+#             */
-/*   Updated: 2023/07/20 11:46:01 by adesgran         ###   ########.fr       */
+/*   Updated: 2023/07/20 11:49:11 by adesgran         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -18,11 +18,11 @@ std::string	_fileName( void )
 	std::stringstream stream;
 	stream 
 		<< "log/"
-		<< ltm->tm_year + 1900 << "-"
-		<< std::setfill('0') << std::setw(2) << ltm->tm_mon + 1 << "-"
-		<< std::setfill('0') << std::setw(2) << ltm->tm_mday << "_" 
-		<< std::setfill('0') << std::setw(2) << ltm->tm_hour << ":"
-		<< std::setfill('0') << std::setw(2) << ltm->tm_min << ":"
+		<< ltm->tm_year + 1900 << "_"
+		<< std::setfill('0') << std::setw(2) << ltm->tm_mon + 1 << "_"
+		<< std::setfill('0') << std::setw(2) << ltm->tm_mday << "-" 
+		<< std::setfill('0') << std::setw(2) << ltm->tm_hour << "_"
+		<< std::setfill('0') << std::setw(2) << ltm->tm_min << "_"
 		<< std::setfill('0') << std::setw(2) << ltm->tm_sec
 		<< ".log";
 	std::string res;
