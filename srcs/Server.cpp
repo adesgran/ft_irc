@@ -6,7 +6,7 @@
 /*   By: adesgran <marvin@42.fr>                    +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2023/07/02 12:03:38 by adesgran          #+#    #+#             */
-/*   Updated: 2023/07/19 09:29:39 by adesgran         ###   ########.fr       */
+/*   Updated: 2023/07/20 11:07:41 by adesgran         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -14,6 +14,7 @@
 
 Server::Server(void)
 {
+	Log log;
 	this->_opt = 1;
 	this->_addrlen = sizeof(this->_sockaddr);
 
@@ -56,7 +57,11 @@ Server::Server(void)
 
 	fcntl(this->_serverfd, F_SETFL, O_NONBLOCK);
 
-	std::cout << "Server ON" << std::endl;
+	_log.debug("Hello !");
+	_log.info("Server is ready");
+	_log.warning("Take care !");
+	_log.error("Oh no ! It's too late !");
+
 }
 
 Server::Server(const Server &server)
