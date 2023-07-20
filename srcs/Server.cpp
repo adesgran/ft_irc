@@ -6,7 +6,7 @@
 /*   By: adesgran <marvin@42.fr>                    +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2023/07/02 12:03:38 by adesgran          #+#    #+#             */
-/*   Updated: 2023/07/20 11:07:41 by adesgran         ###   ########.fr       */
+/*   Updated: 2023/07/20 11:54:50 by adesgran         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -61,7 +61,6 @@ Server::Server(void)
 	_log.info("Server is ready");
 	_log.warning("Take care !");
 	_log.error("Oh no ! It's too late !");
-
 }
 
 Server::Server(const Server &server)
@@ -78,6 +77,11 @@ Server &Server::operator=(const Server &server)
 	if ( this == &server )
 		return ( *this );
 	return (*this);
+}
+
+Log	&Server::getLog( void )
+{
+	return (this->_log);
 }
 
 const std::vector<User>	&Server::getUsers( void ) const

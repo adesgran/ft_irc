@@ -6,7 +6,7 @@
 /*   By: adesgran <marvin@42.fr>                    +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2023/07/02 11:59:06 by adesgran          #+#    #+#             */
-/*   Updated: 2023/07/20 10:37:26 by adesgran         ###   ########.fr       */
+/*   Updated: 2023/07/20 11:54:15 by adesgran         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -53,6 +53,7 @@ class Server {
 		User	&getUser( const int sockfd );
 		User	&getUser( const std::string name );
 		void	addUser( const User &user );
+		Log		&getLog( void );
 
 		Channel	&getChannel( const std::string name );
 
