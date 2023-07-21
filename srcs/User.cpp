@@ -3,10 +3,10 @@
 /*                                                        :::      ::::::::   */
 /*   User.cpp                                           :+:      :+:    :+:   */
 /*                                                    +:+ +:+         +:+     */
-/*   By: adesgran <marvin@42.fr>                    +#+  +:+       +#+        */
+/*   By: mchassig <mchassig@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2023/07/01 13:44:20 by adesgran          #+#    #+#             */
-/*   Updated: 2023/07/05 13:39:13 by adesgran         ###   ########.fr       */
+/*   Updated: 2023/07/21 18:35:34 by mchassig         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -16,12 +16,14 @@ User::User(void)
 {
 	this->_sockfd = 1;
 	this->_isop = false;
+	this->_welcomed = false;
 }
 
 User::User(int sockfd)
 {
 	this->_sockfd = sockfd;
 	this->_isop = false;
+	this->_welcomed = false;
 }
 
 User::User(const User &user)
@@ -111,4 +113,24 @@ int			User::getMode( void ) const
 void		User::setMode( const int mode )
 {
 	this->_mode = mode;
+}
+
+Message*	User::getMessage( void ) const
+{
+	return (_message);
+}
+
+void		User::setMessage(Message *msg)
+{
+	_message = msg;
+}
+
+bool	User::isWelcomed( void ) const
+{
+	return (_welcomed);
+}
+
+void		User::welcome( void )
+{
+	_welcomed = true;
 }
