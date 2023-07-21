@@ -3,10 +3,10 @@
 /*                                                        :::      ::::::::   */
 /*   User.hpp                                           :+:      :+:    :+:   */
 /*                                                    +:+ +:+         +:+     */
-/*   By: adesgran <marvin@42.fr>                    +#+  +:+       +#+        */
+/*   By: mchassig <mchassig@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2023/07/01 13:43:30 by adesgran          #+#    #+#             */
-/*   Updated: 2023/07/13 15:01:04 by adesgran         ###   ########.fr       */
+/*   Updated: 2023/07/21 18:35:43 by mchassig         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -17,9 +17,11 @@
 # include <string>
 # include <Server.hpp>
 # include <Channel.hpp>
+# include <Message.hpp>
 
 class Server;
 class Channel;
+class Message;
 
 class User {
 	public:
@@ -44,7 +46,10 @@ class User {
 		void		setHostname( const std::string hostname );
 		int			getMode( void ) const;
 		void		setMode( const int mode );
-
+		Message*	getMessage( void ) const;
+		void		setMessage(Message *msg);
+		bool		isWelcomed( void ) const;
+		void		welcome( void );
 
 	private:
 		int			_sockfd;
@@ -54,7 +59,8 @@ class User {
 		std::string	_realname;
 		std::string	_hostname;
 		int			_mode;
-
+		Message*	_message;
+		bool		_welcomed;
 
 };
 
