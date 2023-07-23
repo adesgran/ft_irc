@@ -45,7 +45,7 @@ enum cmdValue {
 class Message {
 	public:
 		Message( void );
-		Message( std::string buffer, User *sender );
+		Message( User *sender );
 		Message( const Message &message );
 		~Message( void );
 		Message &operator=( const Message &message );
@@ -55,6 +55,7 @@ class Message {
 		void		setInputMsg(std::string &input_buffer);
 		std::string	getInputMsg() const;
 		std::string	getOutputMsg() const;
+		void		clearOutputMsg();
 
 		// IRC commands -----------------------------------------
 		void	nick(std::vector<std::string> arg);

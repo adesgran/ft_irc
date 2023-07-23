@@ -7,6 +7,7 @@
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2023/07/13 12:21:22 by adesgran          #+#    #+#             */
 /*   Updated: 2023/07/23 13:39:54 by mchassig         ###   ########.fr       */
+/*   Updated: 2023/07/23 02:24:12 by adesgran         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -17,14 +18,15 @@ Message::Message(void)
 	_cmdMap["CAP"] = CAP;
 	_cmdMap["NICK"] = NICK;
 	_cmdMap["USER"] = USER;
+	this->_output = std::string("");
 }
 
-Message::Message(std::string input_buffer, User *sender): _sender(sender), _input(input_buffer)
+Message::Message(User *sender): _sender(sender)
 {
 	_cmdMap["CAP"] = CAP;
 	_cmdMap["NICK"] = NICK;
 	_cmdMap["USER"] = USER;
-	_parseInput(_split(_input, '\n'));
+	this->_output = std::string("");
 }
 
 Message::Message(const Message &message)
@@ -41,6 +43,9 @@ Message &Message::operator=(const Message &message)
 {
 	if ( this == &message )
 		return ( *this );
+	this->_sender = message._sender;
+	this->_input = message._input;
+	this->_output = message._input;
 	return (*this);
 }
 
@@ -62,8 +67,14 @@ std::string	Message::getInputMsg() const
 
 std::string	Message::getOutputMsg() const
 {
-	return (_output);
+	return (this->_output);
 }
+
+void		Message::clearOutputMsg()
+{
+	this->_output.clear();
+}
+
 
 // IRC commands -----------------------------------------
 
