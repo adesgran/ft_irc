@@ -6,7 +6,7 @@
 /*   By: mchassig <mchassig@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2023/07/13 12:21:22 by adesgran          #+#    #+#             */
-/*   Updated: 2023/07/23 17:00:58 by mchassig         ###   ########.fr       */
+/*   Updated: 2023/07/23 18:48:49 by mchassig         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -174,7 +174,12 @@ void		Message::mode(std::vector<std::string> arg)
 void		Message::ping(std::vector<std::string> arg)
 {
 	std::cout << "	*Message class: PING cmd detected*\n";
-	(void)arg;
+	if (arg.size() < 2)
+	{
+		_output = ITOA(ERR_NEEDMOREPARAMS) + '\n';
+		return ;
+	}
+	_output = "PONG " + arg[1] + '\n';
 }
 
 
