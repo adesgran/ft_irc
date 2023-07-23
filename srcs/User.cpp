@@ -6,7 +6,7 @@
 /*   By: mchassig <mchassig@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2023/07/01 13:44:20 by adesgran          #+#    #+#             */
-/*   Updated: 2023/07/21 18:35:34 by mchassig         ###   ########.fr       */
+/*   Updated: 2023/07/23 01:46:40 by adesgran         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -17,6 +17,7 @@ User::User(void)
 	this->_sockfd = 1;
 	this->_isop = false;
 	this->_welcomed = false;
+	this->_message = new Message(this);
 }
 
 User::User(int sockfd)
@@ -24,6 +25,7 @@ User::User(int sockfd)
 	this->_sockfd = sockfd;
 	this->_isop = false;
 	this->_welcomed = false;
+	this->_message = new Message(this);
 }
 
 User::User(const User &user)
@@ -33,6 +35,7 @@ User::User(const User &user)
 
 User::~User(void)
 {
+	delete this->_message;
 };
 
 User &User::operator=(const User &user)
@@ -115,14 +118,9 @@ void		User::setMode( const int mode )
 	this->_mode = mode;
 }
 
-Message*	User::getMessage( void ) const
+Message	*User::getMessage( void ) const
 {
 	return (_message);
-}
-
-void		User::setMessage(Message *msg)
-{
-	_message = msg;
 }
 
 bool	User::isWelcomed( void ) const

@@ -6,7 +6,7 @@
 /*   By: adesgran <marvin@42.fr>                    +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2023/07/02 11:59:06 by adesgran          #+#    #+#             */
-/*   Updated: 2023/07/20 11:54:15 by adesgran         ###   ########.fr       */
+/*   Updated: 2023/07/23 02:40:15 by adesgran         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -47,12 +47,11 @@ class Server {
 		Server &operator=( const Server &server );
 
 		
-		const std::vector<User>	&getUsers( void ) const;
-		const std::vector<Channel>	&getChannels( void ) const;
+		const std::vector<User *>	&getUsers( void ) const;
+		const std::vector<Channel *>	&getChannels( void ) const;
 
 		User	&getUser( const int sockfd );
 		User	&getUser( const std::string name );
-		void	addUser( const User &user );
 		Log		&getLog( void );
 
 		Channel	&getChannel( const std::string name );
@@ -63,21 +62,21 @@ class Server {
 
 
 	private:
-		std::vector<User>		_users;
-		std::vector<Channel>	_channels;
+		std::vector<User *>		_users;
+		std::vector<Channel *>	_channels;
 		int						_serverfd;
 		std::vector<int>		_fdvector;
 		struct sockaddr_in		_sockaddr;
 		socklen_t				_addrlen;
 		int						_opt;
-		char					_buffer[BUFFER_SIZE];
 		struct pollfd			*_pfds;
 		nfds_t					_nfds;
 		Log						_log;
 
+		void	_addUser( int fd );
 		void	_remove_user( int fd );
 		void	_listenConnect( void );
-		void	_listenMessage( int fd );
+		int		_listenMessage( int fd );
 		void	_pfds_init( void );
 		void	_pfds_add( int fd );
 		void	_pfds_remove( int fd );
