@@ -6,7 +6,7 @@
 /*   By: adesgran <marvin@42.fr>                    +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2023/07/02 12:03:38 by adesgran          #+#    #+#             */
-/*   Updated: 2023/07/20 11:54:50 by adesgran         ###   ########.fr       */
+/*   Updated: 2023/07/23 02:41:17 by adesgran         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -57,10 +57,7 @@ Server::Server(void)
 
 	fcntl(this->_serverfd, F_SETFL, O_NONBLOCK);
 
-	_log.debug("Hello !");
 	_log.info("Server is ready");
-	_log.warning("Take care !");
-	_log.error("Oh no ! It's too late !");
 }
 
 Server::Server(const Server &server)
@@ -70,6 +67,7 @@ Server::Server(const Server &server)
 
 Server::~Server(void)
 {
+	delete[] this->_pfds;
 };
 
 Server &Server::operator=(const Server &server)
@@ -84,12 +82,12 @@ Log	&Server::getLog( void )
 	return (this->_log);
 }
 
-const std::vector<User>	&Server::getUsers( void ) const
+const std::vector<User *>	&Server::getUsers( void ) const
 {
 	return (this->_users);
 }
 
-const std::vector<Channel>	&Server::getChannels( void ) const
+const std::vector<Channel *>	&Server::getChannels( void ) const
 {
 	return (this->_channels);
 }
@@ -97,12 +95,12 @@ const std::vector<Channel>	&Server::getChannels( void ) const
 User	&Server::getUser( const int sockfd )
 {
 	for ( 
-			std::vector<User>::iterator it = this->_users.begin(); 
+			std::vector<User *>::iterator it = this->_users.begin(); 
 			it != this->_users.end(); 
 			it++ )
 	{
-		if ( it->getSockfd() == sockfd )
-			return (*it);
+		if ( (*it)->getSockfd() == sockfd )
+			return (**it);
 	}
 	throw (Server::UserDoesNotExistException());
 }
@@ -110,37 +108,39 @@ User	&Server::getUser( const int sockfd )
 User	&Server::getUser( const std::string name )
 {
 	for ( 
-			std::vector<User>::iterator it = this->_users.begin(); 
+			std::vector<User *>::iterator it = this->_users.begin(); 
 			it != this->_users.end(); 
 			it++ )
 	{
-		if ( it->getNickname() == name )
-			return (*it);
+		if ( (*it)->getNickname() == name )
+			return (**it);
 	}
 	throw (Server::UserDoesNotExistException());
 }
 
-void	Server::addUser( const User &user )
+void	Server::_addUser( int fd )
 {
-	this->_users.push_back( User(user) );
+	User *user = new User(fd);
+	this->_users.push_back( user );
 }
 
 void	Server::_remove_user( int fd )
 {
 	for ( 
-			std::vector<Channel>::iterator it = this->_channels.begin(); 
+			std::vector<Channel *>::iterator it = this->_channels.begin(); 
 			it != this->_channels.end(); 
 			it++ )
-		it->removeUser(fd);
+		(*it)->removeUser(fd);
 	for ( 
-			std::vector<User>::iterator it = this->_users.begin(); 
+			std::vector<User *>::iterator it = this->_users.begin(); 
 			it != this->_users.end(); 
 			it++ )
 	{
-		if ( it->getSockfd() == fd )
+		if ( (*it)->getSockfd() == fd )
 		{
+			delete *it;
 			this->_users.erase(it);
-			return ;
+			return ( this->_remove_user( fd ) );
 		}
 	}
 }
@@ -148,16 +148,16 @@ void	Server::_remove_user( int fd )
 Channel	&Server::getChannel( const std::string name )
 {
 	for (
-			std::vector<Channel>::iterator it = this->_channels.begin(); 
+			std::vector<Channel *>::iterator it = this->_channels.begin(); 
 			it != this->_channels.end(); 
 			it++ )
 	{
-		if ( it->getName() == name )
-			return (*it);
+		if ( (*it)->getName() == name )
+			return (**it);
 	}
-	Channel	res(name);
+	Channel	*res = new Channel(name);
 	this->_channels.push_back(res);
-	return (this->_channels.back());
+	return (*res);
 }
 
 void	Server::_pfds_init( void )
@@ -174,10 +174,10 @@ void	Server::_pfds_add( int fd )
 	for ( nfds_t n = 0; n < this->_nfds; n++ )
 		new_pfds[n] = this->_pfds[n];
 	new_pfds[this->_nfds].fd = fd;
-	new_pfds[this->_nfds].events = POLLIN;
-	delete this->_pfds;
+	new_pfds[this->_nfds].events = POLLIN | POLLOUT;
+	delete[] this->_pfds;
 	this->_pfds = new_pfds;
-	this->_nfds++;
+	this->_nfds += 1;
 }
 
 void	Server::_pfds_remove( int fd )
@@ -195,9 +195,9 @@ void	Server::_pfds_remove( int fd )
 		else
 			n++;
 	}
-	delete this->_pfds;
+	delete[] this->_pfds;
 	this->_pfds = new_pfds;
-	this->_nfds--;
+	this->_nfds -= 1;
 }
 
 
@@ -214,21 +214,32 @@ void	Server::_listenConnect( void )
 		std::cout << "Error on connection acceptation : " << strerror(errno) << std::endl;
 		throw std::runtime_error(strerror(errno));
 	}
-	std::cout << "New Connection Set   fd : " << new_sock << std::endl;
+	this->_log.info("New connection set");
 	this->_pfds_add( new_sock );
-	this->_users.push_back(User(new_sock));
+	this->_addUser( new_sock );
 }
 
-void	Server::_listenMessage( int fd )
+int	Server::_listenMessage( int fd )
 {
 	ssize_t	len;
-	this->_buffer[0] = '\0';
-	len = recv(fd, this->_buffer, BUFFER_SIZE, MSG_DONTWAIT);
-	this->_buffer[len] = '\0';
+	char	buffer[BUFFER_SIZE];
+	buffer[0] = '\0';
+	len = recv(fd, buffer, BUFFER_SIZE, MSG_DONTWAIT);
+	buffer[len] = '\0';
 	if ( len )
 	{
-		std::cout << "fd : " << fd << " >> " << this->_buffer;
+		std::string input(buffer);
+		this->_log.debug("CLIENT : " + input);
+		Message *msg = this->getUser( fd ).getMessage();
+		msg->setInputMsg( input );
+		return (0);
 	}
+	else
+	{
+		this->_log.debug("Empty Message received");
+		return (1);
+	}
+
 }
 
 void	Server::stop( void )
@@ -259,22 +270,50 @@ void	Server::run( void )
 			}
 			for ( nfds_t n = 1; n < this->_nfds; n++ )
 			{
-				if ( this->_pfds[n].revents & POLLERR )
+				if ( this->_pfds[n].revents & POLLERR || this->_pfds[n].revents & POLLHUP )
 				{
-					std::cout << "POLLERR" << std::endl;
-					throw Server::PollException();
+					if ( this->_pfds[n].revents & POLLERR )
+					{
+						this->_log.debug("POLLERR");
+						throw Server::PollException();
+					}
+					else if ( this->_pfds[n].revents & POLLHUP )
+					{
+						this->_log.info("Connection closed");
+						this->_remove_user(this->_pfds[n].fd);
+						close(this->_pfds[n].fd);
+						this->_pfds_remove(this->_pfds[n].fd);
+						n = this->_nfds;
+					}
 				}
-				else if ( this->_pfds[n].revents & POLLIN )
-					this->_listenMessage(this->_pfds[n].fd);
-				else if ( this->_pfds[n].revents & POLLHUP )
+				else
 				{
-					std::cout << "Close fd : " << this->_pfds[n].fd << std::endl;
-					this->_remove_user(this->_pfds[n].fd);
-					close(this->_pfds[n].fd);
-					this->_pfds_remove(this->_pfds[n].fd);
-					n--;
-				}
+					if ( this->_pfds[n].revents & POLLIN )
+					{
+						std::cout << this->_nfds << std::endl;
+						this->_log.debug("Listen message");
+						if (this->_listenMessage(this->_pfds[n].fd))
+						{
+							this->_log.info("Connection closed");
+							this->_remove_user(this->_pfds[n].fd);
+							close(this->_pfds[n].fd);
+							this->_pfds_remove(this->_pfds[n].fd);
+							n = this->_nfds;
+						}
+					}
+					else if ( this->_pfds[n].revents & POLLOUT )
+					{
+						Message *msg = this->getUser( this->_pfds[n].fd ).getMessage();
+						std::string	output(msg->getOutputMsg());
+						if ( !output.empty() )
+						{
+							this->_log.debug("Message to send : " + output);
+							send( this->_pfds[n].fd, output.c_str(), output.size(), 0 );
+							msg->clearOutputMsg();
+						}
+					}
 
+				}
 			}
 		}
 	}

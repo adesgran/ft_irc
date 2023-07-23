@@ -6,7 +6,7 @@
 /*   By: mchassig <mchassig@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2023/07/13 12:20:36 by adesgran          #+#    #+#             */
-/*   Updated: 2023/07/21 18:29:46 by mchassig         ###   ########.fr       */
+/*   Updated: 2023/07/23 00:48:27 by adesgran         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -38,7 +38,7 @@ enum cmdValue {
 class Message {
 	public:
 		Message( void );
-		Message( std::string buffer, User *sender );
+		Message( User *sender );
 		Message( const Message &message );
 		~Message( void );
 		Message &operator=( const Message &message );
@@ -48,6 +48,7 @@ class Message {
 		void		setInputMsg(std::string &input_buffer);
 		std::string	getInputMsg() const;
 		std::string	getOutputMsg() const;
+		void		clearOutputMsg();
 
 		// IRC commands -----------------------------------------
 		void	nick(std::vector<std::string> arg);
