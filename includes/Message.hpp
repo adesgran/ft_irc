@@ -6,7 +6,7 @@
 /*   By: mchassig <mchassig@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2023/07/13 12:20:36 by adesgran          #+#    #+#             */
-/*   Updated: 2023/07/21 18:29:46 by mchassig         ###   ########.fr       */
+/*   Updated: 2023/07/23 13:35:39 by mchassig         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -34,6 +34,13 @@ enum cmdValue {
 	PING,
 	CAP,
 };
+
+# define ERR_NONICKNAMEGIVEN	431
+# define ERR_ERRONEUSNICKNAME	432
+# define ERR_NICKNAMEINUSE		433
+
+# define ERR_NEEDMOREPARAMS		461
+# define ERR_ALREADYREGISTERED	462
 
 class Message {
 	public:
