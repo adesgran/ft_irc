@@ -6,7 +6,7 @@
 /*   By: mchassig <mchassig@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2023/07/13 12:20:36 by adesgran          #+#    #+#             */
-/*   Updated: 2023/07/23 13:35:39 by mchassig         ###   ########.fr       */
+/*   Updated: 2023/07/23 17:01:12 by mchassig         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -34,6 +34,9 @@ enum cmdValue {
 	PING,
 	CAP,
 };
+
+#define ITOA( x ) static_cast< std::ostringstream & >( \
+        ( std::ostringstream() << std::dec << x ) ).str()
 
 # define ERR_NONICKNAMEGIVEN	431
 # define ERR_ERRONEUSNICKNAME	432
@@ -76,8 +79,8 @@ class Message {
 
 		// Utils ----------------------------------------------
 		void						_parseInput(std::vector<std::string> input_lines);
-		std::vector<std::string>	_split(const std::string& str, char sep);
-		
+		std::vector<std::string>	_split(std::string str, std::string sep);
+
 };
 
 #endif
