@@ -6,6 +6,7 @@
 /*   By: mchassig <mchassig@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2023/07/13 12:21:22 by adesgran          #+#    #+#             */
+/*   Updated: 2023/07/23 13:39:54 by mchassig         ###   ########.fr       */
 /*   Updated: 2023/07/23 02:24:12 by adesgran         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
@@ -80,18 +81,61 @@ void		Message::clearOutputMsg()
 void	Message::nick(std::vector<std::string> arg)
 {
 	std::cout << "	*Message class: NICK cmd detected*\n";
+
+	// if (arg.size() < 2)
+		// ERR_NONICKNAMEGIVEN	=> should ignore the command
+
+	// if (arg[1].find_first_not_of("0123456789abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ[]{}\\|"))
+		// ERR_ERRONEUSNICKNAME	=> should ignore the command
+
+	// si nickname deja utilise sur le server
+		// ERR_NICKNAMEINUSE	=> should ignore the command
+
+
 	_sender->setNickname(arg[1]);
+	std::cout << "		nickname: " << _sender->getNickname() << std::endl;
+
 }
 
 void	Message::user(std::vector<std::string> arg)
 {
 	std::cout << "	*Message class: USER cmd detected*\n";
-		if (!_sender->isWelcomed())
+	
+	//if (arg.size() < 5)
+		// ERR_NEEDMOREPARAMS => server should reject command
+	//if (_sender->isWelcomed())
+		// ERR_ALREADYREGISTERED => attempt should fail
+	
+	std::vector<std::string>::iterator	it = ++arg.begin();
+	/* username */
+	_sender->setUsername(*it++);
+	/* mode */
+	std::stringstream	ss;
+	int	mode;
+	ss << *it++;
+	ss >> mode;
+	_sender->setMode(mode);
+	/* unused */
+	it++;
+	/* real name */
+	std::string	realName = *it++;
+	if (realName[0] == ':')
+		realName.erase(0, 1);
+	while (it != arg.end())
 	{
-		_sender->welcome();
-		_output += "001 :Welcome to the <networkname> Network, " + _sender->getNickname() + "\n"; //<nick>[!<user>@<host>]
+		realName += " ";
+		realName += *it++;
 	}
-	(void)arg;
+	_sender->setRealname(realName);
+	
+
+	std::cout << "		user: " << _sender->getUsername()
+			<< "\n		mode: " << _sender->getMode()
+			<< "\n		real name: " << _sender->getRealname()
+					<< std::endl;
+
+	_sender->welcome();
+	_output += "001 Welcome to the <networkname> Network, " + _sender->getNickname() + "\n"; //<nick>[!<user>@<host>]
 }
 
 void		Message::privmsg(std::vector<std::string> arg)
