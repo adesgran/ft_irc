@@ -6,10 +6,10 @@
 /*   By: mchassig <mchassig@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2023/07/13 12:21:22 by adesgran          #+#    #+#             */
-/*   Updated: 2023/07/23 13:39:54 by mchassig         ###   ########.fr       */
-/*   Updated: 2023/07/23 02:24:12 by adesgran         ###   ########.fr       */
+/*   Updated: 2023/07/23 17:00:58 by mchassig         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
+
 
 #include <Message.hpp>
 
@@ -57,7 +57,8 @@ Message &Message::operator=(const Message &message)
 void		Message::setInputMsg(std::string &input_buffer)
 {
 	_input = input_buffer;
-	_parseInput(_split(_input, '\n'));
+
+	_parseInput(_split(_input, "\r\n"));
 }
 
 std::string	Message::getInputMsg() const
@@ -82,29 +83,37 @@ void	Message::nick(std::vector<std::string> arg)
 {
 	std::cout << "	*Message class: NICK cmd detected*\n";
 
-	// if (arg.size() < 2)
-		// ERR_NONICKNAMEGIVEN	=> should ignore the command
-
-	// if (arg[1].find_first_not_of("0123456789abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ[]{}\\|"))
-		// ERR_ERRONEUSNICKNAME	=> should ignore the command
-
-	// si nickname deja utilise sur le server
-		// ERR_NICKNAMEINUSE	=> should ignore the command
-
-
+	if (arg.size() < 2)
+	{
+		_output = ITOA(ERR_NONICKNAMEGIVEN) + '\n'; //	=> should ignore the command
+		return ;
+	}
+	if (arg[1].find_first_not_of("0123456789abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ[]{}\\|") != std::string::npos)
+	{
+		_output = ITOA(ERR_ERRONEUSNICKNAME) + '\n';	// => should ignore the command
+		return ;
+	}
+	// si nickname deja utilisé sur le server
+	// {
+	// 	_output = ITOA(ERR_NICKNAMEINUSE)  + '\n';	// => should ignore the command
+	// 	return ;
+	// }
+	
 	_sender->setNickname(arg[1]);
-	std::cout << "		nickname: " << _sender->getNickname() << std::endl;
-
 }
 
 void	Message::user(std::vector<std::string> arg)
 {
-	std::cout << "	*Message class: USER cmd detected*\n";
-	
-	//if (arg.size() < 5)
-		// ERR_NEEDMOREPARAMS => server should reject command
-	//if (_sender->isWelcomed())
-		// ERR_ALREADYREGISTERED => attempt should fail
+	if (arg.size() < 5)
+	{
+		_output = ITOA(ERR_NEEDMOREPARAMS) + '\n';	// => server should reject command
+		return ;
+	}
+	if (_sender->isWelcomed())
+	{
+		_output = ITOA(ERR_ALREADYREGISTERED) + '\n';	// => attempt should fail
+		return ;
+	}
 	
 	std::vector<std::string>::iterator	it = ++arg.begin();
 	/* username */
@@ -128,12 +137,6 @@ void	Message::user(std::vector<std::string> arg)
 	}
 	_sender->setRealname(realName);
 	
-
-	std::cout << "		user: " << _sender->getUsername()
-			<< "\n		mode: " << _sender->getMode()
-			<< "\n		real name: " << _sender->getRealname()
-					<< std::endl;
-
 	_sender->welcome();
 	_output += "001 Welcome to the <networkname> Network, " + _sender->getNickname() + "\n"; //<nick>[!<user>@<host>]
 }
@@ -182,7 +185,7 @@ void	Message::_parseInput(std::vector<std::string> input_lines)
 			line != input_lines.end();
 			line++)
 	{
-		std::vector<std::string>	cmd_arg = _split(*line, ' ');
+		std::vector<std::string>	cmd_arg = _split(*line, " ");
 		switch (_cmdMap[cmd_arg[0]])
 		{
 			case NICK:
@@ -213,15 +216,14 @@ void	Message::_parseInput(std::vector<std::string> input_lines)
 		}
 	}
 }
-std::vector<std::string>	Message::_split(const std::string& str, char sep)
+std::vector<std::string>	Message::_split(std::string str, std::string sep)
 {
-    std::vector<std::string> tokens;
- 
-    std::stringstream ss(str);
-    std::string token;
-    while (std::getline(ss, token, sep)) {
-        tokens.push_back(token);
+	std::vector<std::string> res;
+    size_t pos = 0;
+    while(pos < str.size()){
+        pos = str.find(sep);
+        res.push_back(str.substr(0,pos));
+        str.erase(0, pos + sep.size()); // 3 is the length of the delimiter, "%20"
     }
- 
-    return tokens;
+    return (res);
 }
