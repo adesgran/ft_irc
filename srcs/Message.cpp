@@ -6,7 +6,7 @@
 /*   By: mchassig <mchassig@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2023/07/13 12:21:22 by adesgran          #+#    #+#             */
-/*   Updated: 2023/07/23 18:48:49 by mchassig         ###   ########.fr       */
+/*   Updated: 2023/07/27 15:45:20 by mchassig         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -36,7 +36,6 @@ Message::Message(const Message &message)
 
 Message::~Message(void)
 {
-	(void)_sender;
 };
 
 Message &Message::operator=(const Message &message)
@@ -44,6 +43,7 @@ Message &Message::operator=(const Message &message)
 	if ( this == &message )
 		return ( *this );
 	this->_sender = message._sender;
+	this->_server = message._server;
 	this->_input = message._input;
 	this->_output = message._input;
 	return (*this);
@@ -54,10 +54,10 @@ Message &Message::operator=(const Message &message)
 // 	std::cout << message << std::endl;
 // }
 
-void		Message::setInputMsg(std::string &input_buffer)
+void		Message::setInputMsg(std::string &input_buffer, Server *server)
 {
 	_input = input_buffer;
-
+	_server = server;
 	_parseInput(_split(_input, "\r\n"));
 }
 
@@ -77,9 +77,58 @@ void		Message::clearOutputMsg()
 }
 
 
-// IRC commands -----------------------------------------
+// Utils ----------------------------------------------
+void	Message::_parseInput(std::vector<std::string> input_lines)
+{
+	for (std::vector<std::string>::iterator	line = input_lines.begin();
+			line != input_lines.end();
+			line++)
+	{
+		std::vector<std::string>	cmd_arg = _split(*line, " ");
+		switch (_cmdMap[cmd_arg[0]])
+		{
+			case NICK:
+				_nick(cmd_arg);
+				break;
+			case USER:
+				_user(cmd_arg);
+				break;
+			case PRIVMSG:
+				_privmsg(cmd_arg);
+				break;
+			case KICK:
+				_kick(cmd_arg);
+				break;
+			case TOPIC:
+				_topic(cmd_arg);
+				break;
+			case MODE:
+				_mode(cmd_arg);
+				break;
+			case PING:
+				_ping(cmd_arg);
+				break;
+			case CAP:
+				break;
+			default:
+				break;
+		}
+	}
+}
+std::vector<std::string>	Message::_split(std::string str, std::string sep)
+{
+	std::vector<std::string> res;
+    size_t pos = 0;
+    while(pos < str.size()){
+        pos = str.find(sep);
+        res.push_back(str.substr(0,pos));
+        str.erase(0, pos + sep.size()); // 3 is the length of the delimiter, "%20"
+    }
+    return (res);
+}
 
-void	Message::nick(std::vector<std::string> arg)
+// IRC commands -----------------------------------------
+void	Message::_nick(std::vector<std::string> arg)
 {
 	std::cout << "	*Message class: NICK cmd detected*\n";
 
@@ -102,7 +151,7 @@ void	Message::nick(std::vector<std::string> arg)
 	_sender->setNickname(arg[1]);
 }
 
-void	Message::user(std::vector<std::string> arg)
+void	Message::_user(std::vector<std::string> arg)
 {
 	if (arg.size() < 5)
 	{
@@ -119,11 +168,7 @@ void	Message::user(std::vector<std::string> arg)
 	/* username */
 	_sender->setUsername(*it++);
 	/* mode */
-	std::stringstream	ss;
-	int	mode;
-	ss << *it++;
-	ss >> mode;
-	_sender->setMode(mode);
+	_sender->setMode(*it++);
 	/* unused */
 	it++;
 	/* real name */
@@ -141,37 +186,54 @@ void	Message::user(std::vector<std::string> arg)
 	_output += "001 Welcome to the <networkname> Network, " + _sender->getNickname() + "\n"; //<nick>[!<user>@<host>]
 }
 
-void		Message::privmsg(std::vector<std::string> arg)
+void		Message::_privmsg(std::vector<std::string> arg)
 {
 	std::cout << "	*Message class: PRIVMSG cmd detected*\n";
 	(void)arg;
 }
 
-void		Message::kick(std::vector<std::string> arg)
+void		Message::_kick(std::vector<std::string> arg)
 {
 	std::cout << "	*Message class: KICK cmd detected*\n";
 	(void)arg;
 }
 
-void		Message::invite(std::vector<std::string> arg)
+void		Message::_invite(std::vector<std::string> arg)
 {
 	std::cout << "	*Message class: INVITE cmd detected*\n";
 	(void)arg;
 }
 
-void		Message::topic(std::vector<std::string> arg)
+void		Message::_topic(std::vector<std::string> arg)
 {
 	std::cout << "	*Message class: TOPIC cmd detected*\n";
 	(void)arg;
 }
 
-void		Message::mode(std::vector<std::string> arg)
+void		Message::_mode(std::vector<std::string> arg)
 {
 	std::cout << "	*Message class: MODE cmd detected*\n";
-	(void)arg;
+	try
+	{
+		User	target = _server->getUser(arg[1]);
+		if (target.getNickname().compare(_sender->getNickname()))
+			throw std::invalid_argument(ITOA(ERR_USERSDONTMATCH));
+		if (arg.size() < 3)
+			throw std::invalid_argument(ITOA(RPL_UMODEIS) + " " + target.getMode());
+		// target.setMode(arg[2]);
+	}
+	catch(const std::invalid_argument& e)
+	{
+		_output += e.what();
+		_output += "\n";
+	}
+	catch(const std::exception& e)
+	{
+		_output += ITOA(ERR_NOSUCHNICK) + "\n";
+	}
 }
 
-void		Message::ping(std::vector<std::string> arg)
+void		Message::_ping(std::vector<std::string> arg)
 {
 	std::cout << "	*Message class: PING cmd detected*\n";
 	if (arg.size() < 2)
@@ -180,55 +242,4 @@ void		Message::ping(std::vector<std::string> arg)
 		return ;
 	}
 	_output = "PONG " + arg[1] + '\n';
-}
-
-
-// Utils ----------------------------------------------
-void	Message::_parseInput(std::vector<std::string> input_lines)
-{
-	for (std::vector<std::string>::iterator	line = input_lines.begin();
-			line != input_lines.end();
-			line++)
-	{
-		std::vector<std::string>	cmd_arg = _split(*line, " ");
-		switch (_cmdMap[cmd_arg[0]])
-		{
-			case NICK:
-				nick(cmd_arg);
-				break;
-			case USER:
-				user(cmd_arg);
-				break;
-			case PRIVMSG:
-				privmsg(cmd_arg);
-				break;
-			case KICK:
-				kick(cmd_arg);
-				break;
-			case TOPIC:
-				topic(cmd_arg);
-				break;
-			case MODE:
-				mode(cmd_arg);
-				break;
-			case PING:
-				ping(cmd_arg);
-				break;
-			case CAP:
-				break;
-			default:
-				break;
-		}
-	}
-}
-std::vector<std::string>	Message::_split(std::string str, std::string sep)
-{
-	std::vector<std::string> res;
-    size_t pos = 0;
-    while(pos < str.size()){
-        pos = str.find(sep);
-        res.push_back(str.substr(0,pos));
-        str.erase(0, pos + sep.size()); // 3 is the length of the delimiter, "%20"
-    }
-    return (res);
 }

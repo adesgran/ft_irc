@@ -6,7 +6,7 @@
 /*   By: mchassig <mchassig@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2023/07/01 13:44:20 by adesgran          #+#    #+#             */
-/*   Updated: 2023/07/23 01:46:40 by adesgran         ###   ########.fr       */
+/*   Updated: 2023/07/27 15:29:39 by mchassig         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -108,12 +108,12 @@ void		User::setHostname( const std::string hostname )
 	this->_hostname = hostname;
 }
 
-int			User::getMode( void ) const
+std::string	User::getMode( void ) const
 {
 	return (this->_mode);
 }
 
-void		User::setMode( const int mode )
+void		User::setMode( const std::string mode )
 {
 	this->_mode = mode;
 }
