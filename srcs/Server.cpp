@@ -3,10 +3,10 @@
 /*                                                        :::      ::::::::   */
 /*   Server.cpp                                         :+:      :+:    :+:   */
 /*                                                    +:+ +:+         +:+     */
-/*   By: adesgran <marvin@42.fr>                    +#+  +:+       +#+        */
+/*   By: mchassig <mchassig@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2023/07/02 12:03:38 by adesgran          #+#    #+#             */
-/*   Updated: 2023/07/23 02:41:17 by adesgran         ###   ########.fr       */
+/*   Updated: 2023/07/27 15:44:30 by mchassig         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -231,7 +231,7 @@ int	Server::_listenMessage( int fd )
 		std::string input(buffer);
 		this->_log.debug("CLIENT : " + input);
 		Message *msg = this->getUser( fd ).getMessage();
-		msg->setInputMsg( input );
+		msg->setInputMsg( input, this );
 		return (0);
 	}
 	else

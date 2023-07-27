@@ -6,7 +6,7 @@
 /*   By: mchassig <mchassig@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2023/07/13 12:20:36 by adesgran          #+#    #+#             */
-/*   Updated: 2023/07/23 17:01:12 by mchassig         ###   ########.fr       */
+/*   Updated: 2023/07/27 15:43:42 by mchassig         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -18,8 +18,10 @@
 # include <map>
 # include <vector>
 # include <User.hpp>
+# include <Server.hpp>
 
 class User;
+class Server;
 
 enum cmdValue {
 	ERR_UNKNOWNCMD,
@@ -38,12 +40,14 @@ enum cmdValue {
 #define ITOA( x ) static_cast< std::ostringstream & >( \
         ( std::ostringstream() << std::dec << x ) ).str()
 
+# define RPL_UMODEIS			221
+# define ERR_NOSUCHNICK			401
 # define ERR_NONICKNAMEGIVEN	431
 # define ERR_ERRONEUSNICKNAME	432
 # define ERR_NICKNAMEINUSE		433
-
 # define ERR_NEEDMOREPARAMS		461
 # define ERR_ALREADYREGISTERED	462
+# define ERR_USERSDONTMATCH		502
 
 class Message {
 	public:
@@ -55,25 +59,16 @@ class Message {
 
 		// void	read( std::string message );
 
-		void		setInputMsg(std::string &input_buffer);
+		void		setInputMsg(std::string &input_buffer, Server *server);
 		std::string	getInputMsg() const;
 		std::string	getOutputMsg() const;
 		void		clearOutputMsg();
 
-		// IRC commands -----------------------------------------
-		void	nick(std::vector<std::string> arg);
-		void	user(std::vector<std::string> arg);
-		void	privmsg(std::vector<std::string> arg);
-		void	kick(std::vector<std::string> arg);
-		void	invite(std::vector<std::string> arg);
-		void	topic(std::vector<std::string> arg);
-		void	mode(std::vector<std::string> arg);
-		void	ping(std::vector<std::string> arg);
-
 	private:
 		std::map<std::string, cmdValue>	_cmdMap; //maybe change cmdValue to a pointer to function
 		User*							_sender;
-		
+		Server*							_server;
+
 		std::string						_input;
 		std::string						_output;
 
@@ -81,6 +76,15 @@ class Message {
 		void						_parseInput(std::vector<std::string> input_lines);
 		std::vector<std::string>	_split(std::string str, std::string sep);
 
+		// IRC commands -----------------------------------------
+		void	_nick(std::vector<std::string> arg);
+		void	_user(std::vector<std::string> arg);
+		void	_privmsg(std::vector<std::string> arg);
+		void	_kick(std::vector<std::string> arg);
+		void	_invite(std::vector<std::string> arg);
+		void	_topic(std::vector<std::string> arg);
+		void	_mode(std::vector<std::string> arg);
+		void	_ping(std::vector<std::string> arg);
 };
 
 #endif
