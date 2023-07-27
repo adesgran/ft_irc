@@ -6,7 +6,7 @@
 /*   By: mchassig <mchassig@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2023/07/01 13:44:20 by adesgran          #+#    #+#             */
-/*   Updated: 2023/07/27 15:29:39 by mchassig         ###   ########.fr       */
+/*   Updated: 2023/07/27 17:45:56 by adesgran         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -30,6 +30,7 @@ User::User(int sockfd)
 
 User::User(const User &user)
 {
+	this->_message = NULL;
 	*this = user;
 }
 
@@ -42,8 +43,12 @@ User &User::operator=(const User &user)
 {
 	if (this == &user)
 		return (*this);
+	if (this->_message != NULL)
+		delete this->_message;
+	this->_message = new Message(*(user._message));
 	this->_sockfd = user.getSockfd();
 	this->_isop = user.getIsop();
+	this->_welcomed = user._welcomed;
 	return (*this);
 }
 

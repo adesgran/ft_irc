@@ -6,7 +6,7 @@
 /*   By: adesgran <marvin@42.fr>                    +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2023/07/02 11:59:06 by adesgran          #+#    #+#             */
-/*   Updated: 2023/07/23 02:40:15 by adesgran         ###   ########.fr       */
+/*   Updated: 2023/07/27 16:43:12 by adesgran         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -38,6 +38,7 @@
 
 class User;
 class Channel;
+class Log;
 
 class Server {
 	public:
@@ -52,7 +53,7 @@ class Server {
 
 		User	&getUser( const int sockfd );
 		User	&getUser( const std::string name );
-		Log		&getLog( void );
+		Log		*getLog( void );
 
 		Channel	&getChannel( const std::string name );
 
@@ -71,7 +72,7 @@ class Server {
 		int						_opt;
 		struct pollfd			*_pfds;
 		nfds_t					_nfds;
-		Log						_log;
+		Log						*_log;
 
 		void	_addUser( int fd );
 		void	_remove_user( int fd );
