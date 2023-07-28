@@ -6,7 +6,7 @@
 /*   By: adesgran <marvin@42.fr>                    +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2023/07/19 09:07:27 by adesgran          #+#    #+#             */
-/*   Updated: 2023/07/20 11:40:04 by adesgran         ###   ########.fr       */
+/*   Updated: 2023/07/27 17:40:43 by adesgran         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -19,6 +19,9 @@
 # include <fstream>
 # include <sstream>
 # include <iomanip>
+# include <User.hpp>
+
+class User;
 
 class Log {
 	public:
@@ -31,6 +34,7 @@ class Log {
 		void	info( std::string str );
 		void	warning( std::string str );
 		void	error( std::string str );
+		void	client( std::string str, User &user );
 
 		void	_writeFile( std::string str );
 

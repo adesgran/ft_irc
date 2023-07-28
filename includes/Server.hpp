@@ -38,6 +38,7 @@
 
 class User;
 class Channel;
+class Log;
 
 class Server {
 	public:
@@ -52,7 +53,7 @@ class Server {
 
 		User	&getUser( const int sockfd );
 		User	&getUser( const std::string name );
-		Log		&getLog( void );
+		Log		*getLog( void );
 
 		Channel	&getChannel( const std::string name );
 

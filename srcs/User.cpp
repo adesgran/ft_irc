@@ -30,6 +30,7 @@ User::User(int sockfd)
 
 User::User(const User &user)
 {
+	this->_message = NULL;
 	*this = user;
 }
 
@@ -42,8 +43,12 @@ User &User::operator=(const User &user)
 {
 	if (this == &user)
 		return (*this);
+	if (this->_message != NULL)
+		delete this->_message;
+	this->_message = new Message(*(user._message));
 	this->_sockfd = user.getSockfd();
 	this->_isop = user.getIsop();
+	this->_welcomed = user._welcomed;
 	return (*this);
 }
 

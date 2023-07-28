@@ -14,13 +14,14 @@
 
 Server::Server(void)
 {
-	Log log;
+	this->_log = new Log();
 	this->_opt = 1;
 	this->_addrlen = sizeof(this->_sockaddr);
 
 	if ( ( this->_serverfd = socket(AF_INET, SOCK_STREAM, 0) ) < 0 )
 	{
-		std::cout << "Error on socket creation : " << strerror(errno) << std::endl;
+		this->_log->error("Error on socket creation");
+		this->_log->error(strerror(errno));
 		throw std::runtime_error(strerror(errno));
 	}
 
@@ -30,7 +31,8 @@ Server::Server(void)
 				&this->_opt, 
 				sizeof(this->_opt) ) )
 	{
-		std::cout << "Error on socket options: " << strerror(errno) << std::endl;
+		this->_log->error("Error on socket options");
+		this->_log->error(strerror(errno));
 		throw std::runtime_error(strerror(errno));
 	}
 
@@ -43,13 +45,15 @@ Server::Server(void)
 				(struct sockaddr*)&this->_sockaddr, 
 				sizeof(this->_sockaddr) ) < 0 )
 	{
-		std::cout << "Error on binding socket: " << strerror(errno) << std::endl;
+		this->_log->error("Error on binding socket");
+		this->_log->error(strerror(errno));
 		throw std::runtime_error(strerror(errno));
 	}
 
 	if ( listen(this->_serverfd, 10) < 0)
 	{
-		std::cout << "Error on marking socket as passive socket: " << strerror(errno) << std::endl;
+		this->_log->error("Error on marking socket as passive socket");
+		this->_log->error(strerror(errno));
 		throw std::runtime_error(strerror(errno));
 	}
 
@@ -59,7 +63,7 @@ Server::Server(void)
 
 	fcntl(this->_serverfd, F_SETFL, O_NONBLOCK);
 
-	_log.info("Server is ready");
+	_log->info("Server is ready");
 }
 
 Server::Server(const Server &server)
@@ -79,7 +83,7 @@ Server &Server::operator=(const Server &server)
 	return (*this);
 }
 
-Log	&Server::getLog( void )
+Log	*Server::getLog( void )
 {
 	return (this->_log);
 }
@@ -222,10 +226,11 @@ void	Server::_listenConnect( void )
 	{
 		if ( errno == EAGAIN || errno == EWOULDBLOCK )
 			return ;
-		std::cout << "Error on connection acceptation : " << strerror(errno) << std::endl;
+		this->_log->error("Error on connection acceptation ");
+		this->_log->error(strerror(errno));
 		throw std::runtime_error(strerror(errno));
 	}
-	this->_log.info("New connection set");
+	this->_log->info("New connection set");
 	this->_pfds_add( new_sock );
 	this->_addUser( new_sock );
 }
@@ -239,15 +244,27 @@ int	Server::_listenMessage( int fd )
 	buffer[len] = '\0';
 	if ( len )
 	{
-		std::string input(buffer);
-		this->_log.debug("CLIENT : " + input);
-		Message *msg = this->getUser( fd ).getMessage();
-		msg->setInputMsg( input, this );
-		return (0);
+		try
+		{
+			std::string input(buffer);
+			User &client = this->getUser(fd);
+
+			this->_log->client(input, client);
+			Message *msg = this->getUser( fd ).getMessage();
+			msg->setInputMsg( input, this );
+			(void)client;
+			return (0);
+		}
+		catch (std::exception const & e)
+		{
+			this->_log->error(e.what());
+			return (1);
+		}
+
 	}
 	else
 	{
-		this->_log.debug("Empty Message received");
+		this->_log->debug("Empty Message received");
 		return (1);
 	}
 
@@ -275,50 +292,50 @@ void	Server::run( void )
 			throw Server::PollException();
 		if ( ready )
 		{
+			nfds_t len = this->_nfds;
 			if ( this->_pfds[0].revents & POLLIN )
 			{
 				this->_listenConnect();
 			}
-			for ( nfds_t n = 1; n < this->_nfds; n++ )
+			for ( nfds_t n = 1; n < len; n++ )
 			{
 				if ( this->_pfds[n].revents & POLLERR || this->_pfds[n].revents & POLLHUP )
 				{
 					if ( this->_pfds[n].revents & POLLERR )
 					{
-						this->_log.debug("POLLERR");
+						this->_log->debug("POLLERR");
 						throw Server::PollException();
 					}
 					else if ( this->_pfds[n].revents & POLLHUP )
 					{
-						this->_log.info("Connection closed");
+						this->_log->info("Connection closed");
 						this->_remove_user(this->_pfds[n].fd);
 						close(this->_pfds[n].fd);
 						this->_pfds_remove(this->_pfds[n].fd);
-						n = this->_nfds;
+						n = len;
 					}
 				}
 				else
 				{
 					if ( this->_pfds[n].revents & POLLIN )
 					{
-						std::cout << this->_nfds << std::endl;
-						this->_log.debug("Listen message");
+						this->_log->debug("Listen message");
 						if (this->_listenMessage(this->_pfds[n].fd))
 						{
-							this->_log.info("Connection closed");
+							this->_log->info("Connection closed");
 							this->_remove_user(this->_pfds[n].fd);
 							close(this->_pfds[n].fd);
 							this->_pfds_remove(this->_pfds[n].fd);
-							n = this->_nfds;
+							n = len;
 						}
 					}
-					else if ( this->_pfds[n].revents & POLLOUT )
+					if ( this->_pfds[n].revents & POLLOUT )
 					{
 						Message *msg = this->getUser( this->_pfds[n].fd ).getMessage();
 						std::string	output(msg->getOutputMsg());
 						if ( !output.empty() )
 						{
-							this->_log.debug("Message to send : " + output);
+							this->_log->debug("Message to send : " + output);
 							send( this->_pfds[n].fd, output.c_str(), output.size(), 0 );
 							msg->clearOutputMsg();
 						}
