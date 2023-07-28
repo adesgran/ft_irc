@@ -6,7 +6,7 @@
 /*   By: mchassig <mchassig@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2023/07/01 13:44:20 by adesgran          #+#    #+#             */
-/*   Updated: 2023/07/27 15:29:39 by mchassig         ###   ########.fr       */
+/*   Updated: 2023/07/28 14:07:41 by mchassig         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -113,10 +113,19 @@ std::string	User::getMode( void ) const
 	return (this->_mode);
 }
 
-void		User::setMode( const std::string mode )
+void	User::addMode( const char newMode )
 {
-	this->_mode = mode;
+	if (_mode.find_first_of(newMode) == std::string::npos)
+		_mode += newMode;
 }
+
+void	User::removeMode( const char oldMode )
+{
+	size_t	i = _mode.find_first_of(oldMode);
+	if (i != std::string::npos)
+		_mode.erase(i, 1);
+}
+
 
 Message	*User::getMessage( void ) const
 {

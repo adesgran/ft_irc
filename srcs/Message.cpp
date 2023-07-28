@@ -6,7 +6,7 @@
 /*   By: mchassig <mchassig@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2023/07/13 12:21:22 by adesgran          #+#    #+#             */
-/*   Updated: 2023/07/27 15:45:20 by mchassig         ###   ########.fr       */
+/*   Updated: 2023/07/28 16:34:22 by mchassig         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -15,17 +15,33 @@
 
 Message::Message(void)
 {
-	_cmdMap["CAP"] = CAP;
 	_cmdMap["NICK"] = NICK;
 	_cmdMap["USER"] = USER;
+	_cmdMap["JOIN"] = JOIN;
+	_cmdMap["PRIVMSG"] = PRIVMSG;
+	_cmdMap["KICK"] = KICK;
+	_cmdMap["INVITE"] = INVITE;
+	_cmdMap["TOPIC"] = TOPIC;
+	_cmdMap["MODE"] = MODE;
+	_cmdMap["PING"] = PING;
+	_cmdMap["CAP"] = CAP;
+
 	this->_output = std::string("");
 }
 
 Message::Message(User *sender): _sender(sender)
 {
-	_cmdMap["CAP"] = CAP;
 	_cmdMap["NICK"] = NICK;
 	_cmdMap["USER"] = USER;
+	_cmdMap["JOIN"] = JOIN;
+	_cmdMap["PRIVMSG"] = PRIVMSG;
+	_cmdMap["KICK"] = KICK;
+	_cmdMap["INVITE"] = INVITE;
+	_cmdMap["TOPIC"] = TOPIC;
+	_cmdMap["MODE"] = MODE;
+	_cmdMap["PING"] = PING;
+	_cmdMap["CAP"] = CAP;
+
 	this->_output = std::string("");
 }
 
@@ -115,15 +131,23 @@ void	Message::_parseInput(std::vector<std::string> input_lines)
 		}
 	}
 }
-std::vector<std::string>	Message::_split(std::string str, std::string sep)
+
+std::vector<std::string>	Message::_split(const std::string &str, const std::string &sep) const
 {
 	std::vector<std::string> res;
-    size_t pos = 0;
-    while(pos < str.size()){
-        pos = str.find(sep);
-        res.push_back(str.substr(0,pos));
-        str.erase(0, pos + sep.size()); // 3 is the length of the delimiter, "%20"
-    }
+    size_t	pos = 0;
+	size_t	i = 0;
+    while (str[i])
+	{
+        pos = str.find(sep, i);
+		std::string	tmp = str.substr(i, pos - i);
+		if (tmp.size() > 1)
+        	res.push_back(tmp);
+		if (pos != std::string::npos)
+        	i = pos + sep.size();
+		else
+			i += tmp.size();;
+   }
     return (res);
 }
 
@@ -153,6 +177,8 @@ void	Message::_nick(std::vector<std::string> arg)
 
 void	Message::_user(std::vector<std::string> arg)
 {
+	std::cout << "	*Message class: USER cmd detected*\n";
+
 	if (arg.size() < 5)
 	{
 		_output = ITOA(ERR_NEEDMOREPARAMS) + '\n';	// => server should reject command
@@ -168,7 +194,7 @@ void	Message::_user(std::vector<std::string> arg)
 	/* username */
 	_sender->setUsername(*it++);
 	/* mode */
-	_sender->setMode(*it++);
+	it++;
 	/* unused */
 	it++;
 	/* real name */
@@ -219,8 +245,34 @@ void		Message::_mode(std::vector<std::string> arg)
 		if (target.getNickname().compare(_sender->getNickname()))
 			throw std::invalid_argument(ITOA(ERR_USERSDONTMATCH));
 		if (arg.size() < 3)
-			throw std::invalid_argument(ITOA(RPL_UMODEIS) + " " + target.getMode());
-		// target.setMode(arg[2]);
+			throw std::invalid_argument(ITOA(RPL_UMODEIS) + " " + _sender->getMode());
+		char	op = 0;
+		bool	err = false;
+		
+		for (size_t i = 0; i < arg[2].size(); i++)
+		{
+			if (arg[2][i] == '+' || arg[2][i] == '-')
+			{
+				op = arg[2][i];
+			}
+			else if (_server->isModeImplemented(arg[2][i]) && op == '+'
+					&& arg[2][i] != 'o' && arg[2][i] != 'O')
+			{
+				_sender->addMode(arg[2][i]);
+			}
+			else if (_server->isModeImplemented(arg[2][i]) && op == '-'
+					&& arg[2][i] != 'r')
+			{
+				_sender->removeMode(arg[2][i]);
+			}
+			else if (arg[2][i] != 'o' && arg[2][i] != 'O' && arg[2][i] != 'r')
+			{
+				err = true;
+			}
+		}
+		_output += "MODE " + _sender->getNickname() + " " + _sender->getMode() + "\n";
+		if (err)
+			throw std::invalid_argument(ITOA(ERR_UMODEUNKNOWNFLAG));
 	}
 	catch(const std::invalid_argument& e)
 	{
