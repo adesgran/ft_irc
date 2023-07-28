@@ -6,7 +6,7 @@
 /*   By: mchassig <mchassig@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2023/07/13 12:20:36 by adesgran          #+#    #+#             */
-/*   Updated: 2023/07/27 15:43:42 by mchassig         ###   ########.fr       */
+/*   Updated: 2023/07/28 15:53:40 by mchassig         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -37,7 +37,7 @@ enum cmdValue {
 	CAP,
 };
 
-#define ITOA( x ) static_cast< std::ostringstream & >( \
+# define ITOA( x ) static_cast< std::ostringstream & >( \
         ( std::ostringstream() << std::dec << x ) ).str()
 
 # define RPL_UMODEIS			221
@@ -47,6 +47,7 @@ enum cmdValue {
 # define ERR_NICKNAMEINUSE		433
 # define ERR_NEEDMOREPARAMS		461
 # define ERR_ALREADYREGISTERED	462
+# define ERR_UMODEUNKNOWNFLAG	501
 # define ERR_USERSDONTMATCH		502
 
 class Message {
@@ -56,8 +57,6 @@ class Message {
 		Message( const Message &message );
 		~Message( void );
 		Message &operator=( const Message &message );
-
-		// void	read( std::string message );
 
 		void		setInputMsg(std::string &input_buffer, Server *server);
 		std::string	getInputMsg() const;
@@ -74,7 +73,7 @@ class Message {
 
 		// Utils ----------------------------------------------
 		void						_parseInput(std::vector<std::string> input_lines);
-		std::vector<std::string>	_split(std::string str, std::string sep);
+		std::vector<std::string>	_split(const std::string &str, const std::string &sep) const;
 
 		// IRC commands -----------------------------------------
 		void	_nick(std::vector<std::string> arg);

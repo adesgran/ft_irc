@@ -3,10 +3,10 @@
 /*                                                        :::      ::::::::   */
 /*   Server.hpp                                         :+:      :+:    :+:   */
 /*                                                    +:+ +:+         +:+     */
-/*   By: adesgran <marvin@42.fr>                    +#+  +:+       +#+        */
+/*   By: mchassig <mchassig@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2023/07/02 11:59:06 by adesgran          #+#    #+#             */
-/*   Updated: 2023/07/27 16:43:12 by adesgran         ###   ########.fr       */
+/*   Updated: 2023/07/28 13:38:24 by mchassig         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -57,6 +57,8 @@ class Server {
 
 		Channel	&getChannel( const std::string name );
 
+		bool	isModeImplemented(char &c);
+
 		static void	stop( void );
 
 		void	run( void );
@@ -72,7 +74,8 @@ class Server {
 		int						_opt;
 		struct pollfd			*_pfds;
 		nfds_t					_nfds;
-		Log						*_log;
+		Log						_log;
+		std::string				_implemented_modes;
 
 		void	_addUser( int fd );
 		void	_remove_user( int fd );

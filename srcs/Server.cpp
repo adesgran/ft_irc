@@ -6,7 +6,7 @@
 /*   By: mchassig <mchassig@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2023/07/02 12:03:38 by adesgran          #+#    #+#             */
-/*   Updated: 2023/07/27 17:52:10 by adesgran         ###   ########.fr       */
+/*   Updated: 2023/07/28 13:40:18 by mchassig         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -56,6 +56,8 @@ Server::Server(void)
 		this->_log->error(strerror(errno));
 		throw std::runtime_error(strerror(errno));
 	}
+
+	_implemented_modes = "aiwroOs";
 
 	this->_pfds_init();
 
@@ -163,6 +165,15 @@ Channel	&Server::getChannel( const std::string name )
 	this->_channels.push_back(res);
 	return (*res);
 }
+
+bool	Server::isModeImplemented(char &c)
+{
+	if (_implemented_modes.find_first_of(c) != std::string::npos)
+		return (true);
+	else
+		return (false);
+}
+
 
 void	Server::_pfds_init( void )
 {
