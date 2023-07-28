@@ -74,7 +74,7 @@ class Server {
 		int						_opt;
 		struct pollfd			*_pfds;
 		nfds_t					_nfds;
-		Log						_log;
+		Log						*_log;
 		std::string				_implemented_modes;
 
 		void	_addUser( int fd );
