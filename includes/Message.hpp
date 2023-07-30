@@ -6,7 +6,7 @@
 /*   By: mchassig <mchassig@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2023/07/13 12:20:36 by adesgran          #+#    #+#             */
-/*   Updated: 2023/07/28 15:53:40 by mchassig         ###   ########.fr       */
+/*   Updated: 2023/07/30 15:20:31 by mchassig         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -34,6 +34,7 @@ enum cmdValue {
 	TOPIC,
 	MODE,
 	PING,
+	WHOIS,
 	CAP,
 };
 
@@ -41,7 +42,10 @@ enum cmdValue {
         ( std::ostringstream() << std::dec << x ) ).str()
 
 # define RPL_UMODEIS			221
+# define RPL_ENDOFWHOIS			318
+
 # define ERR_NOSUCHNICK			401
+# define ERR_NOSUCHSERVER		402
 # define ERR_NONICKNAMEGIVEN	431
 # define ERR_ERRONEUSNICKNAME	432
 # define ERR_NICKNAMEINUSE		433
@@ -84,6 +88,7 @@ class Message {
 		void	_topic(std::vector<std::string> arg);
 		void	_mode(std::vector<std::string> arg);
 		void	_ping(std::vector<std::string> arg);
+		void	_whois(std::vector<std::string> arg);
 };
 
 #endif
