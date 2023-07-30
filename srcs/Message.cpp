@@ -6,7 +6,7 @@
 /*   By: mchassig <mchassig@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2023/07/13 12:21:22 by adesgran          #+#    #+#             */
-/*   Updated: 2023/07/28 16:34:22 by mchassig         ###   ########.fr       */
+/*   Updated: 2023/07/30 15:24:18 by mchassig         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -24,6 +24,7 @@ Message::Message(void)
 	_cmdMap["TOPIC"] = TOPIC;
 	_cmdMap["MODE"] = MODE;
 	_cmdMap["PING"] = PING;
+	_cmdMap["WHOIS"] = WHOIS;
 	_cmdMap["CAP"] = CAP;
 
 	this->_output = std::string("");
@@ -40,6 +41,7 @@ Message::Message(User *sender): _sender(sender)
 	_cmdMap["TOPIC"] = TOPIC;
 	_cmdMap["MODE"] = MODE;
 	_cmdMap["PING"] = PING;
+	_cmdMap["WHOIS"] = WHOIS;
 	_cmdMap["CAP"] = CAP;
 
 	this->_output = std::string("");
@@ -124,6 +126,9 @@ void	Message::_parseInput(std::vector<std::string> input_lines)
 			case PING:
 				_ping(cmd_arg);
 				break;
+			case WHOIS:
+				_whois(cmd_arg);
+				break;
 			case CAP:
 				break;
 			default:
@@ -166,13 +171,16 @@ void	Message::_nick(std::vector<std::string> arg)
 		_output = ITOA(ERR_ERRONEUSNICKNAME) + '\n';	// => should ignore the command
 		return ;
 	}
-	// si nickname deja utilisé sur le server
-	// {
-	// 	_output = ITOA(ERR_NICKNAMEINUSE)  + '\n';	// => should ignore the command
-	// 	return ;
-	// }
+	try
+	{
+		_server->getUser(arg[1]);
+		_output = ITOA(ERR_NICKNAMEINUSE)  + '\n';	// => should ignore the command
+	}
+	catch(const std::exception& e)
+	{
+		_sender->setNickname(arg[1]);
+	}
 	
-	_sender->setNickname(arg[1]);
 }
 
 void	Message::_user(std::vector<std::string> arg)
@@ -241,7 +249,7 @@ void		Message::_mode(std::vector<std::string> arg)
 	std::cout << "	*Message class: MODE cmd detected*\n";
 	try
 	{
-		User	target = _server->getUser(arg[1]);
+		User	&target = _server->getUser(arg[1]);
 		if (target.getNickname().compare(_sender->getNickname()))
 			throw std::invalid_argument(ITOA(ERR_USERSDONTMATCH));
 		if (arg.size() < 3)
@@ -294,4 +302,22 @@ void		Message::_ping(std::vector<std::string> arg)
 		return ;
 	}
 	_output = "PONG " + arg[1] + '\n';
+}
+
+void	Message::_whois(std::vector<std::string> arg)
+{
+	std::cout << "	*Message class: WHOIS cmd detected*\n";
+	try
+	{
+		// check aussi si target = nom du server
+		// sinon => ERR_NOSUCHSERVER 
+		_server->getUser(arg[1]);
+		_output += ITOA(RPL_ENDOFWHOIS) + "\n";
+	}
+	catch(const std::exception& e)
+	{
+		_output += ITOA(ERR_NOSUCHNICK) + "\n";
+	}
+	
+	(void)arg;
 }
