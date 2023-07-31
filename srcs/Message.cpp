@@ -217,7 +217,10 @@ void	Message::_user(std::vector<std::string> arg)
 	_sender->setRealname(realName);
 	
 	_sender->welcome();
-	_output += "001 Welcome to the <networkname> Network, " + _sender->getNickname() + "\n"; //<nick>[!<user>@<host>]
+	_output += std::string(":") + std::string(SERVER_ADDRESS) + " 001 " + _sender->getNickname() 
+		+ " :Welcome to the <networkname> Network " 
+		+ _sender->getNickname() +"!" + _sender->getUsername() + "@localhost"
+		+ "\n"; //<nick>[!<user>@<host>]
 }
 
 void		Message::_privmsg(std::vector<std::string> arg)

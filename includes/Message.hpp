@@ -20,6 +20,8 @@
 # include <User.hpp>
 # include <Server.hpp>
 
+# define SERVER_ADDRESS "localhost"
+
 class User;
 class Server;
 
