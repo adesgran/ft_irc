@@ -6,7 +6,7 @@
 /*   By: mchassig <mchassig@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2023/07/13 12:20:36 by adesgran          #+#    #+#             */
-/*   Updated: 2023/08/01 17:21:58 by mchassig         ###   ########.fr       */
+/*   Updated: 2023/08/01 17:31:31 by mchassig         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -51,10 +51,13 @@ enum cmdValue {
 
 # define RPL_WELCOME			"001"
 # define RPL_UMODEIS			"221"
+# define RPL_AWAY				"301"
 # define RPL_ENDOFWHOIS			"318"
 
 # define ERR_NOSUCHNICK			"401"
 # define ERR_NOSUCHSERVER		"402"
+# define ERR_NORECIPIENT		"411"
+# define ERR_NOTEXTTOSEND		"412"
 # define ERR_NONICKNAMEGIVEN	"431"
 # define ERR_ERRONEUSNICKNAME	"432"
 # define ERR_NICKNAMEINUSE		"433"
@@ -86,7 +89,7 @@ class Message {
 		// Utils ----------------------------------------------
 		void						_parseInput(std::vector<std::string> input_lines);
 		std::vector<std::string>	_split(const std::string &str, const std::string &sep) const;
-		void						_appendOutputMsg(std::string err_code, std::string arg);
+		void						_appendOutputMsg(std::string err_code, std::string arg = "");
 
 		// IRC commands -----------------------------------------
 		void	_welcomeNewUser();

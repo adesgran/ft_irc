@@ -6,7 +6,7 @@
 /*   By: mchassig <mchassig@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2023/07/02 12:03:38 by adesgran          #+#    #+#             */
-/*   Updated: 2023/08/01 14:01:30 by mchassig         ###   ########.fr       */
+/*   Updated: 2023/08/01 16:36:54 by mchassig         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -177,6 +177,19 @@ Channel	&Server::getChannel( const std::string name )
 	Channel	*res = new Channel(name);
 	this->_channels.push_back(res);
 	return (*res);
+}
+
+bool	Server::isChannel(const std::string name)
+{
+	for (
+			std::vector<Channel *>::iterator it = this->_channels.begin(); 
+			it != this->_channels.end(); 
+			it++ )
+	{
+		if ( (*it)->getName() == name )
+			return (true);
+	}
+	return (false);
 }
 
 bool	Server::isModeImplemented(char &c)
