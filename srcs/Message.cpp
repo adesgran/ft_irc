@@ -6,7 +6,7 @@
 /*   By: mchassig <mchassig@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2023/07/13 12:21:22 by adesgran          #+#    #+#             */
-/*   Updated: 2023/08/01 09:50:46 by adesgran         ###   ########.fr       */
+/*   Updated: 2023/08/01 15:07:09 by mchassig         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -138,21 +138,32 @@ void	Message::_parseInput(std::vector<std::string> input_lines)
 std::vector<std::string>	Message::_split(const std::string &str, const std::string &sep) const
 {
 	std::vector<std::string> res;
-    size_t	pos = 0;
+	size_t	pos = 0;
 	size_t	i = 0;
-    while (str[i])
+	while (str[i])
 	{
-        pos = str.find(sep, i);
+		pos = str.find(sep, i);
 		std::string	tmp = str.substr(i, pos - i);
 		if (tmp.size() > 1)
-        	res.push_back(tmp);
+			res.push_back(tmp);
 		if (pos != std::string::npos)
-        	i = pos + sep.size();
+			i = pos + sep.size();
 		else
 			i += tmp.size();;
-   }
-    return (res);
+	}
+	return (res);
 }
+
+void	Message::_appendOutputMsg(std::string err_code, std::string arg)
+{
+	_output << err_code;
+	if (arg.size())
+	{
+		_output << " " << arg;
+	}
+	_output << "\n";
+}
+
 
 // IRC commands -----------------------------------------
 void	Message::_nick(std::vector<std::string> arg)
@@ -161,18 +172,18 @@ void	Message::_nick(std::vector<std::string> arg)
 
 	if (arg.size() < 2)
 	{
-		_output << ITOA(ERR_NONICKNAMEGIVEN) << "\n"; //	=> should ignore the command
+		_appendOutputMsg(ERR_NONICKNAMEGIVEN, ""); //	=> should ignore the command
 		return ;
 	}
 	if (arg[1].find_first_not_of("0123456789abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ[]{}\\|") != std::string::npos)
 	{
-		_output << ITOA(ERR_ERRONEUSNICKNAME) << "\n";	// => should ignore the command
+		_appendOutputMsg(ERR_ERRONEUSNICKNAME, "");	// => should ignore the command
 		return ;
 	}
 	try
 	{
 		_server->getUser(arg[1]);
-		_output << ITOA(ERR_NICKNAMEINUSE)  << "\n";	// => should ignore the command
+		_appendOutputMsg(ERR_NICKNAMEINUSE, "");	// => should ignore the command
 	}
 	catch(const std::exception& e)
 	{
@@ -187,12 +198,12 @@ void	Message::_user(std::vector<std::string> arg)
 
 	if (arg.size() < 5)
 	{
-		_output << ITOA(ERR_NEEDMOREPARAMS) << "\n";	// => server should reject command
+		_appendOutputMsg(ERR_NEEDMOREPARAMS, "");	// => server should reject command
 		return ;
 	}
 	if (_sender->isWelcomed())
 	{
-		_output << ITOA(ERR_ALREADYREGISTERED) << "\n";	// => attempt should fail
+		_appendOutputMsg(ERR_ALREADYREGISTERED, "");	// => attempt should fail
 		return ;
 	}
 	
@@ -215,10 +226,10 @@ void	Message::_user(std::vector<std::string> arg)
 	_sender->setRealname(realName);
 	
 	_sender->welcome();
-	_output << ":" << std::string(SERVER_ADDRESS) << " 001 " << _sender->getNickname() 
+	_output << ":" << std::string(SERVER_ADDRESS) << " " << RPL_WELCOME << " " << _sender->getNickname() 
 		<< " :Welcome to the <networkname> Network " 
-		<< _sender->getNickname() << "!" << _sender->getUsername() << "@localhost"
-		<< "\n"; //<nick>[!<user>@<host>]
+		<< USERTAG(_sender)
+		<< "\n";
 }
 
 void	Message::_join(std::vector<std::string> arg)
@@ -226,7 +237,7 @@ void	Message::_join(std::vector<std::string> arg)
 	std::cout << "	*Message class: JOIN cmd detected*\n";
 	if (arg.size() != 2)
 	{
-		_output << ERR_NEEDMOREPARAMS << "\n";	// => server should reject command
+		_appendOutputMsg(ERR_NEEDMOREPARAMS, "");	// => server should reject command
 		return ;
 	}
 	//ERR_INVITEONLYCHAN
@@ -270,48 +281,51 @@ void		Message::_topic(std::vector<std::string> arg)
 void		Message::_mode(std::vector<std::string> arg)
 {
 	std::cout << "	*Message class: MODE cmd detected*\n";
-	try
+	if (!_server->isUser(arg[1]))
 	{
-		User	&target = _server->getUser(arg[1]);
-		if (target.getNickname().compare(_sender->getNickname()))
-			throw std::invalid_argument(ITOA(ERR_USERSDONTMATCH));
-		if (arg.size() < 3)
-			throw std::invalid_argument(ITOA(RPL_UMODEIS) + " " + _sender->getMode());
-		char	op = 0;
-		bool	err = false;
-		
-		for (size_t i = 0; i < arg[2].size(); i++)
+		_appendOutputMsg(ERR_NOSUCHNICK, "");
+		return ;
+	}
+	User	&target = _server->getUser(arg[1]);
+	if (target.getNickname().compare(_sender->getNickname()))
+	{
+		_appendOutputMsg(ERR_USERSDONTMATCH, "");
+		return ;
+	}
+	if (arg.size() < 3)
+	{
+		_appendOutputMsg(RPL_UMODEIS, _sender->getMode());
+		return ;
+	}
+	char	op = 0;
+	bool	err = false;
+
+	for (size_t i = 0; i < arg[2].size(); i++)
+	{
+		if (arg[2][i] == '+' || arg[2][i] == '-')
 		{
-			if (arg[2][i] == '+' || arg[2][i] == '-')
-			{
-				op = arg[2][i];
-			}
-			else if (_server->isModeImplemented(arg[2][i]) && op == '+'
-					&& arg[2][i] != 'o' && arg[2][i] != 'O')
-			{
-				_sender->addMode(arg[2][i]);
-			}
-			else if (_server->isModeImplemented(arg[2][i]) && op == '-'
-					&& arg[2][i] != 'r')
-			{
-				_sender->removeMode(arg[2][i]);
-			}
-			else if (arg[2][i] != 'o' && arg[2][i] != 'O' && arg[2][i] != 'r')
-			{
-				err = true;
-			}
+			op = arg[2][i];
 		}
-		_output << "MODE " << _sender->getNickname() << " " << _sender->getMode() << "\n";
-		if (err)
-			throw std::invalid_argument(ITOA(ERR_UMODEUNKNOWNFLAG));
+		else if (_server->isModeImplemented(arg[2][i]) && op == '+'
+				&& arg[2][i] != 'o' && arg[2][i] != 'O')
+		{
+			_sender->addMode(arg[2][i]);
+		}
+		else if (_server->isModeImplemented(arg[2][i]) && op == '-'
+				&& arg[2][i] != 'r')
+		{
+			_sender->removeMode(arg[2][i]);
+		}
+		else if (arg[2][i] != 'o' && arg[2][i] != 'O' && arg[2][i] != 'r')
+		{
+			err = true;
+		}
 	}
-	catch(const std::invalid_argument& e)
+	_output << "MODE " << _sender->getNickname() << " " << _sender->getMode() << "\n";
+	if (err)
 	{
-		_output << e.what() << "\n";
-	}
-	catch(const std::exception& e)
-	{
-		_output << ITOA(ERR_NOSUCHNICK) << "\n";
+		_appendOutputMsg(ERR_UMODEUNKNOWNFLAG, _sender->getMode());
+		return ;
 	}
 }
 
@@ -320,7 +334,7 @@ void		Message::_ping(std::vector<std::string> arg)
 	std::cout << "	*Message class: PING cmd detected*\n";
 	if (arg.size() < 2)
 	{
-		_output << ITOA(ERR_NEEDMOREPARAMS) << "\n";
+		_appendOutputMsg(ERR_NEEDMOREPARAMS, "");
 		return ;
 	}
 	_output << "PONG " << arg[1] << "\n";
@@ -334,12 +348,10 @@ void	Message::_whois(std::vector<std::string> arg)
 		// check aussi si target = nom du server
 		// sinon => ERR_NOSUCHSERVER 
 		_server->getUser(arg[1]);
-		_output << ITOA(RPL_ENDOFWHOIS) << "\n";
+		_appendOutputMsg(RPL_ENDOFWHOIS, "");
 	}
 	catch(const std::exception& e)
 	{
-		_output << ITOA(ERR_NOSUCHNICK) << "\n";
+		_appendOutputMsg(ERR_NOSUCHNICK, "");
 	}
-	
-	(void)arg;
 }
