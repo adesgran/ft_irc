@@ -6,7 +6,7 @@
 /*   By: mchassig <mchassig@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2023/07/13 12:20:36 by adesgran          #+#    #+#             */
-/*   Updated: 2023/08/01 08:46:07 by adesgran         ###   ########.fr       */
+/*   Updated: 2023/08/01 15:38:19 by mchassig         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -41,24 +41,25 @@ enum cmdValue {
 	CAP,
 };
 
-# define ITOA( x ) static_cast< std::ostringstream & >( \
-        ( std::ostringstream() << std::dec << x ) ).str()
+// # define ITOA( x ) static_cast< std::ostringstream & >( \
+//         ( std::ostringstream() << std::dec << x ) ).str()
 
 # define USERTAG( u ) u->getNickname() << '!' << u->getUsername() \
 		<< "@localhost"
 
-# define RPL_UMODEIS			221
-# define RPL_ENDOFWHOIS			318
+# define RPL_WELCOME			"001"
+# define RPL_UMODEIS			"221"
+# define RPL_ENDOFWHOIS			"318"
 
-# define ERR_NOSUCHNICK			401
-# define ERR_NOSUCHSERVER		402
-# define ERR_NONICKNAMEGIVEN	431
-# define ERR_ERRONEUSNICKNAME	432
-# define ERR_NICKNAMEINUSE		433
-# define ERR_NEEDMOREPARAMS		461
-# define ERR_ALREADYREGISTERED	462
-# define ERR_UMODEUNKNOWNFLAG	501
-# define ERR_USERSDONTMATCH		502
+# define ERR_NOSUCHNICK			"401"
+# define ERR_NOSUCHSERVER		"402"
+# define ERR_NONICKNAMEGIVEN	"431"
+# define ERR_ERRONEUSNICKNAME	"432"
+# define ERR_NICKNAMEINUSE		"433"
+# define ERR_NEEDMOREPARAMS		"461"
+# define ERR_ALREADYREGISTERED	"462"
+# define ERR_UMODEUNKNOWNFLAG	"501"
+# define ERR_USERSDONTMATCH		"502"
 
 class Message {
 	public:
@@ -83,8 +84,11 @@ class Message {
 		// Utils ----------------------------------------------
 		void						_parseInput(std::vector<std::string> input_lines);
 		std::vector<std::string>	_split(const std::string &str, const std::string &sep) const;
+		void						_appendOutputMsg(std::string err_code, std::string arg);
 
 		// IRC commands -----------------------------------------
+		void	_welcomeNewUser();
+
 		void	_nick(std::vector<std::string> arg);
 		void	_user(std::vector<std::string> arg);
 		void	_join(std::vector<std::string> arg);
@@ -95,6 +99,20 @@ class Message {
 		void	_mode(std::vector<std::string> arg);
 		void	_ping(std::vector<std::string> arg);
 		void	_whois(std::vector<std::string> arg);
+
+		// // Exception ------------------------------------------
+		// class CommandErrorException : public std::exception
+		// {
+		// 	public:
+		// 		CommandErrorException(int codeError, std::string arg) throw();
+		// 		virtual ~CommandErrorException(void) throw();
+
+		// 		virtual const char *what() const throw();
+
+		// 	private:
+		// 		std::string	msg;
+		// };
+
 };
 
 #endif
