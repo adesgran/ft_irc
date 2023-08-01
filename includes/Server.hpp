@@ -6,7 +6,7 @@
 /*   By: mchassig <mchassig@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2023/07/02 11:59:06 by adesgran          #+#    #+#             */
-/*   Updated: 2023/08/01 14:01:32 by mchassig         ###   ########.fr       */
+/*   Updated: 2023/08/01 16:35:19 by mchassig         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -58,6 +58,7 @@ class Server {
 		Log		*getLog( void );
 
 		Channel	&getChannel( const std::string name );
+		bool	isChannel(const std::string name);
 
 		bool	isModeImplemented(char &c);
 
