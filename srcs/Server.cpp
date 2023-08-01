@@ -6,7 +6,7 @@
 /*   By: mchassig <mchassig@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2023/07/02 12:03:38 by adesgran          #+#    #+#             */
-/*   Updated: 2023/07/28 13:40:18 by mchassig         ###   ########.fr       */
+/*   Updated: 2023/08/01 07:40:03 by adesgran         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -332,12 +332,15 @@ void	Server::run( void )
 					if ( this->_pfds[n].revents & POLLOUT )
 					{
 						Message *msg = this->getUser( this->_pfds[n].fd ).getMessage();
-						std::string	output(msg->getOutputMsg());
+						std::stringstream	&outstream = msg->getOutputMsg();
+
+						std::string output;
+						std::getline(outstream, output, '\n');
 						if ( !output.empty() )
 						{
 							this->_log->debug("Message to send : " + output);
+							output += '\n';
 							send( this->_pfds[n].fd, output.c_str(), output.size(), 0 );
-							msg->clearOutputMsg();
 						}
 					}
 
