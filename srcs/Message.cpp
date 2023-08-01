@@ -6,7 +6,7 @@
 /*   By: mchassig <mchassig@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2023/07/13 12:21:22 by adesgran          #+#    #+#             */
-/*   Updated: 2023/08/01 09:50:46 by adesgran         ###   ########.fr       */
+/*   Updated: 2023/08/01 10:14:06 by adesgran         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -164,7 +164,7 @@ void	Message::_nick(std::vector<std::string> arg)
 		_output << ITOA(ERR_NONICKNAMEGIVEN) << "\n"; //	=> should ignore the command
 		return ;
 	}
-	if (arg[1].find_first_not_of("0123456789abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ[]{}\\|") != std::string::npos)
+	if (arg[1].find_first_not_of("_0123456789abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ[]{}\\|") != std::string::npos)
 	{
 		_output << ITOA(ERR_ERRONEUSNICKNAME) << "\n";	// => should ignore the command
 		return ;
@@ -238,6 +238,17 @@ void	Message::_join(std::vector<std::string> arg)
 	//ERR_BADCHANMASK
 	//ERR_TOOMANYCHANNELS
 	//ERR_UNAVAILRESOURCE
+	//
+	
+	std::vector<User *> users = _server->getChannel(arg[1]).getUsers();
+
+	 for ( std::vector<User *>::iterator it = users.begin();
+			 it != users.end();
+			 it++)
+		 (*it)->getMessage()->_output << USERTAG(_sender) << " JOIN " << arg[1] << '\n';
+
+	 _server->getChannel(arg[1]).addUser(_sender);
+	
 	
 	_output << USERTAG(_sender) << " JOIN " << arg[1] << "\n";
 	
