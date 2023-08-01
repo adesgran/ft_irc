@@ -6,7 +6,7 @@
 /*   By: adesgran <marvin@42.fr>                    +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2023/08/01 16:50:23 by adesgran          #+#    #+#             */
-/*   Updated: 2023/08/01 19:15:11 by adesgran         ###   ########.fr       */
+/*   Updated: 2023/08/01 20:07:26 by adesgran         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -57,26 +57,61 @@ Bot &Bot::operator=(const Bot &bot)
 
 }
 
+void	Bot::_readline( std::string line )
+{
+	std::vector<std::string> tokens;
+	while (line.size())
+	{
+		size_t pos = line.find(' ');
+		if (pos == std::string::npos)
+		{
+			tokens.push_back(line);
+			break;
+		}
+		else
+		{
+			std::string t;
+			t = line.substr(0, pos );
+			line.erase(0, pos + 1);
+			if (pos > 0)
+				tokens.push_back(t);
+		}
+	}
+
+	for (std::vector<std::string>::iterator it = tokens.begin(); it != tokens.end(); it++)
+		std::cout << "["<< *it << "] " << std::endl;
+	std::cout << std::endl;
+
+			
+			
+
+
+}
+
 void	Bot::_listenMessage( void )
 {
 	ssize_t len;
 	char	buffer[BUFFER_SIZE];
 	buffer[0] = '\0';
 	len = recv(_pfds.fd, buffer, BUFFER_SIZE, MSG_DONTWAIT);
-	if (!len)
+	if (len < 2)
 		throw std::runtime_error("Connection Closed");
 	buffer[len] = '\0';
-	std::cout << "[SERVER] " << buffer;
+	std::stringstream ss;
+	ss.str(buffer);
+	std::string line;
+	while (std::getline(ss, line))
+	{
+		std::cout << "[SERVER] " << line << std::endl;
+		_readline(line);
+	}
 }
 
 void	Bot::_sendMessage( void )
 {
-	std::string tosend;
-	while (std::getline(_output, tosend))
-	{
-		tosend += '\n';
+	std::string tosend = _output.str();
+	if (tosend.size())
 		send(_pfds.fd, tosend.c_str(), tosend.size(), 0);
-	}
 	_output.str("");
 
 }
@@ -101,7 +136,7 @@ void	Bot::run( void )
 		throw std::runtime_error(strerror(errno));
 	}
 
-	_output << "NICK fillbot\n" << "USER fillbot fillbot irc.adesgran.ovh :fillbot\n\n";
+	_output << "NICK fillbot\r\n" << "USER fillbot fillbot irc.adesgran.ovh :fillbot\r\n";
 	this->_pfds.fd = this->_fd;
 	this->_pfds.events = POLLIN | POLLOUT;
 

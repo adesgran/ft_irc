@@ -6,7 +6,7 @@
 /*   By: adesgran <marvin@42.fr>                    +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2023/08/01 16:50:33 by adesgran          #+#    #+#             */
-/*   Updated: 2023/08/01 18:57:44 by adesgran         ###   ########.fr       */
+/*   Updated: 2023/08/01 19:52:44 by adesgran         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -18,6 +18,7 @@
 # include <sstream>
 # include <string>
 # include <stdexcept>
+# include <vector>
 # include <stdlib.h>
 # include <cstring>
 # include <sys/socket.h>
@@ -52,6 +53,7 @@ class Bot {
 		struct pollfd		_pfds;
 		std::stringstream	_output;
 
+		void				_readline( std::string line );
 		void				_listenMessage( void );
 		void				_sendMessage( void );
 
