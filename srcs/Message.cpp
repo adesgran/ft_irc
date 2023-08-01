@@ -6,7 +6,7 @@
 /*   By: mchassig <mchassig@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2023/07/13 12:21:22 by adesgran          #+#    #+#             */
-/*   Updated: 2023/07/30 15:24:18 by mchassig         ###   ########.fr       */
+/*   Updated: 2023/08/01 07:20:56 by adesgran         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -27,7 +27,6 @@ Message::Message(void)
 	_cmdMap["WHOIS"] = WHOIS;
 	_cmdMap["CAP"] = CAP;
 
-	this->_output = std::string("");
 }
 
 Message::Message(User *sender): _sender(sender)
@@ -44,7 +43,6 @@ Message::Message(User *sender): _sender(sender)
 	_cmdMap["WHOIS"] = WHOIS;
 	_cmdMap["CAP"] = CAP;
 
-	this->_output = std::string("");
 }
 
 Message::Message(const Message &message)
@@ -63,13 +61,13 @@ Message &Message::operator=(const Message &message)
 	this->_sender = message._sender;
 	this->_server = message._server;
 	this->_input = message._input;
-	this->_output = message._input;
+	this->_output << message._output.rdbuf();
 	return (*this);
 }
 
 // void	Message::read( std::string message )
 // {
-// 	std::cout << message << std::endl;
+// 	std::cout << message << "\n";
 // }
 
 void		Message::setInputMsg(std::string &input_buffer, Server *server)
@@ -84,14 +82,9 @@ std::string	Message::getInputMsg() const
 	return (_input);
 }
 
-std::string	Message::getOutputMsg() const
+std::stringstream	&Message::getOutputMsg() 
 {
 	return (this->_output);
-}
-
-void		Message::clearOutputMsg()
-{
-	this->_output.clear();
 }
 
 
@@ -163,18 +156,18 @@ void	Message::_nick(std::vector<std::string> arg)
 
 	if (arg.size() < 2)
 	{
-		_output = ITOA(ERR_NONICKNAMEGIVEN) + '\n'; //	=> should ignore the command
+		_output << ITOA(ERR_NONICKNAMEGIVEN) << "\n"; //	=> should ignore the command
 		return ;
 	}
 	if (arg[1].find_first_not_of("0123456789abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ[]{}\\|") != std::string::npos)
 	{
-		_output = ITOA(ERR_ERRONEUSNICKNAME) + '\n';	// => should ignore the command
+		_output << ITOA(ERR_ERRONEUSNICKNAME) << "\n";	// => should ignore the command
 		return ;
 	}
 	try
 	{
 		_server->getUser(arg[1]);
-		_output = ITOA(ERR_NICKNAMEINUSE)  + '\n';	// => should ignore the command
+		_output << ITOA(ERR_NICKNAMEINUSE)  << "\n";	// => should ignore the command
 	}
 	catch(const std::exception& e)
 	{
@@ -189,12 +182,12 @@ void	Message::_user(std::vector<std::string> arg)
 
 	if (arg.size() < 5)
 	{
-		_output = ITOA(ERR_NEEDMOREPARAMS) + '\n';	// => server should reject command
+		_output << ITOA(ERR_NEEDMOREPARAMS) << "\n";	// => server should reject command
 		return ;
 	}
 	if (_sender->isWelcomed())
 	{
-		_output = ITOA(ERR_ALREADYREGISTERED) + '\n';	// => attempt should fail
+		_output << ITOA(ERR_ALREADYREGISTERED) << "\n";	// => attempt should fail
 		return ;
 	}
 	
@@ -217,10 +210,10 @@ void	Message::_user(std::vector<std::string> arg)
 	_sender->setRealname(realName);
 	
 	_sender->welcome();
-	_output += std::string(":") + std::string(SERVER_ADDRESS) + " 001 " + _sender->getNickname() 
-		+ " :Welcome to the <networkname> Network " 
-		+ _sender->getNickname() +"!" + _sender->getUsername() + "@localhost"
-		+ "\n"; //<nick>[!<user>@<host>]
+	_output << ":" << std::string(SERVER_ADDRESS) << " 001 " << _sender->getNickname() 
+		<< " :Welcome to the <networkname> Network " 
+		<< _sender->getNickname() << "!" << _sender->getUsername() << "@localhost"
+		<< "\n"; //<nick>[!<user>@<host>]
 }
 
 void		Message::_privmsg(std::vector<std::string> arg)
@@ -281,18 +274,17 @@ void		Message::_mode(std::vector<std::string> arg)
 				err = true;
 			}
 		}
-		_output += "MODE " + _sender->getNickname() + " " + _sender->getMode() + "\n";
+		_output << "MODE " << _sender->getNickname() << " " << _sender->getMode() << "\n";
 		if (err)
 			throw std::invalid_argument(ITOA(ERR_UMODEUNKNOWNFLAG));
 	}
 	catch(const std::invalid_argument& e)
 	{
-		_output += e.what();
-		_output += "\n";
+		_output << e.what() << "\n";
 	}
 	catch(const std::exception& e)
 	{
-		_output += ITOA(ERR_NOSUCHNICK) + "\n";
+		_output << ITOA(ERR_NOSUCHNICK) << "\n";
 	}
 }
 
@@ -301,10 +293,10 @@ void		Message::_ping(std::vector<std::string> arg)
 	std::cout << "	*Message class: PING cmd detected*\n";
 	if (arg.size() < 2)
 	{
-		_output = ITOA(ERR_NEEDMOREPARAMS) + '\n';
+		_output << ITOA(ERR_NEEDMOREPARAMS) << "\n";
 		return ;
 	}
-	_output = "PONG " + arg[1] + '\n';
+	_output << "PONG " << arg[1] << "\n";
 }
 
 void	Message::_whois(std::vector<std::string> arg)
@@ -315,11 +307,11 @@ void	Message::_whois(std::vector<std::string> arg)
 		// check aussi si target = nom du server
 		// sinon => ERR_NOSUCHSERVER 
 		_server->getUser(arg[1]);
-		_output += ITOA(RPL_ENDOFWHOIS) + "\n";
+		_output << ITOA(RPL_ENDOFWHOIS) << "\n";
 	}
 	catch(const std::exception& e)
 	{
-		_output += ITOA(ERR_NOSUCHNICK) + "\n";
+		_output << ITOA(ERR_NOSUCHNICK) << "\n";
 	}
 	
 	(void)arg;

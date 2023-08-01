@@ -6,7 +6,7 @@
 /*   By: mchassig <mchassig@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2023/07/13 12:20:36 by adesgran          #+#    #+#             */
-/*   Updated: 2023/07/30 15:20:31 by mchassig         ###   ########.fr       */
+/*   Updated: 2023/08/01 07:11:03 by adesgran         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -16,6 +16,7 @@
 # include <iostream>
 # include <string>
 # include <map>
+# include <sstream>
 # include <vector>
 # include <User.hpp>
 # include <Server.hpp>
@@ -64,10 +65,9 @@ class Message {
 		~Message( void );
 		Message &operator=( const Message &message );
 
-		void		setInputMsg(std::string &input_buffer, Server *server);
-		std::string	getInputMsg() const;
-		std::string	getOutputMsg() const;
-		void		clearOutputMsg();
+		void				setInputMsg(std::string &input_buffer, Server *server);
+		std::string			getInputMsg() const;
+		std::stringstream	&getOutputMsg() ;
 
 	private:
 		std::map<std::string, cmdValue>	_cmdMap; //maybe change cmdValue to a pointer to function
@@ -75,7 +75,7 @@ class Message {
 		Server*							_server;
 
 		std::string						_input;
-		std::string						_output;
+		std::stringstream				_output;
 
 		// Utils ----------------------------------------------
 		void						_parseInput(std::vector<std::string> input_lines);
