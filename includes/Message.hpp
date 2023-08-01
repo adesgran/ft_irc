@@ -6,7 +6,7 @@
 /*   By: mchassig <mchassig@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2023/07/13 12:20:36 by adesgran          #+#    #+#             */
-/*   Updated: 2023/08/01 15:38:19 by mchassig         ###   ########.fr       */
+/*   Updated: 2023/08/01 16:38:26 by adesgran         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -41,8 +41,10 @@ enum cmdValue {
 	CAP,
 };
 
-// # define ITOA( x ) static_cast< std::ostringstream & >( \
-//         ( std::ostringstream() << std::dec << x ) ).str()
+/*
+ # define ITOA( x ) static_cast< std::ostringstream & >( \
+		 ( std::ostringstream() << std::dec << x ) ).str()
+		 */
 
 # define USERTAG( u ) u->getNickname() << '!' << u->getUsername() \
 		<< "@localhost"
