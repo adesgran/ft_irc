@@ -41,8 +41,10 @@ enum cmdValue {
 	CAP,
 };
 
-// # define ITOA( x ) static_cast< std::ostringstream & >( \
-//         ( std::ostringstream() << std::dec << x ) ).str()
+/*
+ # define ITOA( x ) static_cast< std::ostringstream & >( \
+		 ( std::ostringstream() << std::dec << x ) ).str()
+		 */
 
 # define USERTAG( u ) u->getNickname() << '!' << u->getUsername() \
 		<< "@localhost"
