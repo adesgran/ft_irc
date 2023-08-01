@@ -6,7 +6,7 @@
 /*   By: mchassig <mchassig@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2023/07/13 12:21:22 by adesgran          #+#    #+#             */
-/*   Updated: 2023/08/01 07:20:56 by adesgran         ###   ########.fr       */
+/*   Updated: 2023/08/01 09:50:46 by adesgran         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -82,9 +82,11 @@ std::string	Message::getInputMsg() const
 	return (_input);
 }
 
-std::stringstream	&Message::getOutputMsg() 
+std::string	Message::getOutputMsg() 
 {
-	return (this->_output);
+	std::string res = _output.str();
+	_output.str("");
+	return (std::string(res));
 }
 
 
@@ -103,6 +105,9 @@ void	Message::_parseInput(std::vector<std::string> input_lines)
 				break;
 			case USER:
 				_user(cmd_arg);
+				break;
+			case JOIN:
+				_join(cmd_arg);
 				break;
 			case PRIVMSG:
 				_privmsg(cmd_arg);
@@ -214,6 +219,28 @@ void	Message::_user(std::vector<std::string> arg)
 		<< " :Welcome to the <networkname> Network " 
 		<< _sender->getNickname() << "!" << _sender->getUsername() << "@localhost"
 		<< "\n"; //<nick>[!<user>@<host>]
+}
+
+void	Message::_join(std::vector<std::string> arg)
+{
+	std::cout << "	*Message class: JOIN cmd detected*\n";
+	if (arg.size() != 2)
+	{
+		_output << ERR_NEEDMOREPARAMS << "\n";	// => server should reject command
+		return ;
+	}
+	//ERR_INVITEONLYCHAN
+	//ERR_CHANNELISFULL
+	//ERR_NOSUCHCHANNEL
+	//ERR_TOOMANYTARGETS
+	//ERR_BANNEDFROMCHAN
+	//ERR_BADCHANNELKEY
+	//ERR_BADCHANMASK
+	//ERR_TOOMANYCHANNELS
+	//ERR_UNAVAILRESOURCE
+	
+	_output << USERTAG(_sender) << " JOIN " << arg[1] << "\n";
+	
 }
 
 void		Message::_privmsg(std::vector<std::string> arg)
