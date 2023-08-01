@@ -6,7 +6,7 @@
 /*   By: mchassig <mchassig@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2023/07/13 12:20:36 by adesgran          #+#    #+#             */
-/*   Updated: 2023/08/01 15:38:19 by mchassig         ###   ########.fr       */
+/*   Updated: 2023/08/01 17:21:58 by mchassig         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -89,16 +89,16 @@ class Message {
 		// IRC commands -----------------------------------------
 		void	_welcomeNewUser();
 
-		void	_nick(std::vector<std::string> arg);
-		void	_user(std::vector<std::string> arg);
-		void	_join(std::vector<std::string> arg);
-		void	_privmsg(std::vector<std::string> arg);
-		void	_kick(std::vector<std::string> arg);
-		void	_invite(std::vector<std::string> arg);
-		void	_topic(std::vector<std::string> arg);
-		void	_mode(std::vector<std::string> arg);
-		void	_ping(std::vector<std::string> arg);
-		void	_whois(std::vector<std::string> arg);
+		void	_nick(std::string arg);
+		void	_user(std::string arg);
+		void	_join(std::string arg);
+		void	_privmsg(std::string arg);
+		void	_kick(std::string arg);
+		void	_invite(std::string arg);
+		void	_topic(std::string arg);
+		void	_mode(std::string arg);
+		void	_ping(std::string arg);
+		void	_whois(std::string arg);
 
 		// // Exception ------------------------------------------
 		// class CommandErrorException : public std::exception

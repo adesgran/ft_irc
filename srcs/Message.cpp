@@ -6,7 +6,7 @@
 /*   By: mchassig <mchassig@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2023/07/13 12:21:22 by adesgran          #+#    #+#             */
-/*   Updated: 2023/08/01 10:14:06 by adesgran         ###   ########.fr       */
+/*   Updated: 2023/08/01 17:20:48 by mchassig         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -97,8 +97,11 @@ void	Message::_parseInput(std::vector<std::string> input_lines)
 			line != input_lines.end();
 			line++)
 	{
-		std::vector<std::string>	cmd_arg = _split(*line, " ");
-		switch (_cmdMap[cmd_arg[0]])
+		std::stringstream	ss(*line);
+		std::string			cmd_name, cmd_arg;
+		std::getline(ss, cmd_name, ' ');
+		std::getline(ss, cmd_arg);
+		switch (_cmdMap[cmd_name])
 		{
 			case NICK:
 				_nick(cmd_arg);
@@ -179,69 +182,73 @@ void	Message::_welcomeNewUser()
 	}
 }
 
-void	Message::_nick(std::vector<std::string> arg)
+void	Message::_nick(std::string arg)
 {
 	std::cout << "	*Message class: NICK cmd detected*\n";
-	if (arg.size() < 2)
+	if (arg.empty())
 	{
 		_appendOutputMsg(ERR_NONICKNAMEGIVEN, ""); // => should ignore the command
 		return ;
 	}
-	if (arg[1].find_first_of("#: \t\n\r\v\f") != std::string::npos)
+	if (arg.find_first_of("#: \t\n\r\v\f") != std::string::npos)
 	{
 		_appendOutputMsg(ERR_ERRONEUSNICKNAME, "");	// => should ignore the command
 		return ;
 	}
-	if (_server->isUser(arg[1]))
+	if (_server->isUser(arg))
 	{
 		_appendOutputMsg(ERR_NICKNAMEINUSE, "");	// => should ignore the command
 		return ;
 	}
-	_sender->setNickname(arg[1]);
+	_sender->setNickname(arg);
 	
 	_welcomeNewUser();
 }
 
-void	Message::_user(std::vector<std::string> arg)
+void	Message::_user(std::string arg)
 {
 	std::cout << "	*Message class: USER cmd detected*\n";
 
-	if (arg.size() < 5)
-	{
-		_appendOutputMsg(ERR_NEEDMOREPARAMS, "");	// => server should reject command
-		return ;
-	}
 	if (_sender->isWelcomed())
 	{
 		_appendOutputMsg(ERR_ALREADYREGISTERED, "");	// => attempt should fail
 		return ;
 	}
-	
-	std::vector<std::string>::iterator	it = ++arg.begin();
-	/* username */
-	_sender->setUsername(*it++);
-	/* mode */
-	it++;
-	/* unused */
-	it++;
-	/* real name */
-	std::string	realName = *it++;
-	if (realName[0] == ':')
-		realName.erase(0, 1);
-	while (it != arg.end())
+
+	std::stringstream	ss(arg);
+	std::string			username, mode, unused, realName;
+
+	try
 	{
-		realName += " ";
-		realName += *it++;
+		/* username */
+		if (!std::getline(ss, username, ' '))
+			throw std::exception();
+		_sender->setUsername(username);
+		/* mode */
+		if (!std::getline(ss, mode, ' '))
+			throw std::exception();
+		/* unused */
+		if (!std::getline(ss, unused, ' '))
+			throw std::exception();
+		/* real name */
+		if (!std::getline(ss, realName, ' '))
+			throw std::exception();
+		if (realName[0] == ':')
+			realName.erase(0, 1);
+		_sender->setRealname(realName);
+		
+		_welcomeNewUser();
 	}
-	_sender->setRealname(realName);
-	
-	_welcomeNewUser();
+	catch(const std::exception& e)
+	{
+		_appendOutputMsg(ERR_NEEDMOREPARAMS, "");	// => server should reject command
+	}
 }
 
-void	Message::_join(std::vector<std::string> arg)
+void	Message::_join(std::string arg)
 {
 	std::cout << "	*Message class: JOIN cmd detected*\n";
-	if (arg.size() != 2)
+	if (arg.empty())
 	{
 		_appendOutputMsg(ERR_NEEDMOREPARAMS, "");	// => server should reject command
 		return ;
@@ -257,53 +264,57 @@ void	Message::_join(std::vector<std::string> arg)
 	//ERR_UNAVAILRESOURCE
 	//
 	
-	std::vector<User *> users = _server->getChannel(arg[1]).getUsers();
+	std::vector<User *> users = _server->getChannel(arg).getUsers();
 
 	 for ( std::vector<User *>::iterator it = users.begin();
 			 it != users.end();
 			 it++)
-		 (*it)->getMessage()->_output << USERTAG(_sender) << " JOIN " << arg[1] << '\n';
+		 (*it)->getMessage()->_output << USERTAG(_sender) << " JOIN " << arg << '\n';
 
-	 _server->getChannel(arg[1]).addUser(_sender);
+	 _server->getChannel(arg).addUser(_sender);
 	
 	
 	_output << USERTAG(_sender) << " JOIN " << arg[1] << "\n";
 	
 }
 
-void		Message::_privmsg(std::vector<std::string> arg)
+void		Message::_privmsg(std::string arg)
 {
 	std::cout << "	*Message class: PRIVMSG cmd detected*\n";
 	(void)arg;
 }
 
-void		Message::_kick(std::vector<std::string> arg)
+void		Message::_kick(std::string arg)
 {
 	std::cout << "	*Message class: KICK cmd detected*\n";
 	(void)arg;
 }
 
-void		Message::_invite(std::vector<std::string> arg)
+void		Message::_invite(std::string arg)
 {
 	std::cout << "	*Message class: INVITE cmd detected*\n";
 	(void)arg;
 }
 
-void		Message::_topic(std::vector<std::string> arg)
+void		Message::_topic(std::string arg)
 {
 	std::cout << "	*Message class: TOPIC cmd detected*\n";
 	(void)arg;
 }
 
-void		Message::_mode(std::vector<std::string> arg)
+void		Message::_mode(std::string arg)
 {
 	std::cout << "	*Message class: MODE cmd detected*\n";
-	if (!_server->isUser(arg[1]))
+	std::stringstream	ss(arg);
+	std::string			target_name, mode_list;
+	std::getline(ss, target_name, ' ');
+
+	if (!_server->isUser(target_name))
 	{
 		_appendOutputMsg(ERR_NOSUCHNICK, "");
 		return ;
 	}
-	User	&target = _server->getUser(arg[1]);
+	User	&target = _server->getUser(target_name);
 	if (target.getNickname().compare(_sender->getNickname()))
 	{
 		_appendOutputMsg(ERR_USERSDONTMATCH, "");
@@ -316,24 +327,25 @@ void		Message::_mode(std::vector<std::string> arg)
 	}
 	char	op = 0;
 	bool	err = false;
+	std::getline(ss, mode_list, ' ');
 
-	for (size_t i = 0; i < arg[2].size(); i++)
+	for (size_t i = 0; i < mode_list.size(); i++)
 	{
-		if (arg[2][i] == '+' || arg[2][i] == '-')
+		if (mode_list[i] == '+' || mode_list[i] == '-')
 		{
-			op = arg[2][i];
+			op = mode_list[i];
 		}
-		else if (_server->isModeImplemented(arg[2][i]) && op == '+'
-				&& arg[2][i] != 'o' && arg[2][i] != 'O')
+		else if (_server->isModeImplemented(mode_list[i]) && op == '+'
+				&& mode_list[i] != 'o' && mode_list[i] != 'O')
 		{
-			_sender->addMode(arg[2][i]);
+			_sender->addMode(mode_list[i]);
 		}
-		else if (_server->isModeImplemented(arg[2][i]) && op == '-'
-				&& arg[2][i] != 'r')
+		else if (_server->isModeImplemented(mode_list[i]) && op == '-'
+				&& mode_list[i] != 'r')
 		{
-			_sender->removeMode(arg[2][i]);
+			_sender->removeMode(mode_list[i]);
 		}
-		else if (arg[2][i] != 'o' && arg[2][i] != 'O' && arg[2][i] != 'r')
+		else if (mode_list[i] != 'o' && mode_list[i] != 'O' && mode_list[i] != 'r')
 		{
 			err = true;
 		}
@@ -346,29 +358,32 @@ void		Message::_mode(std::vector<std::string> arg)
 	}
 }
 
-void		Message::_ping(std::vector<std::string> arg)
+void		Message::_ping(std::string arg)
 {
 	std::cout << "	*Message class: PING cmd detected*\n";
-	if (arg.size() < 2)
+	std::stringstream	ss(arg);
+	std::string			ret, mode_list;
+	std::getline(ss, ret, ' ');
+	if (ret.empty())
 	{
 		_appendOutputMsg(ERR_NEEDMOREPARAMS, "");
 		return ;
 	}
-	_output << "PONG " << arg[1] << "\n";
+	_output << "PONG " << ret << "\n";
 }
 
-void	Message::_whois(std::vector<std::string> arg)
+void	Message::_whois(std::string arg)
 {
 	std::cout << "	*Message class: WHOIS cmd detected*\n";
-	try
-	{
-		// check aussi si target = nom du server
-		// sinon => ERR_NOSUCHSERVER 
-		_server->getUser(arg[1]);
-		_appendOutputMsg(RPL_ENDOFWHOIS, "");
-	}
-	catch(const std::exception& e)
+	std::stringstream	ss(arg);
+	std::string			target_name, mode_list;
+	std::getline(ss, target_name, ' ');
+	// check aussi si target = nom du server
+	// sinon => ERR_NOSUCHSERVER 
+	if (_server->isUser(target_name))
 	{
 		_appendOutputMsg(ERR_NOSUCHNICK, "");
+		return ;
 	}
+	_appendOutputMsg(RPL_ENDOFWHOIS, "");
 }
