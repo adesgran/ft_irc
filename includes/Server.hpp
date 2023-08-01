@@ -6,7 +6,7 @@
 /*   By: mchassig <mchassig@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2023/07/02 11:59:06 by adesgran          #+#    #+#             */
-/*   Updated: 2023/08/01 07:11:52 by adesgran         ###   ########.fr       */
+/*   Updated: 2023/08/01 14:01:32 by mchassig         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -54,6 +54,7 @@ class Server {
 
 		User	&getUser( const int sockfd );
 		User	&getUser( const std::string name );
+		bool	isUser(const std::string nickname);
 		Log		*getLog( void );
 
 		Channel	&getChannel( const std::string name );

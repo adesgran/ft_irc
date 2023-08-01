@@ -6,7 +6,7 @@
 /*   By: mchassig <mchassig@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2023/07/02 12:03:38 by adesgran          #+#    #+#             */
-/*   Updated: 2023/08/01 08:45:48 by adesgran         ###   ########.fr       */
+/*   Updated: 2023/08/01 14:01:30 by mchassig         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -122,6 +122,19 @@ User	&Server::getUser( const std::string name )
 			return (**it);
 	}
 	throw (Server::UserDoesNotExistException());
+}
+
+bool	Server::isUser(const std::string nickname)
+{
+	for ( 
+			std::vector<User *>::iterator it = this->_users.begin(); 
+			it != this->_users.end(); 
+			it++ )
+	{
+		if ( (*it)->getNickname() == nickname )
+			return (true);
+	}
+	return (false);
 }
 
 void	Server::_addUser( int fd )
