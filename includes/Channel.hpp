@@ -6,7 +6,7 @@
 /*   By: adesgran <marvin@42.fr>                    +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2023/07/02 12:53:07 by adesgran          #+#    #+#             */
-/*   Updated: 2023/07/02 13:42:01 by adesgran         ###   ########.fr       */
+/*   Updated: 2023/08/01 07:54:07 by adesgran         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -29,17 +29,17 @@ class Channel {
 		~Channel( void );
 		Channel &operator=( const Channel &channel );
 
-		const std::vector<User>	getUsers( void ) const;
-		void	addUser( User &user );
-		void	removeUser( User &user );
-		void	removeUser( int sockfd );
+		const std::vector<User *>	getUsers( void ) const;
+		void	addUser( User *user );
+		void	removeUser( User *user );
+		void	removeUser( int fd );
 
 		void	setName( const std::string name );
 		std::string	getName( void ) const;
 
 
 	private:
-		std::vector<User>	_users;
+		std::vector<User *>	_users;
 		std::string			_name;
 
 };

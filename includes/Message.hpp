@@ -6,7 +6,7 @@
 /*   By: mchassig <mchassig@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2023/07/13 12:20:36 by adesgran          #+#    #+#             */
-/*   Updated: 2023/08/01 07:11:03 by adesgran         ###   ########.fr       */
+/*   Updated: 2023/08/01 08:46:07 by adesgran         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -44,6 +44,9 @@ enum cmdValue {
 # define ITOA( x ) static_cast< std::ostringstream & >( \
         ( std::ostringstream() << std::dec << x ) ).str()
 
+# define USERTAG( u ) u->getNickname() << '!' << u->getUsername() \
+		<< "@localhost"
+
 # define RPL_UMODEIS			221
 # define RPL_ENDOFWHOIS			318
 
@@ -67,7 +70,7 @@ class Message {
 
 		void				setInputMsg(std::string &input_buffer, Server *server);
 		std::string			getInputMsg() const;
-		std::stringstream	&getOutputMsg() ;
+		std::string			getOutputMsg() ;
 
 	private:
 		std::map<std::string, cmdValue>	_cmdMap; //maybe change cmdValue to a pointer to function
@@ -84,6 +87,7 @@ class Message {
 		// IRC commands -----------------------------------------
 		void	_nick(std::vector<std::string> arg);
 		void	_user(std::vector<std::string> arg);
+		void	_join(std::vector<std::string> arg);
 		void	_privmsg(std::vector<std::string> arg);
 		void	_kick(std::vector<std::string> arg);
 		void	_invite(std::vector<std::string> arg);
