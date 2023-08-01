@@ -6,7 +6,7 @@
 /*   By: mchassig <mchassig@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2023/07/13 12:20:36 by adesgran          #+#    #+#             */
-/*   Updated: 2023/08/01 15:06:48 by mchassig         ###   ########.fr       */
+/*   Updated: 2023/08/01 15:38:19 by mchassig         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -87,6 +87,8 @@ class Message {
 		void						_appendOutputMsg(std::string err_code, std::string arg);
 
 		// IRC commands -----------------------------------------
+		void	_welcomeNewUser();
+
 		void	_nick(std::vector<std::string> arg);
 		void	_user(std::vector<std::string> arg);
 		void	_join(std::vector<std::string> arg);

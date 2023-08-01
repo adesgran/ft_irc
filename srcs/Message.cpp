@@ -6,7 +6,7 @@
 /*   By: mchassig <mchassig@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2023/07/13 12:21:22 by adesgran          #+#    #+#             */
-/*   Updated: 2023/08/01 15:07:09 by mchassig         ###   ########.fr       */
+/*   Updated: 2023/08/01 16:05:56 by mchassig         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -144,7 +144,7 @@ std::vector<std::string>	Message::_split(const std::string &str, const std::stri
 	{
 		pos = str.find(sep, i);
 		std::string	tmp = str.substr(i, pos - i);
-		if (tmp.size() > 1)
+		if (tmp.size() >= 1)
 			res.push_back(tmp);
 		if (pos != std::string::npos)
 			i = pos + sep.size();
@@ -166,30 +166,40 @@ void	Message::_appendOutputMsg(std::string err_code, std::string arg)
 
 
 // IRC commands -----------------------------------------
+void	Message::_welcomeNewUser()
+{
+	if (!_sender->isWelcomed() && !_sender->getNickname().empty()
+		&& !_sender->getUsername().empty())
+	{
+		_sender->welcome();
+		_output << ":" << std::string(SERVER_ADDRESS) << " " << RPL_WELCOME << " " << _sender->getNickname() 
+		<< " :Welcome to the <networkname> Network " 
+		<< USERTAG(_sender)
+		<< "\n";
+	}
+}
+
 void	Message::_nick(std::vector<std::string> arg)
 {
 	std::cout << "	*Message class: NICK cmd detected*\n";
-
 	if (arg.size() < 2)
 	{
-		_appendOutputMsg(ERR_NONICKNAMEGIVEN, ""); //	=> should ignore the command
+		_appendOutputMsg(ERR_NONICKNAMEGIVEN, ""); // => should ignore the command
 		return ;
 	}
-	if (arg[1].find_first_not_of("0123456789abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ[]{}\\|") != std::string::npos)
+	if (arg[1].find_first_of("#: \t\n\r\v\f") != std::string::npos)
 	{
 		_appendOutputMsg(ERR_ERRONEUSNICKNAME, "");	// => should ignore the command
 		return ;
 	}
-	try
+	if (_server->isUser(arg[1]))
 	{
-		_server->getUser(arg[1]);
 		_appendOutputMsg(ERR_NICKNAMEINUSE, "");	// => should ignore the command
+		return ;
 	}
-	catch(const std::exception& e)
-	{
-		_sender->setNickname(arg[1]);
-	}
+	_sender->setNickname(arg[1]);
 	
+	_welcomeNewUser();
 }
 
 void	Message::_user(std::vector<std::string> arg)
@@ -225,11 +235,7 @@ void	Message::_user(std::vector<std::string> arg)
 	}
 	_sender->setRealname(realName);
 	
-	_sender->welcome();
-	_output << ":" << std::string(SERVER_ADDRESS) << " " << RPL_WELCOME << " " << _sender->getNickname() 
-		<< " :Welcome to the <networkname> Network " 
-		<< USERTAG(_sender)
-		<< "\n";
+	_welcomeNewUser();
 }
 
 void	Message::_join(std::vector<std::string> arg)
