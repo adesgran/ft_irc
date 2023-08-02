@@ -6,7 +6,7 @@
 /*   By: adesgran <marvin@42.fr>                    +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2023/08/01 16:50:23 by adesgran          #+#    #+#             */
-/*   Updated: 2023/08/01 20:07:26 by adesgran         ###   ########.fr       */
+/*   Updated: 2023/08/02 14:07:28 by adesgran         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -102,8 +102,11 @@ void	Bot::_listenMessage( void )
 	std::string line;
 	while (std::getline(ss, line))
 	{
-		std::cout << "[SERVER] " << line << std::endl;
-		_readline(line);
+		if (line.size())
+		{
+			std::cout << "[SERVER] " << line << std::endl;
+			_readline(line);
+		}
 	}
 }
 
@@ -173,8 +176,6 @@ void	Bot::run( void )
 			}
 		}
 	}
-
-
 }
 
 
