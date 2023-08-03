@@ -3,10 +3,10 @@
 /*                                                        :::      ::::::::   */
 /*   Channel.cpp                                        :+:      :+:    :+:   */
 /*                                                    +:+ +:+         +:+     */
-/*   By: adesgran <marvin@42.fr>                    +#+  +:+       +#+        */
+/*   By: mchassig <mchassig@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2023/07/02 12:59:54 by adesgran          #+#    #+#             */
-/*   Updated: 2023/08/01 07:54:46 by adesgran         ###   ########.fr       */
+/*   Updated: 2023/08/03 15:05:09 by mchassig         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -89,3 +89,17 @@ std::string	Channel::getName( void ) const
 {
 	return (this->_name);
 }
+
+void	Channel::setKey(const std::string key)
+{
+	if (key.find(' ') == std::string::npos)
+		_key = key;
+	else
+		throw std::exception(); // ERR_INVALIDMODEPARAM
+}
+
+std::string	Channel::getKey() const
+{
+	return (_key);
+}
+

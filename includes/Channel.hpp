@@ -3,10 +3,10 @@
 /*                                                        :::      ::::::::   */
 /*   Channel.hpp                                        :+:      :+:    :+:   */
 /*                                                    +:+ +:+         +:+     */
-/*   By: adesgran <marvin@42.fr>                    +#+  +:+       +#+        */
+/*   By: mchassig <mchassig@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2023/07/02 12:53:07 by adesgran          #+#    #+#             */
-/*   Updated: 2023/08/01 07:54:07 by adesgran         ###   ########.fr       */
+/*   Updated: 2023/08/03 15:03:09 by mchassig         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -34,14 +34,19 @@ class Channel {
 		void	removeUser( User *user );
 		void	removeUser( int fd );
 
-		void	setName( const std::string name );
+		void		setName( const std::string name );
 		std::string	getName( void ) const;
+		void		setKey(const std::string key);
+		std::string	getKey() const;
 
+		std::string			topic;
+		std::string			status;
+		std::string			modes;
 
 	private:
 		std::vector<User *>	_users;
 		std::string			_name;
-
+		std::string			_key;
 };
 
 #endif

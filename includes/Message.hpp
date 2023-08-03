@@ -6,7 +6,7 @@
 /*   By: mchassig <mchassig@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2023/07/13 12:20:36 by adesgran          #+#    #+#             */
-/*   Updated: 2023/08/01 17:31:31 by mchassig         ###   ########.fr       */
+/*   Updated: 2023/08/03 15:10:17 by mchassig         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -53,6 +53,9 @@ enum cmdValue {
 # define RPL_UMODEIS			"221"
 # define RPL_AWAY				"301"
 # define RPL_ENDOFWHOIS			"318"
+# define RPL_TOPIC				"332"
+# define RPL_NAMREPLY			"353"
+# define RPL_ENDOFNAMES			"366"
 
 # define ERR_NOSUCHNICK			"401"
 # define ERR_NOSUCHSERVER		"402"
@@ -63,8 +66,10 @@ enum cmdValue {
 # define ERR_NICKNAMEINUSE		"433"
 # define ERR_NEEDMOREPARAMS		"461"
 # define ERR_ALREADYREGISTERED	"462"
+# define ERR_BADCHANNELKEY		"475"
 # define ERR_UMODEUNKNOWNFLAG	"501"
 # define ERR_USERSDONTMATCH		"502"
+# define ERR_INVALIDMODEPARAM	"696"
 
 class Message {
 	public:
