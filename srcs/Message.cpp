@@ -6,7 +6,7 @@
 /*   By: mchassig <mchassig@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2023/07/13 12:21:22 by adesgran          #+#    #+#             */
-/*   Updated: 2023/08/03 14:17:50 by mchassig         ###   ########.fr       */
+/*   Updated: 2023/08/03 15:20:53 by mchassig         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -147,7 +147,7 @@ std::vector<std::string>	Message::_split(const std::string &str, const std::stri
 	{
 		pos = str.find(sep, i);
 		std::string	tmp = str.substr(i, pos - i);
-		if (tmp.size() >= 1)
+		// if (tmp.size() >= 1)
 			res.push_back(tmp);
 		if (pos != std::string::npos)
 			i = pos + sep.size();
@@ -251,28 +251,57 @@ void	Message::_join(std::string arg)
 		_appendOutputMsg(ERR_NEEDMOREPARAMS);	// => server should reject command
 		return ;
 	}
+	// if (!arg.compare("0"))
+	// {
+	// 	// client leaves all joined channel, equivalent to the PART command"
+	// }
 	//ERR_INVITEONLYCHAN
 	//ERR_CHANNELISFULL
 	//ERR_NOSUCHCHANNEL
 	//ERR_TOOMANYTARGETS
 	//ERR_BANNEDFROMCHAN
-	//ERR_BADCHANNELKEY
 	//ERR_BADCHANMASK
 	//ERR_TOOMANYCHANNELS
 	//ERR_UNAVAILRESOURCE
-	//
 	
-	std::vector<User *> users = _server->getChannel(arg).getUsers();
+	std::vector<std::string>	tmp = _split(arg, " ");
+	std::vector<std::string>	chan_name = _split (tmp[0], ","), key;
+	if (tmp.size() > 1)
+		key = _split(tmp[1], ",");
+	
+	size_t	i = 0;
+	while (i < chan_name.size())
+	{
+		Channel	&channel = _server->getChannel(chan_name[i]);
+		if (channel.modes.find('k') == std::string::npos
+			|| (channel.modes.find('k') != std::string::npos && !channel.getKey().compare(key[i])))
+		{
+			std::vector<User *> users = channel.getUsers();
 
-	 for ( std::vector<User *>::iterator it = users.begin();
-			 it != users.end();
-			 it++)
-		 (*it)->getMessage()->_output << USERTAG(_sender) << " JOIN " << arg << '\n';
-
-	 _server->getChannel(arg).addUser(_sender);
-	
-	_output << USERTAG(_sender) << " JOIN " << arg[1] << "\n";
-	
+			for ( std::vector<User *>::iterator it = users.begin();
+					it != users.end();
+					it++)
+			{
+				(*it)->getMessage()->_output << USERTAG(_sender) << " JOIN " << chan_name[i] << '\n';
+			}
+			channel.addUser(_sender);
+			
+			_output << USERTAG(_sender) << " JOIN " << arg << "\n";
+			_appendOutputMsg(RPL_TOPIC, channel.topic);
+			_output << USERTAG(_sender) << " " << channel.status << " " << chan_name[i] << " :";
+			for ( std::vector<User *>::iterator it = users.begin();
+					it != users.end();
+					it++)
+				(*it)->getMessage()->_output << (*it)->getNickname() << " ";
+			_output << _sender->getNickname() << "\n";
+			_output << RPL_ENDOFNAMES << std::endl;
+		}
+		else
+		{
+			_output << ERR_BADCHANNELKEY << " " << chan_name[i] << "\n";
+		}
+		i++;
+	}	
 }
 
 void		Message::_privmsg(std::string arg)
@@ -316,7 +345,7 @@ void		Message::_privmsg(std::string arg)
 	{
 		_appendOutputMsg(ERR_NOSUCHNICK);
 	}
-	}
+}
 
 void		Message::_kick(std::string arg)
 {
