@@ -6,7 +6,7 @@
 /*   By: mchassig <mchassig@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2023/07/13 12:21:22 by adesgran          #+#    #+#             */
-/*   Updated: 2023/08/01 18:02:04 by mchassig         ###   ########.fr       */
+/*   Updated: 2023/08/03 14:17:50 by mchassig         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -285,20 +285,13 @@ void		Message::_privmsg(std::string arg)
 		_appendOutputMsg(ERR_NORECIPIENT);
 		return ;
 	}
-	if (!std::getline(ss, text_to_send, ' '))
+	if (!std::getline(ss, text_to_send))
 	{
 		_appendOutputMsg(ERR_NOTEXTTOSEND);
 		return ;
 	}
 	
-	if (_server->isUser(target_name))
-	{
-		User	&target = _server->getUser(target_name);
-		if (target.getMode().find_first_of("a") != std::string::npos)
-			_appendOutputMsg(RPL_AWAY, "");
-		target.getMessage()->_output << _sender->getNickname() << text_to_send << '\n';
-	}
-	else if (_server->isChannel(target_name))
+	if (target_name.find('#') != std::string::npos)
 	{
 		// if server is banned from channel => command silently fails
 		// Channels with the moderated mode active may block messages from certain users
@@ -312,11 +305,18 @@ void		Message::_privmsg(std::string arg)
 				it++)
 			(*it)->getMessage()->_output << target_name << text_to_send << '\n';
 	}
-	else
+	else try
+	{
+		User	&target = _server->getUser(target_name);
+		if (target.getMode().find('a') != std::string::npos)
+			_appendOutputMsg(RPL_AWAY, "");
+		target.getMessage()->_output << _sender->getNickname() << text_to_send << '\n';
+	}
+	catch(const std::exception& e)
 	{
 		_appendOutputMsg(ERR_NOSUCHNICK);
 	}
-}
+	}
 
 void		Message::_kick(std::string arg)
 {
