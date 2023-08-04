@@ -6,7 +6,7 @@
 /*   By: mchassig <mchassig@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2023/07/01 13:43:30 by adesgran          #+#    #+#             */
-/*   Updated: 2023/07/28 13:48:01 by mchassig         ###   ########.fr       */
+/*   Updated: 2023/08/04 17:08:05 by mchassig         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -44,23 +44,24 @@ class User {
 		void		setRealname( const std::string realname );
 		std::string	getHostname( void ) const;
 		void		setHostname( const std::string hostname );
-		std::string	getMode( void ) const;
-		void		addMode( const char newMode );
-		void		removeMode( const char oldMode );
+		std::string	getActiveModes( void );
+		bool		setModes( std::string new_modes );
+		// void		addMode( const char newMode );
+		// void		removeMode( const char oldMode );
 		Message		*getMessage( void ) const;
 		bool		isWelcomed( void ) const;
 		void		welcome( void );
 
 	private:
-		int			_sockfd;
-		bool		_isop;
-		std::string	_username;
-		std::string	_nickname;
-		std::string	_realname;
-		std::string	_hostname;
-		std::string	_mode;
-		Message*	_message;
-		bool		_welcomed;
+		int						_sockfd;
+		bool					_isop;
+		std::string				_username;
+		std::string				_nickname;
+		std::string				_realname;
+		std::string				_hostname;
+		std::map<char, bool>	_modes;
+		Message*				_message;
+		bool					_welcomed;
 
 };
 
