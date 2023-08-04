@@ -6,7 +6,7 @@
 /*   By: mchassig <mchassig@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2023/07/13 12:21:22 by adesgran          #+#    #+#             */
-/*   Updated: 2023/08/04 17:15:04 by mchassig         ###   ########.fr       */
+/*   Updated: 2023/08/04 17:50:21 by mchassig         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -401,7 +401,41 @@ void		Message::_invite(std::string arg)
 void		Message::_topic(std::string arg)
 {
 	std::cout << "	*Message class: TOPIC cmd detected*\n";
-	(void)arg;
+	std::stringstream	ss(arg);
+	std::string			target, new_topic;
+
+	try
+	{
+		if (!std::getline(ss, target, ' '))
+			throw std::invalid_argument(ERR_NEEDMOREPARAMS);
+		if (!_server->isChannel(target))
+			throw std::invalid_argument(ERR_NOSUCHCHANNEL);
+		Channel	&channel = _server->getChannel(target);
+		if (!channel.isUserOnChannel(_sender->getNickname()))
+			throw std::invalid_argument(ERR_NOTONCHANNEL);
+		if (!std::getline(ss, new_topic))
+		{
+			if (channel.getTopic().empty())
+				appendOutputMsg(RPL_NOTOPIC);
+			else
+				appendOutputMsg(RPL_TOPIC, channel.getTopic());
+			return ;
+		}
+		if (new_topic[0] == ':')
+			new_topic.erase(0, 1);
+		channel.setTopic(_sender, new_topic);
+		std::vector<User *> chan_users = channel.getUsers();
+
+		for ( std::vector<User *>::iterator it = chan_users.begin();
+				it != chan_users.end();
+				it++)
+			(*it)->getMessage()->_output << "TOPIC " << target << " :" << new_topic << '\n';
+	}
+	catch(const std::exception& e)
+	{
+		appendOutputMsg(e.what());
+	}
+	
 }
 
 void		Message::_mode(std::string arg)

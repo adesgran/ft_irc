@@ -6,7 +6,7 @@
 /*   By: mchassig <mchassig@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2023/07/13 12:20:36 by adesgran          #+#    #+#             */
-/*   Updated: 2023/08/04 17:05:12 by mchassig         ###   ########.fr       */
+/*   Updated: 2023/08/04 17:32:37 by mchassig         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -54,6 +54,7 @@ enum cmdValue {
 # define RPL_AWAY				"301"
 # define RPL_ENDOFWHOIS			"318"
 # define RPL_CHANNELMODEIS		"324"
+# define RPL_NOTOPIC			"331"
 # define RPL_TOPIC				"332"
 # define RPL_NAMREPLY			"353"
 # define RPL_ENDOFNAMES			"366"

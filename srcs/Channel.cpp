@@ -6,7 +6,7 @@
 /*   By: mchassig <mchassig@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2023/07/02 12:59:54 by adesgran          #+#    #+#             */
-/*   Updated: 2023/08/04 17:11:02 by mchassig         ###   ########.fr       */
+/*   Updated: 2023/08/04 17:37:02 by mchassig         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -175,8 +175,12 @@ std::string	Channel::getKey() const
 
 void	Channel::setTopic(User *sender, std::string new_topic)
 {
-	if (_modes['t']) // && sender == operator
-		_topic = new_topic;
+	if (_modes['t'])
+	{
+		// if sender != operator
+		// 	throw std::invalid_argument(ERR_CHANOPRIVSNEEDED);
+	}
+	_topic = new_topic;
 	(void)sender;
 }
 
