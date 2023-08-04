@@ -6,7 +6,7 @@
 /*   By: mchassig <mchassig@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2023/07/02 12:59:54 by adesgran          #+#    #+#             */
-/*   Updated: 2023/08/03 15:05:09 by mchassig         ###   ########.fr       */
+/*   Updated: 2023/08/04 12:17:41 by mchassig         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -97,6 +97,17 @@ void	Channel::setKey(const std::string key)
 	else
 		throw std::exception(); // ERR_INVALIDMODEPARAM
 }
+
+bool	Channel::isUserOnChannel(const std::string &nickname)
+{
+	for (std::vector<User *>::iterator it = _users.begin(); it != _users.end(); it++)
+	{
+		if (!nickname.compare((*it)->getNickname()))
+			return (true);
+	}
+	return (false);
+}
+
 
 std::string	Channel::getKey() const
 {

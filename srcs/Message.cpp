@@ -6,7 +6,7 @@
 /*   By: mchassig <mchassig@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2023/07/13 12:21:22 by adesgran          #+#    #+#             */
-/*   Updated: 2023/08/03 15:20:53 by mchassig         ###   ########.fr       */
+/*   Updated: 2023/08/04 13:00:30 by mchassig         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -272,6 +272,8 @@ void	Message::_join(std::string arg)
 	size_t	i = 0;
 	while (i < chan_name.size())
 	{
+		// if(!_server->isChannel(chan_name[i]))
+		// _sender devient operator du channel
 		Channel	&channel = _server->getChannel(chan_name[i]);
 		if (channel.modes.find('k') == std::string::npos
 			|| (channel.modes.find('k') != std::string::npos && !channel.getKey().compare(key[i])))
@@ -322,7 +324,7 @@ void		Message::_privmsg(std::string arg)
 	
 	if (target_name.find('#') != std::string::npos)
 	{
-		// if server is banned from channel => command silently fails
+		// if sender is banned from channel => command silently fails
 		// Channels with the moderated mode active may block messages from certain users
 		// Other channel modes may affect the delivery of the message or cause the message to be modified before delivery, and these modes are defined by the server software and configuration being used
 	
@@ -350,7 +352,44 @@ void		Message::_privmsg(std::string arg)
 void		Message::_kick(std::string arg)
 {
 	std::cout << "	*Message class: KICK cmd detected*\n";
-	(void)arg;
+	std::cout << "	*arg: " << arg << "*\n";
+	std::stringstream	ss(arg);
+	std::string			chan_name, comment, target_list;
+	std::vector<std::string>	targets;
+	try
+	{
+		if (!std::getline(ss, chan_name, ' '))
+			throw std::invalid_argument(ERR_NEEDMOREPARAMS);
+		if (!std::getline(ss, target_list, ' '))
+			throw std::invalid_argument(ERR_NEEDMOREPARAMS);
+		targets = _split(target_list, ",");
+		if (!std::getline(ss, comment) || (comment.size() <= 1 && !comment.compare(":")))
+			comment = ":You have been kicked from the " + chan_name + " channel.\n";
+		if (!_server->isChannel(chan_name))
+			throw std::invalid_argument(ERR_NOSUCHCHANNEL);
+		Channel	&channel = _server->getChannel(chan_name);
+		if (!channel.isUserOnChannel(_sender->getNickname()))
+			throw std::invalid_argument(ERR_NOTONCHANNEL);
+		// if (_sender n'est pas un operator)
+		// throw std::invalid_argument(ERR_CHANOPRIVSNEEDED);
+		for (std::vector<std::string>::iterator it = targets.begin();
+				it != targets.end();
+				it++)
+		{
+			if (!channel.isUserOnChannel(*it))
+				_appendOutputMsg(ERR_USERNOTINCHANNEL);
+			else
+			{
+				User	*rm_user = &_server->getUser(*it);
+				channel.removeUser(rm_user);
+				rm_user->getMessage()->_output << "KICK " << comment << "\n";
+			}
+		}
+	}
+	catch(const std::exception& e)
+	{
+		_appendOutputMsg(e.what());
+	}
 }
 
 void		Message::_invite(std::string arg)

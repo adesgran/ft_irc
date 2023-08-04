@@ -6,7 +6,7 @@
 /*   By: mchassig <mchassig@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2023/07/13 12:20:36 by adesgran          #+#    #+#             */
-/*   Updated: 2023/08/03 15:10:17 by mchassig         ###   ########.fr       */
+/*   Updated: 2023/08/04 12:18:55 by mchassig         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -59,14 +59,18 @@ enum cmdValue {
 
 # define ERR_NOSUCHNICK			"401"
 # define ERR_NOSUCHSERVER		"402"
+# define ERR_NOSUCHCHANNEL		"403"
 # define ERR_NORECIPIENT		"411"
 # define ERR_NOTEXTTOSEND		"412"
 # define ERR_NONICKNAMEGIVEN	"431"
 # define ERR_ERRONEUSNICKNAME	"432"
 # define ERR_NICKNAMEINUSE		"433"
+# define ERR_USERNOTINCHANNEL	"441"
+# define ERR_NOTONCHANNEL		"442"
 # define ERR_NEEDMOREPARAMS		"461"
 # define ERR_ALREADYREGISTERED	"462"
 # define ERR_BADCHANNELKEY		"475"
+# define ERR_CHANOPRIVSNEEDED	"482"
 # define ERR_UMODEUNKNOWNFLAG	"501"
 # define ERR_USERSDONTMATCH		"502"
 # define ERR_INVALIDMODEPARAM	"696"
