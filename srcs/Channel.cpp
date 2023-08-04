@@ -6,7 +6,7 @@
 /*   By: mchassig <mchassig@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2023/07/02 12:59:54 by adesgran          #+#    #+#             */
-/*   Updated: 2023/08/04 17:37:02 by mchassig         ###   ########.fr       */
+/*   Updated: 2023/08/04 18:18:15 by mchassig         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -57,9 +57,15 @@ const std::vector<User *>	Channel::getUsers( void ) const
 	return (this->_users);
 }
 
-void	Channel::addUser( User *user )
+void	Channel::addUser( User *target, User *sender )
 {
-	this->_users.push_back(user);
+	if (_modes['i'] && sender != NULL)
+		throw std::invalid_argument(ERR_INVITEONLYCHAN);
+	if (isUserOnChannel(target->getNickname()))
+		throw std::invalid_argument(ERR_USERONCHANNEL);
+	if (_modes['l'] && _users.size() == _client_limit)
+		throw std::invalid_argument(ERR_CHANNELISFULL);
+	_users.push_back(target);
 }
 
 void	Channel::removeUser( User *user )
