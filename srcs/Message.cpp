@@ -6,7 +6,7 @@
 /*   By: mchassig <mchassig@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2023/07/13 12:21:22 by adesgran          #+#    #+#             */
-/*   Updated: 2023/08/04 17:50:21 by mchassig         ###   ########.fr       */
+/*   Updated: 2023/08/04 18:27:15 by mchassig         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -117,6 +117,9 @@ void	Message::_parseInput(std::vector<std::string> input_lines)
 				break;
 			case KICK:
 				_kick(cmd_arg);
+				break;
+			case INVITE:
+				_invite(cmd_arg);
 				break;
 			case TOPIC:
 				_topic(cmd_arg);
@@ -255,8 +258,6 @@ void	Message::_join(std::string arg)
 	// {
 	// 	// client leaves all joined channel, equivalent to the PART command"
 	// }
-	//ERR_INVITEONLYCHAN
-	//ERR_CHANNELISFULL
 	//ERR_NOSUCHCHANNEL
 	//ERR_TOOMANYTARGETS
 	//ERR_BANNEDFROMCHAN
@@ -395,7 +396,28 @@ void		Message::_kick(std::string arg)
 void		Message::_invite(std::string arg)
 {
 	std::cout << "	*Message class: INVITE cmd detected*\n";
-	(void)arg;
+	std::stringstream	ss(arg);
+	std::string			target_nickname, target_chan;
+	try
+	{
+		std::cout << "ICI\n";
+		if (!std::getline(ss, target_nickname, ' ') || !std::getline(ss, target_chan, ' '))
+			throw std::invalid_argument(ERR_NEEDMOREPARAMS);
+		if (!_server->isUser(target_nickname))
+			throw std::invalid_argument(ERR_NOSUCHNICK); // Pas indiqué dans la doc ??
+		if (!_server->isChannel(target_chan))
+			throw std::invalid_argument(ERR_NOSUCHCHANNEL);
+		Channel &channel = _server->getChannel(target_chan);
+		if (!channel.isUserOnChannel(target_nickname))
+			throw std::invalid_argument(ERR_NOTONCHANNEL);
+		channel.addUser(&_server->getUser(target_nickname), _sender);
+		appendOutputMsg(RPL_INVITING);
+		_server->getUser(target_nickname).getMessage()->_output << ":" << USERTAG(_sender) << " INVITE " << target_nickname << " " << target_chan << "\n";
+	}
+	catch(const std::exception& e)
+	{
+		appendOutputMsg(e.what());
+	}
 }
 
 void		Message::_topic(std::string arg)
