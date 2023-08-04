@@ -6,7 +6,7 @@
 /*   By: mchassig <mchassig@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2023/07/13 12:20:36 by adesgran          #+#    #+#             */
-/*   Updated: 2023/08/04 12:18:55 by mchassig         ###   ########.fr       */
+/*   Updated: 2023/08/04 17:05:12 by mchassig         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -53,6 +53,7 @@ enum cmdValue {
 # define RPL_UMODEIS			"221"
 # define RPL_AWAY				"301"
 # define RPL_ENDOFWHOIS			"318"
+# define RPL_CHANNELMODEIS		"324"
 # define RPL_TOPIC				"332"
 # define RPL_NAMREPLY			"353"
 # define RPL_ENDOFNAMES			"366"
@@ -86,6 +87,7 @@ class Message {
 		void				setInputMsg(std::string &input_buffer, Server *server);
 		std::string			getInputMsg() const;
 		std::string			getOutputMsg() ;
+		void				appendOutputMsg(std::string err_code, std::string arg = "");
 
 	private:
 		std::map<std::string, cmdValue>	_cmdMap; //maybe change cmdValue to a pointer to function
@@ -98,7 +100,6 @@ class Message {
 		// Utils ----------------------------------------------
 		void						_parseInput(std::vector<std::string> input_lines);
 		std::vector<std::string>	_split(const std::string &str, const std::string &sep) const;
-		void						_appendOutputMsg(std::string err_code, std::string arg = "");
 
 		// IRC commands -----------------------------------------
 		void	_welcomeNewUser();
