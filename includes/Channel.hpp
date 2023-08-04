@@ -6,7 +6,7 @@
 /*   By: mchassig <mchassig@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2023/07/02 12:53:07 by adesgran          #+#    #+#             */
-/*   Updated: 2023/08/03 15:03:09 by mchassig         ###   ########.fr       */
+/*   Updated: 2023/08/04 12:38:48 by mchassig         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -38,6 +38,7 @@ class Channel {
 		std::string	getName( void ) const;
 		void		setKey(const std::string key);
 		std::string	getKey() const;
+		bool		isUserOnChannel(const std::string &nickname);
 
 		std::string			topic;
 		std::string			status;
@@ -47,6 +48,7 @@ class Channel {
 		std::vector<User *>	_users;
 		std::string			_name;
 		std::string			_key;
+		std::vector<User *>	_chanops; // nickname with "@" prefix
 };
 
 #endif
