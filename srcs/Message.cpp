@@ -6,7 +6,7 @@
 /*   By: mchassig <mchassig@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2023/07/13 12:21:22 by adesgran          #+#    #+#             */
-/*   Updated: 2023/08/04 18:27:15 by mchassig         ###   ########.fr       */
+/*   Updated: 2023/08/05 14:14:15 by mchassig         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -15,34 +15,30 @@
 
 Message::Message(void)
 {
-	_cmdMap["NICK"] = NICK;
-	_cmdMap["USER"] = USER;
-	_cmdMap["JOIN"] = JOIN;
-	_cmdMap["PRIVMSG"] = PRIVMSG;
-	_cmdMap["KICK"] = KICK;
-	_cmdMap["INVITE"] = INVITE;
-	_cmdMap["TOPIC"] = TOPIC;
-	_cmdMap["MODE"] = MODE;
-	_cmdMap["PING"] = PING;
-	_cmdMap["WHOIS"] = WHOIS;
-	_cmdMap["CAP"] = CAP;
-
+	_cmdMap["NICK"]		= &Message::_nick;
+	_cmdMap["USER"]		= &Message::_user;
+	_cmdMap["JOIN"]		= &Message::_join;
+	_cmdMap["PRIVMSG"]	= &Message::_privmsg;
+	_cmdMap["KICK"]		= &Message::_kick;
+	_cmdMap["INVITE"]	= &Message::_invite;
+	_cmdMap["TOPIC"]	= &Message::_topic;
+	_cmdMap["MODE"]		= &Message::_mode;
+	_cmdMap["PING"]		= &Message::_ping;
+	_cmdMap["WHOIS"]	= &Message::_whois;
 }
 
 Message::Message(User *sender): _sender(sender)
 {
-	_cmdMap["NICK"] = NICK;
-	_cmdMap["USER"] = USER;
-	_cmdMap["JOIN"] = JOIN;
-	_cmdMap["PRIVMSG"] = PRIVMSG;
-	_cmdMap["KICK"] = KICK;
-	_cmdMap["INVITE"] = INVITE;
-	_cmdMap["TOPIC"] = TOPIC;
-	_cmdMap["MODE"] = MODE;
-	_cmdMap["PING"] = PING;
-	_cmdMap["WHOIS"] = WHOIS;
-	_cmdMap["CAP"] = CAP;
-
+	_cmdMap["NICK"]		= &Message::_nick;
+	_cmdMap["USER"]		= &Message::_user;
+	_cmdMap["JOIN"]		= &Message::_join;
+	_cmdMap["PRIVMSG"]	= &Message::_privmsg;
+	_cmdMap["KICK"]		= &Message::_kick;
+	_cmdMap["INVITE"]	= &Message::_invite;
+	_cmdMap["TOPIC"]	= &Message::_topic;
+	_cmdMap["MODE"]		= &Message::_mode;
+	_cmdMap["PING"]		= &Message::_ping;
+	_cmdMap["WHOIS"]	= &Message::_whois;
 }
 
 Message::Message(const Message &message)
@@ -65,12 +61,7 @@ Message &Message::operator=(const Message &message)
 	return (*this);
 }
 
-// void	Message::read( std::string message )
-// {
-// 	std::cout << message << "\n";
-// }
-
-void		Message::setInputMsg(std::string &input_buffer, Server *server)
+void		Message::setInputMsg(const std::string &input_buffer, Server *server)
 {
 	_input = input_buffer;
 	_server = server;
@@ -82,7 +73,7 @@ std::string	Message::getInputMsg() const
 	return (_input);
 }
 
-std::string	Message::getOutputMsg() 
+std::string	Message::getOutputMsg()
 {
 	std::string res = _output.str();
 	_output.str("");
@@ -91,9 +82,9 @@ std::string	Message::getOutputMsg()
 
 
 // Utils ----------------------------------------------
-void	Message::_parseInput(std::vector<std::string> input_lines)
+void	Message::_parseInput(const std::vector<std::string> &input_lines)
 {
-	for (std::vector<std::string>::iterator	line = input_lines.begin();
+	for (std::vector<std::string>::const_iterator	line = input_lines.begin();
 			line != input_lines.end();
 			line++)
 	{
@@ -101,43 +92,14 @@ void	Message::_parseInput(std::vector<std::string> input_lines)
 		std::string			cmd_name, cmd_arg;
 		std::getline(ss, cmd_name, ' ');
 		std::getline(ss, cmd_arg);
-		switch (_cmdMap[cmd_name])
+
+		std::map<std::string, cmdFunction>::const_iterator cmd_ft;
+		cmd_ft = _cmdMap.find(cmd_name);
+		if (cmd_ft != _cmdMap.end())
 		{
-			case NICK:
-				_nick(cmd_arg);
-				break;
-			case USER:
-				_user(cmd_arg);
-				break;
-			case JOIN:
-				_join(cmd_arg);
-				break;
-			case PRIVMSG:
-				_privmsg(cmd_arg);
-				break;
-			case KICK:
-				_kick(cmd_arg);
-				break;
-			case INVITE:
-				_invite(cmd_arg);
-				break;
-			case TOPIC:
-				_topic(cmd_arg);
-				break;
-			case MODE:
-				_mode(cmd_arg);
-				break;
-			case PING:
-				_ping(cmd_arg);
-				break;
-			case WHOIS:
-				_whois(cmd_arg);
-				break;
-			case CAP:
-				break;
-			default:
-				break;
+			(*this.*cmd_ft->second)(cmd_arg);
 		}
+		// _cmdMap[cmd_name](cmd_arg); cette ligne ne marche malheureusement pas :'(
 	}
 }
 
@@ -150,8 +112,7 @@ std::vector<std::string>	Message::_split(const std::string &str, const std::stri
 	{
 		pos = str.find(sep, i);
 		std::string	tmp = str.substr(i, pos - i);
-		// if (tmp.size() >= 1)
-			res.push_back(tmp);
+		res.push_back(tmp);
 		if (pos != std::string::npos)
 			i = pos + sep.size();
 		else
@@ -160,7 +121,7 @@ std::vector<std::string>	Message::_split(const std::string &str, const std::stri
 	return (res);
 }
 
-void	Message::appendOutputMsg(std::string err_code, std::string arg)
+void	Message::appendOutputMsg(const std::string &err_code, const std::string &arg)
 {
 	_output << err_code;
 	if (arg.size())
@@ -185,7 +146,7 @@ void	Message::_welcomeNewUser()
 	}
 }
 
-void	Message::_nick(std::string arg)
+void	Message::_nick(const std::string &arg)
 {
 	std::cout << "	*Message class: NICK cmd detected*\n";
 	if (arg.empty())
@@ -208,7 +169,7 @@ void	Message::_nick(std::string arg)
 	_welcomeNewUser();
 }
 
-void	Message::_user(std::string arg)
+void	Message::_user(const std::string &arg)
 {
 	std::cout << "	*Message class: USER cmd detected*\n";
 
@@ -246,7 +207,7 @@ void	Message::_user(std::string arg)
 	}
 }
 
-void	Message::_join(std::string arg)
+void	Message::_join(const std::string &arg)
 {
 	std::cout << "	*Message class: JOIN cmd detected*\n";
 	if (arg.empty())
@@ -307,7 +268,7 @@ void	Message::_join(std::string arg)
 	}	
 }
 
-void		Message::_privmsg(std::string arg)
+void		Message::_privmsg(const std::string &arg)
 {
 	std::cout << "	*Message class: PRIVMSG cmd detected*\n";
 	std::stringstream	ss(arg);
@@ -325,11 +286,8 @@ void		Message::_privmsg(std::string arg)
 	
 	if (target_name[0] == '#')
 	{
-		// if sender is banned from channel => command silently fails
 		// Channels with the moderated mode active may block messages from certain users
 		// Other channel modes may affect the delivery of the message or cause the message to be modified before delivery, and these modes are defined by the server software and configuration being used
-	
-		// msg couldn't be delivered : ERR_CANNOTSENDTOCHAN
 		std::vector<User *> chan_users = _server->getChannel(target_name).getUsers();
 
 		for ( std::vector<User *>::iterator it = chan_users.begin();
@@ -350,7 +308,7 @@ void		Message::_privmsg(std::string arg)
 	}
 }
 
-void		Message::_kick(std::string arg)
+void		Message::_kick(const std::string &arg)
 {
 	std::cout << "	*Message class: KICK cmd detected*\n";
 	std::cout << "	*arg: " << arg << "*\n";
@@ -393,7 +351,7 @@ void		Message::_kick(std::string arg)
 	}
 }
 
-void		Message::_invite(std::string arg)
+void		Message::_invite(const std::string &arg)
 {
 	std::cout << "	*Message class: INVITE cmd detected*\n";
 	std::stringstream	ss(arg);
@@ -420,7 +378,7 @@ void		Message::_invite(std::string arg)
 	}
 }
 
-void		Message::_topic(std::string arg)
+void		Message::_topic(const std::string &arg)
 {
 	std::cout << "	*Message class: TOPIC cmd detected*\n";
 	std::stringstream	ss(arg);
@@ -460,7 +418,7 @@ void		Message::_topic(std::string arg)
 	
 }
 
-void		Message::_mode(std::string arg)
+void		Message::_mode(const std::string &arg)
 {
 	std::cout << "	*Message class: MODE cmd detected*\n";
 	std::stringstream	ss(arg);
@@ -511,7 +469,7 @@ void		Message::_mode(std::string arg)
 	
 }
 
-void		Message::_ping(std::string arg)
+void		Message::_ping(const std::string &arg)
 {
 	std::cout << "	*Message class: PING cmd detected*\n";
 	std::stringstream	ss(arg);
@@ -525,7 +483,7 @@ void		Message::_ping(std::string arg)
 	_output << "PONG " << ret << "\n";
 }
 
-void	Message::_whois(std::string arg)
+void	Message::_whois(const std::string &arg)
 {
 	std::cout << "	*Message class: WHOIS cmd detected*\n";
 	std::stringstream	ss(arg);

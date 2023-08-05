@@ -6,7 +6,7 @@
 /*   By: mchassig <mchassig@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2023/07/01 13:44:20 by adesgran          #+#    #+#             */
-/*   Updated: 2023/08/04 17:10:25 by mchassig         ###   ########.fr       */
+/*   Updated: 2023/08/05 14:11:11 by mchassig         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -123,28 +123,28 @@ void		User::setHostname( const std::string hostname )
 	this->_hostname = hostname;
 }
 
-std::string	User::getActiveModes( void )
+std::string	User::getActiveModes( void ) const
 {
 	std::string ret;
-	if (_modes['a'])
+	if (_modes.at('a'))
 		ret += 'a';
-	if (_modes['i'])
+	if (_modes.at('i'))
 		ret += 'i';
-	if (_modes['w'])
+	if (_modes.at('w'))
 		ret += 'w';
-	if (_modes['o'])
+	if (_modes.at('o'))
 		ret += 'o';
-	if (_modes['O'])
+	if (_modes.at('O'))
 		ret += 'O';
 	return (ret);
 }
 
-bool	User::setModes(std::string new_modes)
+bool	User::setModes(const std::string new_modes)
 {
 	char	op = 0;
 	bool	err = false;
 
-	for (std::string::iterator it = new_modes.begin(); it != new_modes.end(); it++)
+	for (std::string::const_iterator it = new_modes.begin(); it != new_modes.end(); it++)
 	{
 		if (*it == '+' || *it == '-')
 		{
@@ -165,20 +165,6 @@ bool	User::setModes(std::string new_modes)
 	}
 	return (err);
 }
-
-// void	User::addMode( const char newMode )
-// {
-// 	if (_mode.find_first_of(newMode) == std::string::npos)
-// 		_mode += newMode;
-// }
-
-// void	User::removeMode( const char oldMode )
-// {
-// 	size_t	i = _mode.find_first_of(oldMode);
-// 	if (i != std::string::npos)
-// 		_mode.erase(i, 1);
-// }
-
 
 Message	*User::getMessage( void ) const
 {

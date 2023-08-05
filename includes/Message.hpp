@@ -6,7 +6,7 @@
 /*   By: mchassig <mchassig@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2023/07/13 12:20:36 by adesgran          #+#    #+#             */
-/*   Updated: 2023/08/04 18:20:44 by mchassig         ###   ########.fr       */
+/*   Updated: 2023/08/05 14:11:58 by mchassig         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -40,11 +40,6 @@ enum cmdValue {
 	WHOIS,
 	CAP,
 };
-
-/*
- # define ITOA( x ) static_cast< std::ostringstream & >( \
-		 ( std::ostringstream() << std::dec << x ) ).str()
-		 */
 
 # define USERTAG( u ) u->getNickname() << '!' << u->getUsername() \
 		<< "@localhost"
@@ -89,36 +84,37 @@ class Message {
 		~Message( void );
 		Message &operator=( const Message &message );
 
-		void				setInputMsg(std::string &input_buffer, Server *server);
+		void				setInputMsg(const std::string &input_buffer, Server *server);
 		std::string			getInputMsg() const;
-		std::string			getOutputMsg() ;
-		void				appendOutputMsg(std::string err_code, std::string arg = "");
+		std::string			getOutputMsg();
+		void				appendOutputMsg(const std::string &err_code, const std::string &arg = "");
 
 	private:
-		std::map<std::string, cmdValue>	_cmdMap; //maybe change cmdValue to a pointer to function
-		User*							_sender;
-		Server*							_server;
+		typedef void (Message::*cmdFunction)(const std::string&);
+		std::map<std::string, cmdFunction>	_cmdMap;
+		User*								_sender;
+		Server*								_server;
 
-		std::string						_input;
-		std::stringstream				_output;
+		std::string							_input;
+		std::stringstream					_output;
 
 		// Utils ----------------------------------------------
-		void						_parseInput(std::vector<std::string> input_lines);
+		void						_parseInput(const std::vector<std::string> &input_lines);
 		std::vector<std::string>	_split(const std::string &str, const std::string &sep) const;
 
 		// IRC commands -----------------------------------------
 		void	_welcomeNewUser();
 
-		void	_nick(std::string arg);
-		void	_user(std::string arg);
-		void	_join(std::string arg);
-		void	_privmsg(std::string arg);
-		void	_kick(std::string arg);
-		void	_invite(std::string arg);
-		void	_topic(std::string arg);
-		void	_mode(std::string arg);
-		void	_ping(std::string arg);
-		void	_whois(std::string arg);
+		void	_nick(const std::string &arg);
+		void	_user(const std::string &arg);
+		void	_join(const std::string &arg);
+		void	_privmsg(const std::string &arg);
+		void	_kick(const std::string &arg);
+		void	_invite(const std::string &arg);
+		void	_topic(const std::string &arg);
+		void	_mode(const std::string &arg);
+		void	_ping(const std::string &arg);
+		void	_whois(const std::string &arg);
 
 		// // Exception ------------------------------------------
 		// class CommandErrorException : public std::exception
