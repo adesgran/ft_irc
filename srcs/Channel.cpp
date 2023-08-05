@@ -6,7 +6,7 @@
 /*   By: mchassig <mchassig@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2023/07/02 12:59:54 by adesgran          #+#    #+#             */
-/*   Updated: 2023/08/04 18:18:15 by mchassig         ###   ########.fr       */
+/*   Updated: 2023/08/05 14:07:57 by mchassig         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -68,7 +68,7 @@ void	Channel::addUser( User *target, User *sender )
 	_users.push_back(target);
 }
 
-void	Channel::removeUser( User *user )
+void	Channel::removeUser( const User *user )
 {
 	for ( std::vector<User *>::iterator it = this->_users.begin();
 			it != this->_users.end();
@@ -96,9 +96,9 @@ void	Channel::removeUser( int fd )
 	}
 }
 
-bool	Channel::isUserOnChannel(const std::string &nickname)
+bool	Channel::isUserOnChannel(const std::string &nickname) const
 {
-	for (std::vector<User *>::iterator it = _users.begin(); it != _users.end(); it++)
+	for (std::vector<User *>::const_iterator it = _users.begin(); it != _users.end(); it++)
 	{
 		if (!nickname.compare((*it)->getNickname()))
 			return (true);
@@ -106,7 +106,7 @@ bool	Channel::isUserOnChannel(const std::string &nickname)
 	return (false);
 }
 
-void	Channel::setName( const std::string name )
+void	Channel::setName( const std::string &name )
 {
 	this->_name = name;
 }
@@ -116,13 +116,13 @@ std::string	Channel::getName( void ) const
 	return (this->_name);
 }
 
-bool	Channel::setModes(std::string new_modes, std::string mode_arg)
+bool	Channel::setModes(const std::string &new_modes, const std::string &mode_arg)
 {
 	char	op = 0;
 	bool	err = false;
 	std::stringstream	ss(mode_arg);
 
-	for (std::string::iterator it = new_modes.begin(); it != new_modes.end(); it++)
+	for (std::string::const_iterator it = new_modes.begin(); it != new_modes.end(); it++)
 	{
 		if (*it == '+' || *it == '-')
 		{
@@ -145,23 +145,23 @@ bool	Channel::setModes(std::string new_modes, std::string mode_arg)
 	return (err);
 }
 
-std::string	Channel::getActiveModes()
+std::string	Channel::getActiveModes() const
 {
 	std::string ret;
-	if (_modes['i'])
+	if (_modes.at('i'))
 		ret += 'i';
-	if (_modes['t'])
+	if (_modes.at('t'))
 		ret += 't';
-	if (_modes['k'])
+	if (_modes.at('k'))
 		ret += 'k';
-	if (_modes['o'])
+	if (_modes.at('o'))
 		ret += 'o';
-	if (_modes['l'])
+	if (_modes.at('l'))
 		ret += 'l';
 	return (ret);
 }
 
-void	Channel::setKey(User *sender, const std::string key)
+void	Channel::setKey(const User *sender, const std::string key)
 {
 	// if sender != operator
 	// error
@@ -179,7 +179,7 @@ std::string	Channel::getKey() const
 	return (_key);
 }
 
-void	Channel::setTopic(User *sender, std::string new_topic)
+void	Channel::setTopic(const User *sender, const std::string &new_topic)
 {
 	if (_modes['t'])
 	{
@@ -195,7 +195,7 @@ std::string	Channel::getTopic() const
 	return (_topic);
 }
 
-void	Channel::setClientLimit(User *sender, size_t new_lim)
+void	Channel::setClientLimit(const User *sender, size_t new_lim)
 {
 	// if sender != operator
 	// error

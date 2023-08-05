@@ -6,7 +6,7 @@
 /*   By: mchassig <mchassig@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2023/07/01 13:43:30 by adesgran          #+#    #+#             */
-/*   Updated: 2023/08/04 17:08:05 by mchassig         ###   ########.fr       */
+/*   Updated: 2023/08/05 14:10:28 by mchassig         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -44,10 +44,8 @@ class User {
 		void		setRealname( const std::string realname );
 		std::string	getHostname( void ) const;
 		void		setHostname( const std::string hostname );
-		std::string	getActiveModes( void );
-		bool		setModes( std::string new_modes );
-		// void		addMode( const char newMode );
-		// void		removeMode( const char oldMode );
+		std::string	getActiveModes( void ) const;
+		bool		setModes( const std::string new_modes );
 		Message		*getMessage( void ) const;
 		bool		isWelcomed( void ) const;
 		void		welcome( void );
