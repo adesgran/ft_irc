@@ -6,7 +6,7 @@
 /*   By: mchassig <mchassig@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2023/07/02 11:59:06 by adesgran          #+#    #+#             */
-/*   Updated: 2023/08/04 16:53:57 by mchassig         ###   ########.fr       */
+/*   Updated: 2023/08/06 17:07:02 by mchassig         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -52,13 +52,14 @@ class Server {
 		const std::vector<User *>	&getUsers( void ) const;
 		const std::vector<Channel *>	&getChannels( void ) const;
 
-		User	&getUser( const int sockfd );
-		User	&getUser( const std::string name );
-		bool	isUser(const std::string nickname);
-		Log		*getLog( void );
+		User	&getUser( const int sockfd ) const;
+		User	&getUser( const std::string name ) const;
+		bool	isUser(const std::string nickname) const;
+		Log		*getLog( void ) const;
 
-		Channel	&getChannel( const std::string name );
-		bool	isChannel(const std::string name);
+		void	addChannel(Channel *new_chan);
+		Channel	&getChannel( const std::string name ) const;
+		bool	isChannel(const std::string name) const;
 
 		static void	stop( void );
 

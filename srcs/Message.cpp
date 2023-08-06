@@ -6,7 +6,7 @@
 /*   By: mchassig <mchassig@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2023/07/13 12:21:22 by adesgran          #+#    #+#             */
-/*   Updated: 2023/08/05 14:14:15 by mchassig         ###   ########.fr       */
+/*   Updated: 2023/08/06 17:41:52 by mchassig         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -93,13 +93,8 @@ void	Message::_parseInput(const std::vector<std::string> &input_lines)
 		std::getline(ss, cmd_name, ' ');
 		std::getline(ss, cmd_arg);
 
-		std::map<std::string, cmdFunction>::const_iterator cmd_ft;
-		cmd_ft = _cmdMap.find(cmd_name);
-		if (cmd_ft != _cmdMap.end())
-		{
-			(*this.*cmd_ft->second)(cmd_arg);
-		}
-		// _cmdMap[cmd_name](cmd_arg); cette ligne ne marche malheureusement pas :'(
+		if (_cmdMap.find(cmd_name) != _cmdMap.end())
+			(this->*_cmdMap[cmd_name])(cmd_arg);
 	}
 }
 
@@ -173,28 +168,23 @@ void	Message::_user(const std::string &arg)
 {
 	std::cout << "	*Message class: USER cmd detected*\n";
 
-	if (_sender->isWelcomed())
-	{
-		appendOutputMsg(ERR_ALREADYREGISTERED);	// => attempt should fail
-		return ;
-	}
-
 	std::stringstream	ss(arg);
 	std::string			username, mode, unused, realName;
-
 	try
 	{
+		if (_sender->isWelcomed())
+			throw std::invalid_argument(ERR_ALREADYREGISTERED);
 		if (!std::getline(ss, username, ' '))
-			throw std::exception();
+			throw std::invalid_argument(ERR_NEEDMOREPARAMS);
 		_sender->setUsername(username);
 		if (!std::getline(ss, mode, ' '))
-			throw std::exception();
+			throw std::invalid_argument(ERR_NEEDMOREPARAMS);
 		(void)mode;
 		if (!std::getline(ss, unused, ' '))
-			throw std::exception();
+			throw std::invalid_argument(ERR_NEEDMOREPARAMS);
 		(void)unused;
 		if (!std::getline(ss, realName, ' '))
-			throw std::exception();
+			throw std::invalid_argument(ERR_NEEDMOREPARAMS);
 		if (realName[0] == ':')
 			realName.erase(0, 1);
 		_sender->setRealname(realName);
@@ -203,7 +193,7 @@ void	Message::_user(const std::string &arg)
 	}
 	catch(const std::exception& e)
 	{
-		appendOutputMsg(ERR_NEEDMOREPARAMS);	// => server should reject command
+		appendOutputMsg(e.what());
 	}
 }
 
@@ -221,7 +211,6 @@ void	Message::_join(const std::string &arg)
 	// }
 	//ERR_NOSUCHCHANNEL
 	//ERR_TOOMANYTARGETS
-	//ERR_BANNEDFROMCHAN
 	//ERR_BADCHANMASK
 	//ERR_TOOMANYCHANNELS
 	//ERR_UNAVAILRESOURCE
@@ -234,35 +223,37 @@ void	Message::_join(const std::string &arg)
 	size_t	i = 0;
 	while (i < chan_name.size())
 	{
-		// if(!_server->isChannel(chan_name[i]))
-		// _sender devient operator du channel
-		Channel	&channel = _server->getChannel(chan_name[i]);
-		if (channel.getActiveModes().find('k') == std::string::npos
-			|| (channel.getActiveModes().find('k') != std::string::npos && !channel.getKey().compare(key[i])))
+		try
 		{
-			std::vector<User *> users = channel.getUsers();
-
-			for ( std::vector<User *>::iterator it = users.begin();
-					it != users.end();
-					it++)
+			Channel channel;
+			if (!_server->isChannel(chan_name[i]))
 			{
-				(*it)->getMessage()->_output << USERTAG(_sender) << " JOIN " << chan_name[i] << '\n';
+				_server->addChannel(new Channel(chan_name[i], _sender));
+				channel = _server->getChannel(chan_name[i]);
 			}
-			channel.addUser(_sender);
-			
-			_output << USERTAG(_sender) << " JOIN " << arg << "\n";
-			appendOutputMsg(RPL_TOPIC, channel.getTopic());
-			_output << USERTAG(_sender) << " " << channel.status << " " << chan_name[i] << " :";
+			else
+			{
+				channel = _server->getChannel(chan_name[i]);
+				channel.addUser(_sender);
+			}
+			std::vector<User *> users = channel.getUsers();
 			for ( std::vector<User *>::iterator it = users.begin();
 					it != users.end();
 					it++)
-				(*it)->getMessage()->_output << (*it)->getNickname() << " ";
+				(*it)->getMessage()->_output << USERTAG(_sender) << " JOIN " << chan_name[i] << '\n';
+			_output << RPL_TOPIC << " :" << channel.getTopic();
+			_output << USERTAG(_sender) << " " << channel.status << " " << chan_name[i] << " :";
+			_output << RPL_NAMREPLY << " :";
+			for ( std::vector<User *>::iterator it = users.begin();
+					it != users.end();
+					it++)
+				_output << (*it)->getNickname() << " ";
 			_output << _sender->getNickname() << "\n";
 			_output << RPL_ENDOFNAMES << std::endl;
 		}
-		else
+		catch (std::exception &e)
 		{
-			_output << ERR_BADCHANNELKEY << " " << chan_name[i] << "\n";
+			appendOutputMsg(e.what());
 		}
 		i++;
 	}	
@@ -311,7 +302,6 @@ void		Message::_privmsg(const std::string &arg)
 void		Message::_kick(const std::string &arg)
 {
 	std::cout << "	*Message class: KICK cmd detected*\n";
-	std::cout << "	*arg: " << arg << "*\n";
 	std::stringstream	ss(arg);
 	std::string			chan_name, comment, target_list;
 	std::vector<std::string>	targets;
@@ -324,13 +314,11 @@ void		Message::_kick(const std::string &arg)
 		targets = _split(target_list, ",");
 		if (!std::getline(ss, comment) || (comment.size() <= 1 && !comment.compare(":")))
 			comment = ":You have been kicked from the " + chan_name + " channel.\n";
-		if (!_server->isChannel(chan_name))
-			throw std::invalid_argument(ERR_NOSUCHCHANNEL);
 		Channel	&channel = _server->getChannel(chan_name);
 		if (!channel.isUserOnChannel(_sender->getNickname()))
 			throw std::invalid_argument(ERR_NOTONCHANNEL);
-		// if (_sender n'est pas un operator)
-		// throw std::invalid_argument(ERR_CHANOPRIVSNEEDED);
+		if (!channel.isChanop(_sender->getNickname()))
+			throw std::invalid_argument(ERR_CHANOPRIVSNEEDED);
 		for (std::vector<std::string>::iterator it = targets.begin();
 				it != targets.end();
 				it++)
@@ -358,15 +346,12 @@ void		Message::_invite(const std::string &arg)
 	std::string			target_nickname, target_chan;
 	try
 	{
-		std::cout << "ICI\n";
 		if (!std::getline(ss, target_nickname, ' ') || !std::getline(ss, target_chan, ' '))
 			throw std::invalid_argument(ERR_NEEDMOREPARAMS);
 		if (!_server->isUser(target_nickname))
 			throw std::invalid_argument(ERR_NOSUCHNICK); // Pas indiqué dans la doc ??
-		if (!_server->isChannel(target_chan))
-			throw std::invalid_argument(ERR_NOSUCHCHANNEL);
 		Channel &channel = _server->getChannel(target_chan);
-		if (!channel.isUserOnChannel(target_nickname))
+		if (!channel.isUserOnChannel(_sender->getNickname()))
 			throw std::invalid_argument(ERR_NOTONCHANNEL);
 		channel.addUser(&_server->getUser(target_nickname), _sender);
 		appendOutputMsg(RPL_INVITING);
@@ -388,11 +373,9 @@ void		Message::_topic(const std::string &arg)
 	{
 		if (!std::getline(ss, target, ' '))
 			throw std::invalid_argument(ERR_NEEDMOREPARAMS);
-		if (!_server->isChannel(target))
-			throw std::invalid_argument(ERR_NOSUCHCHANNEL);
 		Channel	&channel = _server->getChannel(target);
 		if (!channel.isUserOnChannel(_sender->getNickname()))
-			throw std::invalid_argument(ERR_NOTONCHANNEL);
+			throw std::invalid_argument(ERR_NOTONCHANNEL); // ERR optionnelle
 		if (!std::getline(ss, new_topic))
 		{
 			if (channel.getTopic().empty())
@@ -405,7 +388,6 @@ void		Message::_topic(const std::string &arg)
 			new_topic.erase(0, 1);
 		channel.setTopic(_sender, new_topic);
 		std::vector<User *> chan_users = channel.getUsers();
-
 		for ( std::vector<User *>::iterator it = chan_users.begin();
 				it != chan_users.end();
 				it++)
@@ -415,37 +397,28 @@ void		Message::_topic(const std::string &arg)
 	{
 		appendOutputMsg(e.what());
 	}
-	
 }
 
 void		Message::_mode(const std::string &arg)
 {
 	std::cout << "	*Message class: MODE cmd detected*\n";
 	std::stringstream	ss(arg);
-	std::string			target_name, mode_list, mode_arg;
+	std::string			target_name, mode_list;
 	std::getline(ss, target_name, ' ');
 
 	try
 	{
 		if (target_name[0] == '#')
 		{
-			if (!_server->isChannel(target_name))
-				throw std::invalid_argument(ERR_NOSUCHCHANNEL);
 			Channel	&channel = _server->getChannel(target_name);
 			if (!std::getline(ss, mode_list, ' '))
 			{
 				appendOutputMsg(RPL_CHANNELMODEIS, channel.getActiveModes());
 				return ;
 			}
-			// if sender != chanops
-			// ERR_CHANOPRIVSNEEDED
-			if (!std::getline(ss, mode_list, ' '))
-			{
-				appendOutputMsg(RPL_UMODEIS, channel.getActiveModes());
-				return ;
-			}
-			std::getline(ss, mode_arg);
-			channel.setModes(mode_list, mode_arg);
+			if (!channel.isChanop(_sender->getNickname()))
+				throw std::invalid_argument(ERR_CHANOPRIVSNEEDED);
+			channel.setModes(_sender, mode_list, ss);
 		}
 		else
 		{
@@ -455,7 +428,7 @@ void		Message::_mode(const std::string &arg)
 				throw std::invalid_argument(ERR_USERSDONTMATCH);
 			if (!std::getline(ss, mode_list, ' '))
 			{
-				appendOutputMsg(RPL_UMODEIS, _sender->getActiveModes());
+				appendOutputMsg(RPL_UMODEIS, _sender->getActiveModes()); // mauvais affichage
 				return ;
 			}
 			_sender->setModes(mode_list);
@@ -466,7 +439,6 @@ void		Message::_mode(const std::string &arg)
 	{
 		appendOutputMsg(e.what());
 	}
-	
 }
 
 void		Message::_ping(const std::string &arg)

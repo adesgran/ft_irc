@@ -6,7 +6,7 @@
 /*   By: mchassig <mchassig@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2023/07/02 12:03:38 by adesgran          #+#    #+#             */
-/*   Updated: 2023/08/04 16:54:13 by mchassig         ###   ########.fr       */
+/*   Updated: 2023/08/06 17:08:54 by mchassig         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -81,7 +81,7 @@ Server &Server::operator=(const Server &server)
 	return (*this);
 }
 
-Log	*Server::getLog( void )
+Log	*Server::getLog( void ) const
 {
 	return (this->_log);
 }
@@ -96,10 +96,10 @@ const std::vector<Channel *>	&Server::getChannels( void ) const
 	return (this->_channels);
 }
 
-User	&Server::getUser( const int sockfd )
+User	&Server::getUser( const int sockfd ) const
 {
 	for ( 
-			std::vector<User *>::iterator it = this->_users.begin(); 
+			std::vector<User *>::const_iterator it = this->_users.begin(); 
 			it != this->_users.end(); 
 			it++ )
 	{
@@ -109,10 +109,10 @@ User	&Server::getUser( const int sockfd )
 	throw (Server::UserDoesNotExistException());
 }
 
-User	&Server::getUser( const std::string name )
+User	&Server::getUser( const std::string name ) const
 {
 	for ( 
-			std::vector<User *>::iterator it = this->_users.begin(); 
+			std::vector<User *>::const_iterator it = this->_users.begin(); 
 			it != this->_users.end(); 
 			it++ )
 	{
@@ -122,10 +122,10 @@ User	&Server::getUser( const std::string name )
 	throw (Server::UserDoesNotExistException());
 }
 
-bool	Server::isUser(const std::string nickname)
+bool	Server::isUser(const std::string nickname) const
 {
 	for ( 
-			std::vector<User *>::iterator it = this->_users.begin(); 
+			std::vector<User *>::const_iterator it = this->_users.begin(); 
 			it != this->_users.end(); 
 			it++ )
 	{
@@ -162,25 +162,28 @@ void	Server::_remove_user( int fd )
 	}
 }
 
-Channel	&Server::getChannel( const std::string name )
+void	Server::addChannel(Channel *new_chan)
+{
+	this->_channels.push_back(new_chan);
+}
+
+Channel	&Server::getChannel( const std::string name ) const
 {
 	for (
-			std::vector<Channel *>::iterator it = this->_channels.begin(); 
+			std::vector<Channel *>::const_iterator it = this->_channels.begin(); 
 			it != this->_channels.end(); 
 			it++ )
 	{
 		if ( (*it)->getName() == name )
 			return (**it);
 	}
-	Channel	*res = new Channel(name);
-	this->_channels.push_back(res);
-	return (*res);
+	throw std::invalid_argument(ERR_NOSUCHCHANNEL);
 }
 
-bool	Server::isChannel(const std::string name)
+bool	Server::isChannel(const std::string name) const
 {
 	for (
-			std::vector<Channel *>::iterator it = this->_channels.begin(); 
+			std::vector<Channel *>::const_iterator it = this->_channels.begin(); 
 			it != this->_channels.end(); 
 			it++ )
 	{

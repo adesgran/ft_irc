@@ -6,7 +6,7 @@
 /*   By: mchassig <mchassig@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2023/07/02 12:59:54 by adesgran          #+#    #+#             */
-/*   Updated: 2023/08/05 14:07:57 by mchassig         ###   ########.fr       */
+/*   Updated: 2023/08/06 17:53:41 by mchassig         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -22,16 +22,17 @@ Channel::Channel(void)
 	_modes['l'] = false;
 }
 
-Channel::Channel( const std::string name )
+Channel::Channel( const std::string name, User *founder )
 {
 	this->_name = name;
+	_users.push_back(founder);
+	_chanops.insert(std::make_pair(founder->getNickname(), 1));
 	_modes['i'] = false;
 	_modes['t'] = false;
 	_modes['k'] = false;
 	_modes['o'] = false;
 	_modes['l'] = false;
 }
-
 
 Channel::Channel(const Channel &channel)
 {
@@ -57,15 +58,18 @@ const std::vector<User *>	Channel::getUsers( void ) const
 	return (this->_users);
 }
 
-void	Channel::addUser( User *target, User *sender )
+void	Channel::addUser( User *target, User *sender, std::string key )
 {
-	if (_modes['i'] && sender != NULL)
+	if (_modes['i'] && (sender == NULL || !_chanops[sender->getNickname()]))
 		throw std::invalid_argument(ERR_INVITEONLYCHAN);
+	if (!_modes['i'] && _modes['k'] && _key.compare(key))
+		throw std::invalid_argument(ERR_BADCHANNELKEY + std::string(" ") + _name);
 	if (isUserOnChannel(target->getNickname()))
 		throw std::invalid_argument(ERR_USERONCHANNEL);
 	if (_modes['l'] && _users.size() == _client_limit)
 		throw std::invalid_argument(ERR_CHANNELISFULL);
 	_users.push_back(target);
+	_chanops.insert(std::make_pair(target->getNickname(), 0));
 }
 
 void	Channel::removeUser( const User *user )
@@ -76,6 +80,7 @@ void	Channel::removeUser( const User *user )
 	{
 		if ( *it == user )
 		{
+			_chanops.erase(_chanops.find((*it)->getNickname()));
 			this->_users.erase(it);
 			return ;
 		}
@@ -90,6 +95,7 @@ void	Channel::removeUser( int fd )
 	{
 		if ( (*it)->getSockfd() == fd )
 		{
+			_chanops.erase(_chanops.find((*it)->getNickname()));
 			this->_users.erase(it);
 			return ;
 		}
@@ -116,32 +122,79 @@ std::string	Channel::getName( void ) const
 	return (this->_name);
 }
 
-bool	Channel::setModes(const std::string &new_modes, const std::string &mode_arg)
+bool	Channel::setModes(const User *sender, const std::string &new_modes, std::stringstream &ss)
 {
-	char	op = 0;
+	char	sign = 0;
 	bool	err = false;
-	std::stringstream	ss(mode_arg);
-
 	for (std::string::const_iterator it = new_modes.begin(); it != new_modes.end(); it++)
 	{
 		if (*it == '+' || *it == '-')
 		{
-			op = *it;
+			sign = *it;
 		}
-		else if (op == '+' && _modes.find(*it) != _modes.end())
+		else if((sign == '+' || sign == '-') && _modes.find(*it) != _modes.end())
 		{
-			_modes[*it] = true;
+			bool	b;
+			if (sign == '+')
+				b = true;
+			else
+				b = false;
+			switch (*it)
+			{
+				case 'i': {
+					_modes['i'] = b;
+					break;
+				}
+				case 't': {
+					_modes['t'] = b;
+					break;
+				}
+				case 'k': {
+					_modes['k'] = b;
+					if (_modes['k'])
+					{
+						std::string	new_key;
+						if (!std::getline(ss, new_key, ','))
+							sender->getMessage()->appendOutputMsg(ERR_INVALIDMODEPARAM, _name + " " + *it + " :Missing key");
+						else if (new_key.find_first_of(" ,") != std::string::npos)
+							sender->getMessage()->appendOutputMsg(ERR_INVALIDMODEPARAM, _name + " " + *it + " " + new_key + " :Not a valid key");						
+						else
+							_key = new_key;
+					}
+					break;
+				}
+				case 'o': {
+					std::string	nickname;
+					if (!std::getline(ss, nickname, ','))
+						sender->getMessage()->appendOutputMsg(ERR_INVALIDMODEPARAM, _name + " " + *it + " :Missing user nickname");
+					else if (!isUserOnChannel(nickname))
+						sender->getMessage()->appendOutputMsg(ERR_INVALIDMODEPARAM, _name + " " + *it + " " + nickname + " :User is not on channel");
+					else
+						_chanops[nickname] = b;
+					break;
+				}
+				case 'l': {
+					_modes['l'] = b;
+					if (_modes['l'])
+					{
+						std::string	new_lim;
+						if (!std::getline(ss, new_lim, ','))
+							sender->getMessage()->appendOutputMsg(ERR_INVALIDMODEPARAM, _name + " " + *it + " :Missing client limit");
+						else
+						{
+							std::stringstream tmpss(new_lim);
+							tmpss >> _client_limit;
+						}
+					}
+					break;
+				}
+			}
 		}
-		else if (op == '-' && _modes.find(*it) != _modes.end())
-		{
-			_modes[*it] = false;
-		}
-		else if (*it != 'o')
+		else
 		{
 			err = true;
 		}
 	}
-	(void)mode_arg;
 	return (err);
 }
 
@@ -161,33 +214,16 @@ std::string	Channel::getActiveModes() const
 	return (ret);
 }
 
-void	Channel::setKey(const User *sender, const std::string key)
+bool	Channel::isActiveMode(char c) const
 {
-	// if sender != operator
-	// error
-	if (!_modes['k'])
-		return ;
-	if (key.find(' ') == std::string::npos)
-		_key = key;
-	else
-		throw std::exception(); // ERR_INVALIDMODEPARAM
-	(void)sender;
-}
-
-std::string	Channel::getKey() const
-{
-	return (_key);
+	return (_modes.at(c));
 }
 
 void	Channel::setTopic(const User *sender, const std::string &new_topic)
 {
-	if (_modes['t'])
-	{
-		// if sender != operator
-		// 	throw std::invalid_argument(ERR_CHANOPRIVSNEEDED);
-	}
+	if (_modes['t'] && !_chanops[sender->getNickname()])
+		throw std::invalid_argument(ERR_CHANOPRIVSNEEDED);
 	_topic = new_topic;
-	(void)sender;
 }
 
 std::string	Channel::getTopic() const
@@ -195,19 +231,18 @@ std::string	Channel::getTopic() const
 	return (_topic);
 }
 
-void	Channel::setClientLimit(const User *sender, size_t new_lim)
+
+std::string	Channel::getKey() const
 {
-	// if sender != operator
-	// error
-	if (!_modes['l'])
-		return ;
-	_client_limit = new_lim;
-	(void)sender;
+	return (_key);
+}
+
+bool	Channel::isChanop(const std::string &nickname) const
+{
+	return (_chanops.find(nickname)->second);
 }
 
 size_t	Channel::getClientLimit() const
 {
 	return (_client_limit);
 }
-
-
