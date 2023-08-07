@@ -6,7 +6,7 @@
 /*   By: mchassig <mchassig@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2023/07/02 12:59:54 by adesgran          #+#    #+#             */
-/*   Updated: 2023/08/06 17:53:41 by mchassig         ###   ########.fr       */
+/*   Updated: 2023/08/07 14:46:58 by mchassig         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -122,11 +122,12 @@ std::string	Channel::getName( void ) const
 	return (this->_name);
 }
 
-bool	Channel::setModes(const User *sender, const std::string &new_modes, std::stringstream &ss)
+bool	Channel::setModes(const User *sender, const std::string &modestring, std::stringstream &ss)
 {
 	char	sign = 0;
 	bool	err = false;
-	for (std::string::const_iterator it = new_modes.begin(); it != new_modes.end(); it++)
+	std::vector<std::string>	changed_modes;
+	for (std::string::const_iterator it = modestring.begin(); it != modestring.end(); it++)
 	{
 		if (*it == '+' || *it == '-')
 		{
@@ -188,6 +189,8 @@ bool	Channel::setModes(const User *sender, const std::string &new_modes, std::st
 					}
 					break;
 				}
+				default:
+					break;
 			}
 		}
 		else

@@ -6,7 +6,7 @@
 /*   By: mchassig <mchassig@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2023/07/01 13:44:20 by adesgran          #+#    #+#             */
-/*   Updated: 2023/08/05 14:11:11 by mchassig         ###   ########.fr       */
+/*   Updated: 2023/08/07 14:01:03 by mchassig         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -18,7 +18,6 @@ User::User(void)
 	this->_isop = false;
 	this->_welcomed = false;
 	this->_message = new Message(this);
-	_modes['a'] = false;
 	_modes['i'] = false;
 	_modes['w'] = false;
 	_modes['o'] = false;
@@ -31,7 +30,6 @@ User::User(int sockfd)
 	this->_isop = false;
 	this->_welcomed = false;
 	this->_message = new Message(this);
-	_modes['a'] = false;
 	_modes['i'] = false;
 	_modes['w'] = false;
 	_modes['o'] = false;
@@ -126,8 +124,6 @@ void		User::setHostname( const std::string hostname )
 std::string	User::getActiveModes( void ) const
 {
 	std::string ret;
-	if (_modes.at('a'))
-		ret += 'a';
 	if (_modes.at('i'))
 		ret += 'i';
 	if (_modes.at('w'))
@@ -160,7 +156,7 @@ bool	User::setModes(const std::string new_modes)
 		}
 		else if (*it != 'o' && *it != 'O')
 		{
-			_message->appendOutputMsg(ERR_UMODEUNKNOWNFLAG);
+			_message->appendOutputMsg(ERR_UMODEUNKNOWNFLAG, _nickname + " :Unknown MODE flag");
 		}
 	}
 	return (err);

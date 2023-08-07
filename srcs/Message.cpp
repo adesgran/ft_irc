@@ -6,7 +6,7 @@
 /*   By: mchassig <mchassig@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2023/07/13 12:21:22 by adesgran          #+#    #+#             */
-/*   Updated: 2023/08/06 17:41:52 by mchassig         ###   ########.fr       */
+/*   Updated: 2023/08/07 14:44:48 by mchassig         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -242,7 +242,6 @@ void	Message::_join(const std::string &arg)
 					it++)
 				(*it)->getMessage()->_output << USERTAG(_sender) << " JOIN " << chan_name[i] << '\n';
 			_output << RPL_TOPIC << " :" << channel.getTopic();
-			_output << USERTAG(_sender) << " " << channel.status << " " << chan_name[i] << " :";
 			_output << RPL_NAMREPLY << " :";
 			for ( std::vector<User *>::iterator it = users.begin();
 					it != users.end();
@@ -295,7 +294,7 @@ void		Message::_privmsg(const std::string &arg)
 	}
 	catch(const std::exception& e)
 	{
-		appendOutputMsg(ERR_NOSUCHNICK);
+		appendOutputMsg(ERR_NOSUCHNICK, _sender->getNickname() + " " + target_name + " :No such nick/channel");
 	}
 }
 
@@ -349,7 +348,7 @@ void		Message::_invite(const std::string &arg)
 		if (!std::getline(ss, target_nickname, ' ') || !std::getline(ss, target_chan, ' '))
 			throw std::invalid_argument(ERR_NEEDMOREPARAMS);
 		if (!_server->isUser(target_nickname))
-			throw std::invalid_argument(ERR_NOSUCHNICK); // Pas indiqué dans la doc ??
+			throw std::invalid_argument(ERR_NOSUCHNICK + std::string(" " + _sender->getNickname() + " " + target_nickname + " :No such nick/channel")); // Pas indiqué dans la doc ??
 		Channel &channel = _server->getChannel(target_chan);
 		if (!channel.isUserOnChannel(_sender->getNickname()))
 			throw std::invalid_argument(ERR_NOTONCHANNEL);
@@ -403,36 +402,45 @@ void		Message::_mode(const std::string &arg)
 {
 	std::cout << "	*Message class: MODE cmd detected*\n";
 	std::stringstream	ss(arg);
-	std::string			target_name, mode_list;
-	std::getline(ss, target_name, ' ');
+	std::string			target, modestring;
+	std::getline(ss, target, ' ');
 
 	try
 	{
-		if (target_name[0] == '#')
+		if (target[0] == '#')
 		{
-			Channel	&channel = _server->getChannel(target_name);
-			if (!std::getline(ss, mode_list, ' '))
+			Channel	&channel = _server->getChannel(target);
+			if (!std::getline(ss, modestring, ' '))
 			{
-				appendOutputMsg(RPL_CHANNELMODEIS, channel.getActiveModes());
-				return ;
+				appendOutputMsg(RPL_CHANNELMODEIS, target + " " + channel.getActiveModes());
 			}
-			if (!channel.isChanop(_sender->getNickname()))
-				throw std::invalid_argument(ERR_CHANOPRIVSNEEDED);
-			channel.setModes(_sender, mode_list, ss);
+			else
+			{
+				if (!channel.isChanop(_sender->getNickname()))
+					throw std::invalid_argument(ERR_CHANOPRIVSNEEDED + std::string(" " + _sender->getNickname() + " " + target + " :You're not a channel operator"));
+				channel.setModes(_sender, modestring, ss);
+				std::vector<User *> chan_users = channel.getUsers();
+				for ( std::vector<User *>::iterator it = chan_users.begin();
+						it != chan_users.end();
+						it++)
+					(*it)->getMessage()->_output << "MODE " << target << " :" << channel.getActiveModes() << '\n';
+			}
 		}
 		else
 		{
-			if (!_server->isUser(target_name))
-				throw std::invalid_argument(ERR_NOSUCHNICK);
-			if (target_name.compare(_sender->getNickname()))
-				throw std::invalid_argument(ERR_USERSDONTMATCH);
-			if (!std::getline(ss, mode_list, ' '))
+			if (!_server->isUser(target))
+				throw std::invalid_argument(ERR_NOSUCHNICK + std::string(" " + _sender->getNickname() + " " + target + " :No such nick/channel"));
+			if (target.compare(_sender->getNickname()))
+				throw std::invalid_argument(ERR_USERSDONTMATCH + std::string(" " + _sender->getNickname() + " :Cant change mode for other users"));
+			if (!std::getline(ss, modestring, ' '))
 			{
-				appendOutputMsg(RPL_UMODEIS, _sender->getActiveModes()); // mauvais affichage
-				return ;
+				appendOutputMsg(RPL_UMODEIS, target + " " + _sender->getActiveModes());
 			}
-			_sender->setModes(mode_list);
-			_output << "MODE " << _sender->getNickname() << " " << _sender->getActiveModes() << "\n";
+			else
+			{
+				_sender->setModes(modestring);
+				_output << "MODE " << target << " " << _sender->getActiveModes() << "\n";	
+			}
 		}
 	}
 	catch(const std::exception& e)
@@ -465,7 +473,7 @@ void	Message::_whois(const std::string &arg)
 	// sinon => ERR_NOSUCHSERVER 
 	if (_server->isUser(target_name))
 	{
-		appendOutputMsg(ERR_NOSUCHNICK);
+		appendOutputMsg(ERR_NOSUCHNICK + std::string(" " + _sender->getNickname() + " " + target_name + " :No such nick/channel"));
 		return ;
 	}
 	appendOutputMsg(RPL_ENDOFWHOIS);
