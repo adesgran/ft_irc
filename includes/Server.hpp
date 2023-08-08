@@ -6,7 +6,7 @@
 /*   By: mchassig <mchassig@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2023/07/02 11:59:06 by adesgran          #+#    #+#             */
-/*   Updated: 2023/08/01 16:35:19 by mchassig         ###   ########.fr       */
+/*   Updated: 2023/08/04 16:53:57 by mchassig         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -60,8 +60,6 @@ class Server {
 		Channel	&getChannel( const std::string name );
 		bool	isChannel(const std::string name);
 
-		bool	isModeImplemented(char &c);
-
 		static void	stop( void );
 
 		void	run( void );
@@ -78,7 +76,6 @@ class Server {
 		struct pollfd			*_pfds;
 		nfds_t					_nfds;
 		Log						*_log;
-		std::string				_implemented_modes;
 
 		void	_addUser( int fd );
 		void	_remove_user( int fd );

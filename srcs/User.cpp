@@ -6,7 +6,7 @@
 /*   By: mchassig <mchassig@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2023/07/01 13:44:20 by adesgran          #+#    #+#             */
-/*   Updated: 2023/07/28 14:07:41 by mchassig         ###   ########.fr       */
+/*   Updated: 2023/08/05 14:11:11 by mchassig         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -18,6 +18,11 @@ User::User(void)
 	this->_isop = false;
 	this->_welcomed = false;
 	this->_message = new Message(this);
+	_modes['a'] = false;
+	_modes['i'] = false;
+	_modes['w'] = false;
+	_modes['o'] = false;
+	_modes['O'] = false;
 }
 
 User::User(int sockfd)
@@ -26,6 +31,11 @@ User::User(int sockfd)
 	this->_isop = false;
 	this->_welcomed = false;
 	this->_message = new Message(this);
+	_modes['a'] = false;
+	_modes['i'] = false;
+	_modes['w'] = false;
+	_modes['o'] = false;
+	_modes['O'] = false;
 }
 
 User::User(const User &user)
@@ -113,24 +123,48 @@ void		User::setHostname( const std::string hostname )
 	this->_hostname = hostname;
 }
 
-std::string	User::getMode( void ) const
+std::string	User::getActiveModes( void ) const
 {
-	return (this->_mode);
+	std::string ret;
+	if (_modes.at('a'))
+		ret += 'a';
+	if (_modes.at('i'))
+		ret += 'i';
+	if (_modes.at('w'))
+		ret += 'w';
+	if (_modes.at('o'))
+		ret += 'o';
+	if (_modes.at('O'))
+		ret += 'O';
+	return (ret);
 }
 
-void	User::addMode( const char newMode )
+bool	User::setModes(const std::string new_modes)
 {
-	if (_mode.find_first_of(newMode) == std::string::npos)
-		_mode += newMode;
-}
+	char	op = 0;
+	bool	err = false;
 
-void	User::removeMode( const char oldMode )
-{
-	size_t	i = _mode.find_first_of(oldMode);
-	if (i != std::string::npos)
-		_mode.erase(i, 1);
+	for (std::string::const_iterator it = new_modes.begin(); it != new_modes.end(); it++)
+	{
+		if (*it == '+' || *it == '-')
+		{
+			op = *it;
+		}
+		else if (op == '+' && _modes.find(*it) != _modes.end() && *it != 'o' && *it != 'O')
+		{
+			_modes[*it] = true;
+		}
+		else if (op == '-' && _modes.find(*it) != _modes.end())
+		{
+			_modes[*it] = false;
+		}
+		else if (*it != 'o' && *it != 'O')
+		{
+			_message->appendOutputMsg(ERR_UMODEUNKNOWNFLAG);
+		}
+	}
+	return (err);
 }
-
 
 Message	*User::getMessage( void ) const
 {
