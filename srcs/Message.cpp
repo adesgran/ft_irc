@@ -6,7 +6,7 @@
 /*   By: mchassig <mchassig@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2023/07/13 12:21:22 by adesgran          #+#    #+#             */
-/*   Updated: 2023/08/07 14:44:48 by mchassig         ###   ########.fr       */
+/*   Updated: 2023/08/09 16:43:20 by mchassig         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -65,7 +65,7 @@ void		Message::setInputMsg(const std::string &input_buffer, Server *server)
 {
 	_input = input_buffer;
 	_server = server;
-	_parseInput(_split(_input, "\r\n"));
+	_parseInput(_split(_input, CRLF));
 }
 
 std::string	Message::getInputMsg() const
@@ -80,6 +80,25 @@ std::string	Message::getOutputMsg()
 	return (std::string(res));
 }
 
+void	Message::addNumericMsg(const std::string code, const std::string arg)
+{
+	_output << ':' << USERTAG(_sender);
+	_output << " " << code;
+	_output << " " << _sender->getNickname();
+	if (!arg.empty())
+		_output << " " << arg;
+	_output << CRLF;
+}
+
+void	Message::addMsg(const User *source, const std::string cmd, const std::string target, const std::string arg)
+{
+	_output << ':' << USERTAG(source);
+	_output << " " << cmd;
+	_output << " " << target;
+	if (!arg.empty())
+		_output << " " << arg;
+	_output << CRLF;
+}
 
 // Utils ----------------------------------------------
 void	Message::_parseInput(const std::vector<std::string> &input_lines)
@@ -95,6 +114,8 @@ void	Message::_parseInput(const std::vector<std::string> &input_lines)
 
 		if (_cmdMap.find(cmd_name) != _cmdMap.end())
 			(this->*_cmdMap[cmd_name])(cmd_arg);
+		else if (!cmd_name.empty())
+			addNumericMsg(ERR_UNKNOWNCOMMAND, cmd_name + " :Unknown command");
 	}
 }
 
@@ -116,16 +137,6 @@ std::vector<std::string>	Message::_split(const std::string &str, const std::stri
 	return (res);
 }
 
-void	Message::appendOutputMsg(const std::string &err_code, const std::string &arg)
-{
-	_output << err_code;
-	if (arg.size())
-	{
-		_output << " " << arg;
-	}
-	_output << "\n";
-}
-
 
 // IRC commands -----------------------------------------
 void	Message::_welcomeNewUser()
@@ -137,72 +148,60 @@ void	Message::_welcomeNewUser()
 		_output << ":" << std::string(SERVER_ADDRESS) << " " << RPL_WELCOME << " " << _sender->getNickname() 
 		<< " :Welcome to the <networkname> Network " 
 		<< USERTAG(_sender)
-		<< "\n";
+		<< CRLF;
 	}
 }
 
 void	Message::_nick(const std::string &arg)
 {
-	std::cout << "	*Message class: NICK cmd detected*\n";
-	if (arg.empty())
+	try
 	{
-		appendOutputMsg(ERR_NONICKNAMEGIVEN); // => should ignore the command
-		return ;
+		if (arg.empty())
+			throw NumericReply(ERR_NONICKNAMEGIVEN, ":No nickname given");
+		if (arg.find_first_of("#:@ \t\n\r\v\f") != std::string::npos)
+			throw NumericReply(ERR_ERRONEUSNICKNAME, arg + " :Erroneus nickname");
+		if (_server->isUser(arg))
+			throw NumericReply(ERR_NICKNAMEINUSE, arg + " :Nickname is already in use");
+		_sender->setNickname(arg);		
+		_welcomeNewUser();
 	}
-	if (arg.find_first_of("#: \t\n\r\v\f") != std::string::npos)
+	catch(const NumericReply& e)
 	{
-		appendOutputMsg(ERR_ERRONEUSNICKNAME);	// => should ignore the command
-		return ;
+		addNumericMsg(e.what(), e.param());
 	}
-	if (_server->isUser(arg))
-	{
-		appendOutputMsg(ERR_NICKNAMEINUSE);	// => should ignore the command
-		return ;
-	}
-	_sender->setNickname(arg);
-	
-	_welcomeNewUser();
 }
 
 void	Message::_user(const std::string &arg)
 {
-	std::cout << "	*Message class: USER cmd detected*\n";
-
 	std::stringstream	ss(arg);
 	std::string			username, mode, unused, realName;
 	try
 	{
 		if (_sender->isWelcomed())
-			throw std::invalid_argument(ERR_ALREADYREGISTERED);
-		if (!std::getline(ss, username, ' '))
-			throw std::invalid_argument(ERR_NEEDMOREPARAMS);
+			throw NumericReply(ERR_ALREADYREGISTERED, ":You may not reregister");
+		if (!std::getline(ss, username, ' ') || !std::getline(ss, mode, ' ') \
+				|| !std::getline(ss, unused, ' ') || !std::getline(ss, realName))
+			throw NumericReply(ERR_NEEDMOREPARAMS, "USER :Not enough parameters");
 		_sender->setUsername(username);
-		if (!std::getline(ss, mode, ' '))
-			throw std::invalid_argument(ERR_NEEDMOREPARAMS);
 		(void)mode;
-		if (!std::getline(ss, unused, ' '))
-			throw std::invalid_argument(ERR_NEEDMOREPARAMS);
 		(void)unused;
-		if (!std::getline(ss, realName, ' '))
-			throw std::invalid_argument(ERR_NEEDMOREPARAMS);
 		if (realName[0] == ':')
 			realName.erase(0, 1);
 		_sender->setRealname(realName);
 		
 		_welcomeNewUser();
 	}
-	catch(const std::exception& e)
+	catch(const NumericReply& e)
 	{
-		appendOutputMsg(e.what());
+		addNumericMsg(e.what(), e.param());
 	}
 }
 
 void	Message::_join(const std::string &arg)
 {
-	std::cout << "	*Message class: JOIN cmd detected*\n";
 	if (arg.empty())
 	{
-		appendOutputMsg(ERR_NEEDMOREPARAMS);	// => server should reject command
+		addNumericMsg(ERR_NEEDMOREPARAMS, "JOIN :Not enough parameters");
 		return ;
 	}
 	// if (!arg.compare("0"))
@@ -240,241 +239,232 @@ void	Message::_join(const std::string &arg)
 			for ( std::vector<User *>::iterator it = users.begin();
 					it != users.end();
 					it++)
-				(*it)->getMessage()->_output << USERTAG(_sender) << " JOIN " << chan_name[i] << '\n';
-			_output << RPL_TOPIC << " :" << channel.getTopic();
-			_output << RPL_NAMREPLY << " :";
+				(*it)->getMessage()->addMsg(_sender, "JOIN", chan_name[i]);
+				// (*it)->getMessage()->_output << ":" << USERTAG(_sender) << " JOIN " << chan_name[i] << CRLF;
+			addNumericMsg(RPL_TOPIC, ":" + channel.getTopic());
+			_output << ":" << USERTAG(_sender) << " " << RPL_NAMREPLY << " " << _sender->getNickname() << " :";
 			for ( std::vector<User *>::iterator it = users.begin();
 					it != users.end();
 					it++)
 				_output << (*it)->getNickname() << " ";
-			_output << _sender->getNickname() << "\n";
-			_output << RPL_ENDOFNAMES << std::endl;
+			_output << CRLF;
+			addNumericMsg(RPL_ENDOFNAMES);
 		}
-		catch (std::exception &e)
+		catch(const NumericReply& e)
 		{
-			appendOutputMsg(e.what());
+			addNumericMsg(e.what(), e.param());
 		}
 		i++;
-	}	
+	}
 }
 
 void		Message::_privmsg(const std::string &arg)
 {
-	std::cout << "	*Message class: PRIVMSG cmd detected*\n";
 	std::stringstream	ss(arg);
 	std::string			target_name, text_to_send;
-	if (!std::getline(ss, target_name, ' '))
-	{
-		appendOutputMsg(ERR_NORECIPIENT);
-		return ;
-	}
-	if (!std::getline(ss, text_to_send))
-	{
-		appendOutputMsg(ERR_NOTEXTTOSEND);
-		return ;
-	}
-	
-	if (target_name[0] == '#')
-	{
-		// Channels with the moderated mode active may block messages from certain users
-		// Other channel modes may affect the delivery of the message or cause the message to be modified before delivery, and these modes are defined by the server software and configuration being used
-		std::vector<User *> chan_users = _server->getChannel(target_name).getUsers();
 
-		for ( std::vector<User *>::iterator it = chan_users.begin();
-				it != chan_users.end();
-				it++)
-			(*it)->getMessage()->_output << target_name << text_to_send << '\n';
-	}
-	else try
+	try
 	{
-		User	&target = _server->getUser(target_name);
-		if (target.getActiveModes().find('a') != std::string::npos)
-			appendOutputMsg(RPL_AWAY, "");
-		target.getMessage()->_output << _sender->getNickname() << text_to_send << '\n';
+		if (!std::getline(ss, target_name, ' '))
+			throw NumericReply(ERR_NORECIPIENT, ":No recipient given PRIVMSG");
+		if (!std::getline(ss, text_to_send))
+			throw NumericReply(ERR_NOTEXTTOSEND, ":No text to send");
+		if (target_name[0] == '#')
+		{
+			std::vector<User *> chan_users = _server->getChannel(target_name).getUsers();
+			for ( std::vector<User *>::iterator it = chan_users.begin();
+					it != chan_users.end();
+					it++)
+				(*it)->getMessage()->addMsg(_sender, "PRIVMSG", target_name, text_to_send);
+				// (*it)->getMessage()->_output << target_name << text_to_send << CRLF;
+		}
+		else
+		{
+			User	&target = _server->getUser(target_name);
+			if (target.getActiveModes().find('a') != std::string::npos)
+				addNumericMsg(RPL_AWAY, target_name);
+			target.getMessage()->_output << _sender->getNickname() << text_to_send << CRLF;
+		}
+	}
+	catch(const NumericReply& e)
+	{
+		addNumericMsg(e.what(), e.param());
 	}
 	catch(const std::exception& e)
 	{
-		appendOutputMsg(ERR_NOSUCHNICK, _sender->getNickname() + " " + target_name + " :No such nick/channel");
+		addNumericMsg(ERR_NOSUCHNICK, target_name + " :No such nick/channel");
 	}
 }
 
 void		Message::_kick(const std::string &arg)
 {
-	std::cout << "	*Message class: KICK cmd detected*\n";
 	std::stringstream	ss(arg);
 	std::string			chan_name, comment, target_list;
 	std::vector<std::string>	targets;
 	try
 	{
-		if (!std::getline(ss, chan_name, ' '))
-			throw std::invalid_argument(ERR_NEEDMOREPARAMS);
-		if (!std::getline(ss, target_list, ' '))
-			throw std::invalid_argument(ERR_NEEDMOREPARAMS);
+		if (!std::getline(ss, chan_name, ' ') || !std::getline(ss, target_list, ' '))
+			throw NumericReply(ERR_NEEDMOREPARAMS, "KICK :Not enough parameters");
 		targets = _split(target_list, ",");
 		if (!std::getline(ss, comment) || (comment.size() <= 1 && !comment.compare(":")))
-			comment = ":You have been kicked from the " + chan_name + " channel.\n";
+			comment = ":You have been kicked from the " + chan_name + " channel" + CRLF;
 		Channel	&channel = _server->getChannel(chan_name);
 		if (!channel.isUserOnChannel(_sender->getNickname()))
-			throw std::invalid_argument(ERR_NOTONCHANNEL);
+			throw NumericReply(ERR_NOTONCHANNEL, chan_name + " :You're not on that channel");
 		if (!channel.isChanop(_sender->getNickname()))
-			throw std::invalid_argument(ERR_CHANOPRIVSNEEDED);
+			throw NumericReply(ERR_CHANOPRIVSNEEDED,chan_name + " :You're not channel operator");
+		std::vector<User *> chan_users = channel.getUsers();
 		for (std::vector<std::string>::iterator it = targets.begin();
 				it != targets.end();
 				it++)
 		{
 			if (!channel.isUserOnChannel(*it))
-				appendOutputMsg(ERR_USERNOTINCHANNEL);
+				addNumericMsg(ERR_USERNOTINCHANNEL, *it + " " + channel.getName() + " :They aren't on that channel");
 			else
 			{
 				User	*rm_user = &_server->getUser(*it);
 				channel.removeUser(rm_user);
-				rm_user->getMessage()->_output << "KICK " << comment << "\n";
+				rm_user->getMessage()->addMsg(_sender, "KICK", rm_user->getNickname(), comment);
+				// rm_user->getMessage()->_output << USERTAG(_sender) << " KICK " << comment << CRLF;
 			}
+			for ( std::vector<User *>::iterator it = chan_users.begin();
+					it != chan_users.end();
+					it++)
+				(*it)->getMessage()->addMsg(_sender, "KICK", chan_name, (*it)->getNickname());
+				// (*it)->getMessage()->_output << USERTAG(_sender) << " KICK " << chan_name << " " << *it << CRLF;
 		}
 	}
-	catch(const std::exception& e)
+	catch(const NumericReply& e)
 	{
-		appendOutputMsg(e.what());
+		addNumericMsg(e.what(), e.param());
 	}
 }
 
 void		Message::_invite(const std::string &arg)
 {
-	std::cout << "	*Message class: INVITE cmd detected*\n";
 	std::stringstream	ss(arg);
 	std::string			target_nickname, target_chan;
 	try
 	{
 		if (!std::getline(ss, target_nickname, ' ') || !std::getline(ss, target_chan, ' '))
-			throw std::invalid_argument(ERR_NEEDMOREPARAMS);
+			throw NumericReply(ERR_NEEDMOREPARAMS, "INVITE :Not enough parameters");
 		if (!_server->isUser(target_nickname))
-			throw std::invalid_argument(ERR_NOSUCHNICK + std::string(" " + _sender->getNickname() + " " + target_nickname + " :No such nick/channel")); // Pas indiqué dans la doc ??
+			throw NumericReply(ERR_NOSUCHNICK, target_nickname + " :No such nick/channel");
 		Channel &channel = _server->getChannel(target_chan);
 		if (!channel.isUserOnChannel(_sender->getNickname()))
-			throw std::invalid_argument(ERR_NOTONCHANNEL);
+			throw NumericReply(ERR_NOTONCHANNEL, target_chan + " :You're not on that channel");
 		channel.addUser(&_server->getUser(target_nickname), _sender);
-		appendOutputMsg(RPL_INVITING);
-		_server->getUser(target_nickname).getMessage()->_output << ":" << USERTAG(_sender) << " INVITE " << target_nickname << " " << target_chan << "\n";
+		addNumericMsg(RPL_INVITING, target_nickname + " " + target_chan);
+		_server->getUser(target_nickname).getMessage()->addMsg(_sender, "INVITE", target_nickname, target_chan);
+		// _server->getUser(target_nickname).getMessage()->_output << ":" << USERTAG(_sender) << " INVITE " << target_nickname << " " << target_chan << CRLF;
 	}
-	catch(const std::exception& e)
+	catch (const NumericReply &e)
 	{
-		appendOutputMsg(e.what());
+		addNumericMsg(e.what(), e.param());
 	}
 }
 
 void		Message::_topic(const std::string &arg)
 {
-	std::cout << "	*Message class: TOPIC cmd detected*\n";
 	std::stringstream	ss(arg);
 	std::string			target, new_topic;
 
 	try
 	{
 		if (!std::getline(ss, target, ' '))
-			throw std::invalid_argument(ERR_NEEDMOREPARAMS);
+			throw NumericReply(ERR_NEEDMOREPARAMS, "TOPIC :Not enough parameters");
 		Channel	&channel = _server->getChannel(target);
 		if (!channel.isUserOnChannel(_sender->getNickname()))
-			throw std::invalid_argument(ERR_NOTONCHANNEL); // ERR optionnelle
+			throw NumericReply(ERR_NOTONCHANNEL, target + " :You're not on that channel"); // ERR optionnelle
 		if (!std::getline(ss, new_topic))
 		{
 			if (channel.getTopic().empty())
-				appendOutputMsg(RPL_NOTOPIC);
+				throw NumericReply(RPL_NOTOPIC, target + ":No topic is set");
 			else
-				appendOutputMsg(RPL_TOPIC, channel.getTopic());
-			return ;
+				throw NumericReply(RPL_TOPIC, target + channel.getTopic());
 		}
-		if (new_topic[0] == ':')
-			new_topic.erase(0, 1);
 		channel.setTopic(_sender, new_topic);
 		std::vector<User *> chan_users = channel.getUsers();
 		for ( std::vector<User *>::iterator it = chan_users.begin();
 				it != chan_users.end();
 				it++)
-			(*it)->getMessage()->_output << "TOPIC " << target << " :" << new_topic << '\n';
+			(*it)->getMessage()->addMsg(_sender, "TOPIC", target, new_topic);
+			// (*it)->getMessage()->_output << ":" << USERTAG(_sender) << " TOPIC " << target << " " << new_topic << CRLF;
 	}
-	catch(const std::exception& e)
+	catch (const NumericReply &e)
 	{
-		appendOutputMsg(e.what());
+		addNumericMsg(e.what(), e.param());
 	}
 }
 
 void		Message::_mode(const std::string &arg)
 {
-	std::cout << "	*Message class: MODE cmd detected*\n";
 	std::stringstream	ss(arg);
 	std::string			target, modestring;
 	std::getline(ss, target, ' ');
-
 	try
 	{
 		if (target[0] == '#')
 		{
 			Channel	&channel = _server->getChannel(target);
 			if (!std::getline(ss, modestring, ' '))
-			{
-				appendOutputMsg(RPL_CHANNELMODEIS, target + " " + channel.getActiveModes());
-			}
+				throw NumericReply(RPL_CHANNELMODEIS, target + " " + channel.getActiveModes());
 			else
 			{
 				if (!channel.isChanop(_sender->getNickname()))
-					throw std::invalid_argument(ERR_CHANOPRIVSNEEDED + std::string(" " + _sender->getNickname() + " " + target + " :You're not a channel operator"));
+					throw NumericReply(ERR_CHANOPRIVSNEEDED, target + " :You're not a channel operator");
 				channel.setModes(_sender, modestring, ss);
 				std::vector<User *> chan_users = channel.getUsers();
 				for ( std::vector<User *>::iterator it = chan_users.begin();
 						it != chan_users.end();
 						it++)
-					(*it)->getMessage()->_output << "MODE " << target << " :" << channel.getActiveModes() << '\n';
+					(*it)->getMessage()->_output << "MODE " << target << " :" << channel.getActiveModes() << CRLF;
 			}
 		}
 		else
 		{
 			if (!_server->isUser(target))
-				throw std::invalid_argument(ERR_NOSUCHNICK + std::string(" " + _sender->getNickname() + " " + target + " :No such nick/channel"));
+				throw NumericReply(ERR_NOSUCHNICK, target + " :No such nick/channel");
 			if (target.compare(_sender->getNickname()))
-				throw std::invalid_argument(ERR_USERSDONTMATCH + std::string(" " + _sender->getNickname() + " :Cant change mode for other users"));
+				throw NumericReply(ERR_USERSDONTMATCH, ":Cant change mode for other users");
 			if (!std::getline(ss, modestring, ' '))
-			{
-				appendOutputMsg(RPL_UMODEIS, target + " " + _sender->getActiveModes());
-			}
+				throw NumericReply(RPL_UMODEIS, _sender->getActiveModes());
 			else
 			{
 				_sender->setModes(modestring);
-				_output << "MODE " << target << " " << _sender->getActiveModes() << "\n";	
+				addMsg(_sender, "MODE", target, _sender->getActiveModes());
+				// _output << ":" << USERTAG(_sender) << " MODE " << target << " " << _sender->getActiveModes() << CRLF;	
 			}
 		}
 	}
-	catch(const std::exception& e)
+	catch (const NumericReply &e)
 	{
-		appendOutputMsg(e.what());
+		addNumericMsg(e.what(), e.param());
 	}
 }
 
 void		Message::_ping(const std::string &arg)
 {
-	std::cout << "	*Message class: PING cmd detected*\n";
 	std::stringstream	ss(arg);
 	std::string			ret, mode_list;
 	std::getline(ss, ret, ' ');
 	if (ret.empty())
 	{
-		appendOutputMsg(ERR_NEEDMOREPARAMS);
+		addNumericMsg(ERR_NEEDMOREPARAMS, " PING :Not enough parameters");
 		return ;
 	}
-	_output << "PONG " << ret << "\n";
+	_output << "PONG " << ret << CRLF;
 }
 
 void	Message::_whois(const std::string &arg)
 {
-	std::cout << "	*Message class: WHOIS cmd detected*\n";
 	std::stringstream	ss(arg);
 	std::string			target_name, mode_list;
 	std::getline(ss, target_name, ' ');
 	// check aussi si target = nom du server
 	// sinon => ERR_NOSUCHSERVER 
-	if (_server->isUser(target_name))
-	{
-		appendOutputMsg(ERR_NOSUCHNICK + std::string(" " + _sender->getNickname() + " " + target_name + " :No such nick/channel"));
-		return ;
-	}
-	appendOutputMsg(RPL_ENDOFWHOIS);
+	if (!_server->isUser(target_name))
+		addNumericMsg(ERR_NOSUCHNICK,target_name + " :No such nick/channel");
+	else
+		addNumericMsg(RPL_ENDOFWHOIS, target_name + " :End of /WHOIS list");
 }

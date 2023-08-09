@@ -6,7 +6,7 @@
 /*   By: mchassig <mchassig@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2023/07/02 12:03:38 by adesgran          #+#    #+#             */
-/*   Updated: 2023/08/06 17:08:54 by mchassig         ###   ########.fr       */
+/*   Updated: 2023/08/09 14:58:16 by mchassig         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -177,7 +177,7 @@ Channel	&Server::getChannel( const std::string name ) const
 		if ( (*it)->getName() == name )
 			return (**it);
 	}
-	throw std::invalid_argument(ERR_NOSUCHCHANNEL);
+	throw Message::NumericReply(ERR_NOSUCHCHANNEL, name + " :No such channel");
 }
 
 bool	Server::isChannel(const std::string name) const
@@ -358,11 +358,10 @@ void	Server::run( void )
 						if ( !output.empty() )
 						{
 							this->_log->debug("Message to send : " + output);
-							output += '\n';
+							// output += '\n';
 							send( this->_pfds[n].fd, output.c_str(), output.size(), 0 );
 						}
 					}
-
 				}
 			}
 		}

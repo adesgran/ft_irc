@@ -6,7 +6,7 @@
 /*   By: mchassig <mchassig@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2023/07/01 13:44:20 by adesgran          #+#    #+#             */
-/*   Updated: 2023/08/07 14:01:03 by mchassig         ###   ########.fr       */
+/*   Updated: 2023/08/09 13:52:42 by mchassig         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -156,7 +156,7 @@ bool	User::setModes(const std::string new_modes)
 		}
 		else if (*it != 'o' && *it != 'O')
 		{
-			_message->appendOutputMsg(ERR_UMODEUNKNOWNFLAG, _nickname + " :Unknown MODE flag");
+			_message->addNumericMsg(ERR_UMODEUNKNOWNFLAG, ":Unknown MODE flag");
 		}
 	}
 	return (err);

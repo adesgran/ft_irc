@@ -6,7 +6,7 @@
 /*   By: mchassig <mchassig@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2023/07/02 12:59:54 by adesgran          #+#    #+#             */
-/*   Updated: 2023/08/07 14:46:58 by mchassig         ###   ########.fr       */
+/*   Updated: 2023/08/07 19:09:44 by mchassig         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -61,13 +61,13 @@ const std::vector<User *>	Channel::getUsers( void ) const
 void	Channel::addUser( User *target, User *sender, std::string key )
 {
 	if (_modes['i'] && (sender == NULL || !_chanops[sender->getNickname()]))
-		throw std::invalid_argument(ERR_INVITEONLYCHAN);
+		throw Message::NumericReply(ERR_INVITEONLYCHAN, _name + " :Cannot join channel (+i)");
 	if (!_modes['i'] && _modes['k'] && _key.compare(key))
-		throw std::invalid_argument(ERR_BADCHANNELKEY + std::string(" ") + _name);
+		throw Message::NumericReply(ERR_BADCHANNELKEY, _name + " :Cannot join channel (+k)");
 	if (isUserOnChannel(target->getNickname()))
-		throw std::invalid_argument(ERR_USERONCHANNEL);
+		throw Message::NumericReply(ERR_USERONCHANNEL, target->getNickname() + " " + _name + ":is already on channel");
 	if (_modes['l'] && _users.size() == _client_limit)
-		throw std::invalid_argument(ERR_CHANNELISFULL);
+		throw Message::NumericReply(ERR_CHANNELISFULL, _name + ":Cannot join channel (+l)");
 	_users.push_back(target);
 	_chanops.insert(std::make_pair(target->getNickname(), 0));
 }
@@ -156,9 +156,9 @@ bool	Channel::setModes(const User *sender, const std::string &modestring, std::s
 					{
 						std::string	new_key;
 						if (!std::getline(ss, new_key, ','))
-							sender->getMessage()->appendOutputMsg(ERR_INVALIDMODEPARAM, _name + " " + *it + " :Missing key");
+							sender->getMessage()->addNumericMsg(ERR_INVALIDMODEPARAM, _name + " " + *it + " :Missing key");
 						else if (new_key.find_first_of(" ,") != std::string::npos)
-							sender->getMessage()->appendOutputMsg(ERR_INVALIDMODEPARAM, _name + " " + *it + " " + new_key + " :Not a valid key");						
+							sender->getMessage()->addNumericMsg(ERR_INVALIDMODEPARAM, _name + " " + *it + " " + new_key + " :Not a valid key");						
 						else
 							_key = new_key;
 					}
@@ -167,9 +167,9 @@ bool	Channel::setModes(const User *sender, const std::string &modestring, std::s
 				case 'o': {
 					std::string	nickname;
 					if (!std::getline(ss, nickname, ','))
-						sender->getMessage()->appendOutputMsg(ERR_INVALIDMODEPARAM, _name + " " + *it + " :Missing user nickname");
+						sender->getMessage()->addNumericMsg(ERR_INVALIDMODEPARAM, _name + " " + *it + " :Missing user nickname");
 					else if (!isUserOnChannel(nickname))
-						sender->getMessage()->appendOutputMsg(ERR_INVALIDMODEPARAM, _name + " " + *it + " " + nickname + " :User is not on channel");
+						sender->getMessage()->addNumericMsg(ERR_INVALIDMODEPARAM, _name + " " + *it + " " + nickname + " :User is not on channel");
 					else
 						_chanops[nickname] = b;
 					break;
@@ -180,7 +180,7 @@ bool	Channel::setModes(const User *sender, const std::string &modestring, std::s
 					{
 						std::string	new_lim;
 						if (!std::getline(ss, new_lim, ','))
-							sender->getMessage()->appendOutputMsg(ERR_INVALIDMODEPARAM, _name + " " + *it + " :Missing client limit");
+							sender->getMessage()->addNumericMsg(ERR_INVALIDMODEPARAM, _name + " " + *it + " :Missing client limit");
 						else
 						{
 							std::stringstream tmpss(new_lim);
@@ -225,7 +225,7 @@ bool	Channel::isActiveMode(char c) const
 void	Channel::setTopic(const User *sender, const std::string &new_topic)
 {
 	if (_modes['t'] && !_chanops[sender->getNickname()])
-		throw std::invalid_argument(ERR_CHANOPRIVSNEEDED);
+		throw Message::NumericReply(ERR_CHANOPRIVSNEEDED, _name + " :You're not channel operator");
 	_topic = new_topic;
 }
 
