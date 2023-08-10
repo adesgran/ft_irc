@@ -6,7 +6,7 @@
 /*   By: mchassig <mchassig@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2023/07/02 12:03:38 by adesgran          #+#    #+#             */
-/*   Updated: 2023/08/09 14:58:16 by mchassig         ###   ########.fr       */
+/*   Updated: 2023/08/10 11:38:59 by mchassig         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -357,7 +357,7 @@ void	Server::run( void )
 						//std::getline(msg->getOutputMsg(), output, '\n');
 						if ( !output.empty() )
 						{
-							this->_log->debug("Message to send : " + output);
+							this->_log->debug(">" + output);
 							// output += '\n';
 							send( this->_pfds[n].fd, output.c_str(), output.size(), 0 );
 						}
