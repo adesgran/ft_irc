@@ -5,7 +5,7 @@ CXX_FLAGS = -Wall -Wextra -Werror
 CXX_FLAGS += -std=c++98
 CPP_FLAGS = -MMD
 
-CXX_SRCS = main Message User Channel Server Log
+CXX_SRCS = main Message Message.Exceptions User Channel Server Log
 CXX_FILES = $(addsuffix .cpp, $(addprefix srcs/, ${CXX_SRCS}))
 
 O_FILES = $(CXX_FILES:.cpp=.o)

@@ -6,7 +6,7 @@
 /*   By: mchassig <mchassig@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2023/07/02 12:53:07 by adesgran          #+#    #+#             */
-/*   Updated: 2023/08/05 14:11:42 by mchassig         ###   ########.fr       */
+/*   Updated: 2023/08/06 17:38:38 by mchassig         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -25,13 +25,13 @@ class Server;
 class Channel {
 	public:
 		Channel( void );
-		Channel( const std::string name );
+		Channel( const std::string name, User *founder );
 		Channel( const Channel &channel );
 		~Channel( void );
 		Channel &operator=( const Channel &channel );
 
 		const std::vector<User *>	getUsers( void ) const;
-		void	addUser( User *target, User *sender = NULL);
+		void	addUser( User *target, User *sender = NULL, std::string key = "");
 		void	removeUser( const User *user );
 		void	removeUser( int fd );
 		bool	isUserOnChannel(const std::string &nickname) const;
@@ -39,25 +39,24 @@ class Channel {
 		void		setName( const std::string &name );
 		std::string	getName( void ) const;
 
-		bool		setModes(const std::string &new_modes, const std::string &mode_arg);
+		bool		setModes(const User *sender, const std::string &new_modes, std::stringstream &ss);
 		std::string	getActiveModes() const;
-		void		setKey(const User *sender, const std::string key);
-		std::string	getKey() const;
+		bool		isActiveMode(char c) const;
 		void		setTopic(const User *sender, const std::string &new_topic);
 		std::string	getTopic() const;
-		void		setClientLimit(const User *sender, size_t new_lim);
+		std::string	getKey() const;
+		bool		isChanop(const std::string &nickname) const;
 		size_t		getClientLimit() const;
 
-		std::string			status;
-
 	private:
-		std::vector<User *>		_users;
 		std::string				_name;
+		std::vector<User *>		_users;
+
 		std::map<char, bool>	_modes;
-		std::string				_key; // set/unset with "k" mode, by chanops only
-		std::string				_topic; // limited no chanops if 't' mode is enabled
-		size_t					_client_limit; // set/unset with "l" mode, by chanops only
-		// std::vector<User *>		_chanops; // nickname with "@" prefix
+		std::string				_topic;
+		std::string				_key;
+		std::map<std::string, bool>	_chanops;
+		size_t					_client_limit;
 };
 
 #endif
