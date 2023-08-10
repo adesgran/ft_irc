@@ -1,7 +1,7 @@
 # Irc
 irc
 log
-bot
+bot/bot
 *.swp
 
 # Prerequisites

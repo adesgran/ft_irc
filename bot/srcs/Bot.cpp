@@ -6,7 +6,7 @@
 /*   By: adesgran <marvin@42.fr>                    +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2023/08/01 16:50:23 by adesgran          #+#    #+#             */
-/*   Updated: 2023/08/02 14:07:28 by adesgran         ###   ########.fr       */
+/*   Updated: 2023/08/08 04:17:55 by adesgran         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -80,6 +80,19 @@ void	Bot::_readline( std::string line )
 
 	for (std::vector<std::string>::iterator it = tokens.begin(); it != tokens.end(); it++)
 		std::cout << "["<< *it << "] " << std::endl;
+
+	std::stringstream ss(tokens[1]);
+	int code;
+	ss >> code;
+	switch (code)
+	{
+		case 1 : 
+			std::cout << "Code 001" << std::endl;
+			_output << "JOIN #bot\r\n";
+			break;
+		default :
+			std::cout << "Unknonwn code : " << code << std::endl;
+	}
 	std::cout << std::endl;
 
 			
@@ -125,7 +138,7 @@ void	Bot::run( void )
 	this->_sockaddr.sin_addr.s_addr = INADDR_ANY;
 	this->_sockaddr.sin_port = htons(6667);//read file
 	
-	if (inet_pton(AF_INET, hostname_to_ip("irc.adesgran.ovh").c_str(), &this->_sockaddr.sin_addr) <= 0) //readfile
+	if (inet_pton(AF_INET, hostname_to_ip("localhost").c_str(), &this->_sockaddr.sin_addr) <= 0) //readfile
 	{
 		std::cerr << "Error while trying to connect" << std::endl;
 		std::cerr << strerror(errno) << std::endl;
