@@ -6,7 +6,7 @@
 /*   By: mchassig <mchassig@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2023/07/13 12:21:22 by adesgran          #+#    #+#             */
-/*   Updated: 2023/08/10 12:41:04 by mchassig         ###   ########.fr       */
+/*   Updated: 2023/08/10 13:35:25 by mchassig         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -234,9 +234,11 @@ void	Message::_join(const std::string &arg)
 	//ERR_UNAVAILRESOURCE
 	
 	std::vector<std::string>	tmp = _split(arg, " ");
-	std::vector<std::string>	chan_name = _split (tmp[0], ","), key;
+	std::vector<std::string>	chan_name = _split(tmp[0], ","), key;
 	if (tmp.size() > 1)
 		key = _split(tmp[1], ",");
+	while (key.size() < chan_name.size())
+		key.push_back("");
 	
 	size_t	i = 0;
 	while (i < chan_name.size())
@@ -252,7 +254,7 @@ void	Message::_join(const std::string &arg)
 			else
 			{
 				channel = &_server->getChannel(chan_name[i]);
-				channel->addUser(_sender);
+				channel->addUser(_sender, NULL, key[i]);
 			}
 			std::vector<User *> users = channel->getUsers();
 			std::string			user_list;

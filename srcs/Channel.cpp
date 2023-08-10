@@ -6,7 +6,7 @@
 /*   By: mchassig <mchassig@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2023/07/02 12:59:54 by adesgran          #+#    #+#             */
-/*   Updated: 2023/08/07 19:09:44 by mchassig         ###   ########.fr       */
+/*   Updated: 2023/08/10 13:38:34 by mchassig         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -58,7 +58,7 @@ const std::vector<User *>	Channel::getUsers( void ) const
 	return (this->_users);
 }
 
-void	Channel::addUser( User *target, User *sender, std::string key )
+void	Channel::addUser( User *target, User *sender, const std::string &key )
 {
 	if (_modes['i'] && (sender == NULL || !_chanops[sender->getNickname()]))
 		throw Message::NumericReply(ERR_INVITEONLYCHAN, _name + " :Cannot join channel (+i)");
