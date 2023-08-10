@@ -6,7 +6,7 @@
 /*   By: mchassig <mchassig@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2023/07/13 12:21:22 by adesgran          #+#    #+#             */
-/*   Updated: 2023/08/10 12:41:04 by mchassig         ###   ########.fr       */
+/*   Updated: 2023/08/10 14:15:29 by mchassig         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -115,24 +115,6 @@ void	Message::_parseInput(const std::vector<std::string> &input_lines)
 
 		if (_cmdMap.find(cmd_name) != _cmdMap.end())
 			(this->*_cmdMap[cmd_name])(cmd_arg);
-		else if (!cmd_name.compare("PART"))
-		{
-			std::vector<Channel *>	chans = _server->getChannels();
-			std::cout << "	*number of channels: " << chans.size() << std::endl;
-			for (std::vector<Channel *>::iterator c = chans.begin();
-					c != chans.end(); c ++)
-			{
-				std::cout << "	| " << (*c)->getName();
-				std::vector<User *>	users = (*c)->getUsers();
-				std::cout << " (" << users.size() << " users):";
-				for (std::vector<User *>::iterator u = users.begin();
-						u != users.end(); u ++)
-				{
-					std::cout << " " << (*u)->getNickname();
-				}
-				std::cout << std::endl;
-			}
-		}
 		else if (!cmd_name.empty())
 			addNumericMsg(ERR_UNKNOWNCOMMAND, cmd_name + " :Unknown command");
 	}
@@ -234,9 +216,11 @@ void	Message::_join(const std::string &arg)
 	//ERR_UNAVAILRESOURCE
 	
 	std::vector<std::string>	tmp = _split(arg, " ");
-	std::vector<std::string>	chan_name = _split (tmp[0], ","), key;
+	std::vector<std::string>	chan_name = _split(tmp[0], ","), key;
 	if (tmp.size() > 1)
 		key = _split(tmp[1], ",");
+	while (key.size() < chan_name.size())
+		key.push_back("");
 	
 	size_t	i = 0;
 	while (i < chan_name.size())
@@ -252,7 +236,7 @@ void	Message::_join(const std::string &arg)
 			else
 			{
 				channel = &_server->getChannel(chan_name[i]);
-				channel->addUser(_sender);
+				channel->addUser(_sender, NULL, key[i]);
 			}
 			std::vector<User *> users = channel->getUsers();
 			std::string			user_list;
@@ -432,12 +416,16 @@ void	Message::_mode(const std::string &arg)
 			{
 				if (!channel.isChanop(_sender->getNickname()))
 					throw NumericReply(ERR_CHANOPRIVSNEEDED, target + " :You're not a channel operator");
-				channel.setModes(_sender, modestring, ss);
-				std::vector<User *> chan_users = channel.getUsers();
-				for ( std::vector<User *>::iterator it = chan_users.begin();
-						it != chan_users.end();
-						it++)
-					(*it)->getMessage()->_output << "MODE " << target << " :" << channel.getActiveModes() << CRLF;
+				std::string	new_modes = channel.setModes(_sender, modestring, ss);
+				if (!new_modes.empty())
+				{
+					std::vector<User *> chan_users = channel.getUsers();
+					for ( std::vector<User *>::iterator it = chan_users.begin();
+							it != chan_users.end();
+							it++)
+						(*it)->getMessage()->addMsg(_sender, "MODE", target, ":" + new_modes);
+						// (*it)->getMessage()->_output << "MODE " << target << " :" << new_modes << CRLF;
+				}
 			}
 		}
 		else
@@ -450,9 +438,7 @@ void	Message::_mode(const std::string &arg)
 				throw NumericReply(RPL_UMODEIS, _sender->getActiveModes());
 			else
 			{
-				_sender->setModes(modestring);
-				addMsg(_sender, "MODE", target, _sender->getActiveModes());
-				// _output << ":" << USERTAG(_sender) << " MODE " << target << " " << _sender->getActiveModes() << CRLF;	
+				addMsg(_sender, "MODE", target, _sender->setModes(modestring));
 			}
 		}
 	}

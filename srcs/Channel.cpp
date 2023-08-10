@@ -6,7 +6,7 @@
 /*   By: mchassig <mchassig@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2023/07/02 12:59:54 by adesgran          #+#    #+#             */
-/*   Updated: 2023/08/07 19:09:44 by mchassig         ###   ########.fr       */
+/*   Updated: 2023/08/10 14:16:49 by mchassig         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -52,13 +52,12 @@ Channel &Channel::operator=(const Channel &channel)
 	return (*this);
 }
 
-
 const std::vector<User *>	Channel::getUsers( void ) const
 {
 	return (this->_users);
 }
 
-void	Channel::addUser( User *target, User *sender, std::string key )
+void	Channel::addUser( User *target, User *sender, const std::string &key )
 {
 	if (_modes['i'] && (sender == NULL || !_chanops[sender->getNickname()]))
 		throw Message::NumericReply(ERR_INVITEONLYCHAN, _name + " :Cannot join channel (+i)");
@@ -122,11 +121,10 @@ std::string	Channel::getName( void ) const
 	return (this->_name);
 }
 
-bool	Channel::setModes(const User *sender, const std::string &modestring, std::stringstream &ss)
+std::string	Channel::setModes(const User *sender, const std::string &modestring, std::stringstream &ss)
 {
 	char	sign = 0;
-	bool	err = false;
-	std::vector<std::string>	changed_modes;
+	std::string	changed_modes;
 	for (std::string::const_iterator it = modestring.begin(); it != modestring.end(); it++)
 	{
 		if (*it == '+' || *it == '-')
@@ -144,10 +142,12 @@ bool	Channel::setModes(const User *sender, const std::string &modestring, std::s
 			{
 				case 'i': {
 					_modes['i'] = b;
+					changed_modes += "i";
 					break;
 				}
 				case 't': {
 					_modes['t'] = b;
+					changed_modes += "t";
 					break;
 				}
 				case 'k': {
@@ -160,7 +160,10 @@ bool	Channel::setModes(const User *sender, const std::string &modestring, std::s
 						else if (new_key.find_first_of(" ,") != std::string::npos)
 							sender->getMessage()->addNumericMsg(ERR_INVALIDMODEPARAM, _name + " " + *it + " " + new_key + " :Not a valid key");						
 						else
+						{
 							_key = new_key;
+							changed_modes += "k";
+						}
 					}
 					break;
 				}
@@ -171,7 +174,10 @@ bool	Channel::setModes(const User *sender, const std::string &modestring, std::s
 					else if (!isUserOnChannel(nickname))
 						sender->getMessage()->addNumericMsg(ERR_INVALIDMODEPARAM, _name + " " + *it + " " + nickname + " :User is not on channel");
 					else
+					{
 						_chanops[nickname] = b;
+						changed_modes += "o";
+					}
 					break;
 				}
 				case 'l': {
@@ -185,6 +191,7 @@ bool	Channel::setModes(const User *sender, const std::string &modestring, std::s
 						{
 							std::stringstream tmpss(new_lim);
 							tmpss >> _client_limit;
+							changed_modes += "l";
 						}
 					}
 					break;
@@ -193,12 +200,8 @@ bool	Channel::setModes(const User *sender, const std::string &modestring, std::s
 					break;
 			}
 		}
-		else
-		{
-			err = true;
-		}
 	}
-	return (err);
+	return (changed_modes);
 }
 
 std::string	Channel::getActiveModes() const
