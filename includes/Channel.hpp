@@ -6,7 +6,7 @@
 /*   By: mchassig <mchassig@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2023/07/02 12:53:07 by adesgran          #+#    #+#             */
-/*   Updated: 2023/08/10 13:13:12 by mchassig         ###   ########.fr       */
+/*   Updated: 2023/08/10 13:46:40 by mchassig         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -39,7 +39,7 @@ class Channel {
 		void		setName( const std::string &name );
 		std::string	getName( void ) const;
 
-		bool		setModes(const User *sender, const std::string &new_modes, std::stringstream &ss);
+		std::string	setModes(const User *sender, const std::string &new_modes, std::stringstream &ss);
 		std::string	getActiveModes() const;
 		bool		isActiveMode(char c) const;
 		void		setTopic(const User *sender, const std::string &new_topic);
