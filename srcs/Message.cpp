@@ -6,7 +6,7 @@
 /*   By: mchassig <mchassig@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2023/07/13 12:21:22 by adesgran          #+#    #+#             */
-/*   Updated: 2023/08/09 16:43:20 by mchassig         ###   ########.fr       */
+/*   Updated: 2023/08/10 12:41:04 by mchassig         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -54,6 +54,7 @@ Message &Message::operator=(const Message &message)
 {
 	if ( this == &message )
 		return ( *this );
+	this->_cmdMap = message._cmdMap;
 	this->_sender = message._sender;
 	this->_server = message._server;
 	this->_input = message._input;
@@ -114,6 +115,24 @@ void	Message::_parseInput(const std::vector<std::string> &input_lines)
 
 		if (_cmdMap.find(cmd_name) != _cmdMap.end())
 			(this->*_cmdMap[cmd_name])(cmd_arg);
+		else if (!cmd_name.compare("PART"))
+		{
+			std::vector<Channel *>	chans = _server->getChannels();
+			std::cout << "	*number of channels: " << chans.size() << std::endl;
+			for (std::vector<Channel *>::iterator c = chans.begin();
+					c != chans.end(); c ++)
+			{
+				std::cout << "	| " << (*c)->getName();
+				std::vector<User *>	users = (*c)->getUsers();
+				std::cout << " (" << users.size() << " users):";
+				for (std::vector<User *>::iterator u = users.begin();
+						u != users.end(); u ++)
+				{
+					std::cout << " " << (*u)->getNickname();
+				}
+				std::cout << std::endl;
+			}
+		}
 		else if (!cmd_name.empty())
 			addNumericMsg(ERR_UNKNOWNCOMMAND, cmd_name + " :Unknown command");
 	}
@@ -224,30 +243,28 @@ void	Message::_join(const std::string &arg)
 	{
 		try
 		{
-			Channel channel;
+			Channel *channel;
 			if (!_server->isChannel(chan_name[i]))
 			{
 				_server->addChannel(new Channel(chan_name[i], _sender));
-				channel = _server->getChannel(chan_name[i]);
+				channel = &_server->getChannel(chan_name[i]);
 			}
 			else
 			{
-				channel = _server->getChannel(chan_name[i]);
-				channel.addUser(_sender);
+				channel = &_server->getChannel(chan_name[i]);
+				channel->addUser(_sender);
 			}
-			std::vector<User *> users = channel.getUsers();
+			std::vector<User *> users = channel->getUsers();
+			std::string			user_list;
 			for ( std::vector<User *>::iterator it = users.begin();
 					it != users.end();
 					it++)
+			{
 				(*it)->getMessage()->addMsg(_sender, "JOIN", chan_name[i]);
-				// (*it)->getMessage()->_output << ":" << USERTAG(_sender) << " JOIN " << chan_name[i] << CRLF;
-			addNumericMsg(RPL_TOPIC, ":" + channel.getTopic());
-			_output << ":" << USERTAG(_sender) << " " << RPL_NAMREPLY << " " << _sender->getNickname() << " :";
-			for ( std::vector<User *>::iterator it = users.begin();
-					it != users.end();
-					it++)
-				_output << (*it)->getNickname() << " ";
-			_output << CRLF;
+				user_list += (*it)->getNickname() + " ";
+			}
+			addNumericMsg(RPL_TOPIC, channel->getTopic());
+			addNumericMsg(RPL_NAMREPLY, ":" + user_list);
 			addNumericMsg(RPL_ENDOFNAMES);
 		}
 		catch(const NumericReply& e)
@@ -258,7 +275,7 @@ void	Message::_join(const std::string &arg)
 	}
 }
 
-void		Message::_privmsg(const std::string &arg)
+void	Message::_privmsg(const std::string &arg)
 {
 	std::stringstream	ss(arg);
 	std::string			target_name, text_to_send;
@@ -275,8 +292,10 @@ void		Message::_privmsg(const std::string &arg)
 			for ( std::vector<User *>::iterator it = chan_users.begin();
 					it != chan_users.end();
 					it++)
-				(*it)->getMessage()->addMsg(_sender, "PRIVMSG", target_name, text_to_send);
-				// (*it)->getMessage()->_output << target_name << text_to_send << CRLF;
+			{
+				if (*it != _sender)
+					(*it)->getMessage()->addMsg(_sender, "PRIVMSG", target_name, text_to_send);
+			}
 		}
 		else
 		{
@@ -296,7 +315,7 @@ void		Message::_privmsg(const std::string &arg)
 	}
 }
 
-void		Message::_kick(const std::string &arg)
+void	Message::_kick(const std::string &arg)
 {
 	std::stringstream	ss(arg);
 	std::string			chan_name, comment, target_list;
@@ -340,7 +359,7 @@ void		Message::_kick(const std::string &arg)
 	}
 }
 
-void		Message::_invite(const std::string &arg)
+void	Message::_invite(const std::string &arg)
 {
 	std::stringstream	ss(arg);
 	std::string			target_nickname, target_chan;
@@ -364,7 +383,7 @@ void		Message::_invite(const std::string &arg)
 	}
 }
 
-void		Message::_topic(const std::string &arg)
+void	Message::_topic(const std::string &arg)
 {
 	std::stringstream	ss(arg);
 	std::string			target, new_topic;
@@ -375,7 +394,7 @@ void		Message::_topic(const std::string &arg)
 			throw NumericReply(ERR_NEEDMOREPARAMS, "TOPIC :Not enough parameters");
 		Channel	&channel = _server->getChannel(target);
 		if (!channel.isUserOnChannel(_sender->getNickname()))
-			throw NumericReply(ERR_NOTONCHANNEL, target + " :You're not on that channel"); // ERR optionnelle
+			throw NumericReply(ERR_NOTONCHANNEL, target + " :!!You're not on that channel"); // ERR optionnelle
 		if (!std::getline(ss, new_topic))
 		{
 			if (channel.getTopic().empty())
@@ -397,7 +416,7 @@ void		Message::_topic(const std::string &arg)
 	}
 }
 
-void		Message::_mode(const std::string &arg)
+void	Message::_mode(const std::string &arg)
 {
 	std::stringstream	ss(arg);
 	std::string			target, modestring;
@@ -443,7 +462,7 @@ void		Message::_mode(const std::string &arg)
 	}
 }
 
-void		Message::_ping(const std::string &arg)
+void	Message::_ping(const std::string &arg)
 {
 	std::stringstream	ss(arg);
 	std::string			ret, mode_list;
