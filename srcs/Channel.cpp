@@ -6,7 +6,7 @@
 /*   By: mchassig <mchassig@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2023/07/02 12:59:54 by adesgran          #+#    #+#             */
-/*   Updated: 2023/08/10 14:16:49 by mchassig         ###   ########.fr       */
+/*   Updated: 2023/08/11 18:47:39 by mchassig         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -236,7 +236,6 @@ std::string	Channel::getTopic() const
 {
 	return (_topic);
 }
-
 
 std::string	Channel::getKey() const
 {

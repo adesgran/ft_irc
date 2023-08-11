@@ -6,7 +6,7 @@
 /*   By: mchassig <mchassig@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2023/07/13 12:21:22 by adesgran          #+#    #+#             */
-/*   Updated: 2023/08/11 18:19:26 by mchassig         ###   ########.fr       */
+/*   Updated: 2023/08/11 18:55:07 by mchassig         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -18,13 +18,13 @@ Message::Message(void)
 	_cmdMap["PASS"]		= &Message::_pass;
 	_cmdMap["NICK"]		= &Message::_nick;
 	_cmdMap["USER"]		= &Message::_user;
+	_cmdMap["PING"]		= &Message::_pong;
 	_cmdMap["JOIN"]		= &Message::_join;
 	_cmdMap["PRIVMSG"]	= &Message::_privmsg;
 	_cmdMap["KICK"]		= &Message::_kick;
 	_cmdMap["INVITE"]	= &Message::_invite;
 	_cmdMap["TOPIC"]	= &Message::_topic;
 	_cmdMap["MODE"]		= &Message::_mode;
-	_cmdMap["PING"]		= &Message::_ping;
 	_cmdMap["WHOIS"]	= &Message::_whois;
 }
 
@@ -33,13 +33,13 @@ Message::Message(User *sender): _sender(sender)
 	_cmdMap["PASS"]		= &Message::_pass;
 	_cmdMap["NICK"]		= &Message::_nick;
 	_cmdMap["USER"]		= &Message::_user;
+	_cmdMap["PING"]		= &Message::_pong;
 	_cmdMap["JOIN"]		= &Message::_join;
 	_cmdMap["PRIVMSG"]	= &Message::_privmsg;
 	_cmdMap["KICK"]		= &Message::_kick;
 	_cmdMap["INVITE"]	= &Message::_invite;
 	_cmdMap["TOPIC"]	= &Message::_topic;
 	_cmdMap["MODE"]		= &Message::_mode;
-	_cmdMap["PING"]		= &Message::_ping;
 	_cmdMap["WHOIS"]	= &Message::_whois;
 }
 
@@ -148,8 +148,7 @@ void	Message::_welcomeNewUser()
 	{
 		_sender->welcome();
 		_output << ":" << std::string(SERVER_ADDRESS) << " " << RPL_WELCOME << " " << _sender->getNickname() 
-		<< " :Welcome to the <networkname> Network " 
-		<< USERTAG(_sender)
+		<< " :Welcome to the <networkname> Network " << USERTAG(_sender)
 		<< CRLF;
 	}
 }
@@ -168,31 +167,43 @@ void	Message::_pass(const std::string &arg)
 	}
 	catch(const NumericReply& e)
 	{
-		addNumericMsg(e.what(), e.what());
+		addNumericMsg(e.code(), e.what());
 	}	
 }
 
 void	Message::_nick(const std::string &arg)
 {
+	if (!_sender->authentificated)
+	{
+		addNumericMsg(ERR_NOTREGISTERED, ":You have not registered");
+		return ;
+	}
+
 	try
 	{
 		if (arg.empty())
 			throw NumericReply(ERR_NONICKNAMEGIVEN, ":No nickname given");
-		if (arg.find_first_of("#:@ \t\n\r\v\f") != std::string::npos)
+		if (arg.find_first_of(",#:@ \t\n\r\v\f") != std::string::npos)
 			throw NumericReply(ERR_ERRONEUSNICKNAME, arg + " :Erroneus nickname");
 		if (_server->isUser(arg))
 			throw NumericReply(ERR_NICKNAMEINUSE, arg + " :Nickname is already in use");
-		_sender->setNickname(arg);		
+		_sender->setNickname(arg);
 		_welcomeNewUser();
 	}
 	catch(const NumericReply& e)
 	{
-		addNumericMsg(e.what(), e.what());
+		addNumericMsg(e.code(), e.what());
 	}
 }
 
 void	Message::_user(const std::string &arg)
 {
+	if (!_sender->authentificated)
+	{
+		addNumericMsg(ERR_NOTREGISTERED, ":You have not registered");
+		return ;
+	}
+
 	std::stringstream	ss(arg);
 	std::string			username, mode, unused, realName;
 	try
@@ -213,8 +224,27 @@ void	Message::_user(const std::string &arg)
 	}
 	catch(const NumericReply& e)
 	{
-		addNumericMsg(e.what(), e.what());
+		addNumericMsg(e.code(), e.what());
 	}
+}
+
+void	Message::_pong(const std::string &arg)
+{
+	if (!_sender->authentificated || !_sender->isWelcomed())
+	{
+		addNumericMsg(ERR_NOTREGISTERED, ":You have not registered");
+		return ;
+	}
+
+	std::stringstream	ss(arg);
+	std::string			ret, mode_list;
+	std::getline(ss, ret, ' ');
+	if (ret.empty())
+	{
+		addNumericMsg(ERR_NEEDMOREPARAMS, " PING :Not enough parameters");
+		return ;
+	}
+	_output << "PONG " << ret << CRLF;
 }
 
 void	Message::_join(const std::string &arg)
@@ -269,13 +299,14 @@ void	Message::_join(const std::string &arg)
 				(*it)->getMessage()->addMsg(_sender, "JOIN", chan_name[i]);
 				user_list += (*it)->getNickname() + " ";
 			}
-			addNumericMsg(RPL_TOPIC, channel->getTopic());
-			addNumericMsg(RPL_NAMREPLY, ":" + user_list);
+			if (!channel->getTopic().empty())
+				addNumericMsg(RPL_TOPIC, chan_name[i] + " " + channel->getTopic());
+			addNumericMsg(RPL_NAMREPLY, chan_name[i] + " :" + user_list);
 			addNumericMsg(RPL_ENDOFNAMES);
 		}
 		catch(const NumericReply& e)
 		{
-			addNumericMsg(e.what(), e.what());
+			addNumericMsg(e.code(), e.what());
 		}
 		i++;
 	}
@@ -317,7 +348,7 @@ void	Message::_privmsg(const std::string &arg)
 	}
 	catch(const NumericReply& e)
 	{
-		addNumericMsg(e.what(), e.what());
+		addNumericMsg(e.code(), e.what());
 	}
 	catch(const std::exception& e)
 	{
@@ -365,7 +396,7 @@ void	Message::_kick(const std::string &arg)
 	}
 	catch(const NumericReply& e)
 	{
-		addNumericMsg(e.what(), e.what());
+		addNumericMsg(e.code(), e.what());
 	}
 }
 
@@ -395,7 +426,7 @@ void	Message::_invite(const std::string &arg)
 	}
 	catch (const NumericReply &e)
 	{
-		addNumericMsg(e.what(), e.what());
+		addNumericMsg(e.code(), e.what());
 	}
 }
 
@@ -416,7 +447,7 @@ void	Message::_topic(const std::string &arg)
 			throw NumericReply(ERR_NEEDMOREPARAMS, "TOPIC :Not enough parameters");
 		Channel	&channel = _server->getChannel(target);
 		if (!channel.isUserOnChannel(_sender->getNickname()))
-			throw NumericReply(ERR_NOTONCHANNEL, target + " :!!You're not on that channel"); // ERR optionnelle
+			throw NumericReply(ERR_NOTONCHANNEL, target + " :You're not on that channel"); // ERR optionnelle
 		if (!std::getline(ss, new_topic))
 		{
 			if (channel.getTopic().empty())
@@ -431,7 +462,7 @@ void	Message::_topic(const std::string &arg)
 	}
 	catch (const NumericReply &e)
 	{
-		addNumericMsg(e.what(), e.what());
+		addNumericMsg(e.code(), e.what());
 	}
 }
 
@@ -482,27 +513,8 @@ void	Message::_mode(const std::string &arg)
 	}
 	catch (const NumericReply &e)
 	{
-		addNumericMsg(e.what(), e.what());
+		addNumericMsg(e.code(), e.what());
 	}
-}
-
-void	Message::_ping(const std::string &arg)
-{
-	if (!_sender->authentificated || !_sender->isWelcomed())
-	{
-		addNumericMsg(ERR_NOTREGISTERED, ":You have not registered");
-		return ;
-	}
-
-	std::stringstream	ss(arg);
-	std::string			ret, mode_list;
-	std::getline(ss, ret, ' ');
-	if (ret.empty())
-	{
-		addNumericMsg(ERR_NEEDMOREPARAMS, " PING :Not enough parameters");
-		return ;
-	}
-	_output << "PONG " << ret << CRLF;
 }
 
 void	Message::_whois(const std::string &arg)
