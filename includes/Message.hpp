@@ -6,7 +6,7 @@
 /*   By: mchassig <mchassig@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2023/07/13 12:20:36 by adesgran          #+#    #+#             */
-/*   Updated: 2023/08/11 18:00:10 by mchassig         ###   ########.fr       */
+/*   Updated: 2023/08/11 18:46:49 by mchassig         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -30,13 +30,13 @@ enum cmdValue {
 	PASS,
 	NICK,
 	USER,
+	PING,
 	JOIN,
 	PRIVMSG,
 	KICK,
 	INVITE,
 	TOPIC,
 	MODE,
-	PING,
 	WHOIS,
 };
 
@@ -57,12 +57,12 @@ enum cmdValue {
 # define RPL_NOTOPIC			"331"
 # define RPL_TOPIC				"332"
 # define RPL_INVITING			"341"
-# define RPL_NAMREPLY			"353" //Pas au point
+# define RPL_NAMREPLY			"353"
 # define RPL_ENDOFNAMES			"366"
 
 # define ERR_NOSUCHNICK			"401"
 # define ERR_NOSUCHSERVER		"402"
-# define ERR_NOSUCHCHANNEL		"403" //to-do
+# define ERR_NOSUCHCHANNEL		"403"
 # define ERR_NORECIPIENT		"411"
 # define ERR_NOTEXTTOSEND		"412"
 # define ERR_UNKNOWNCOMMAND		"421"
@@ -71,14 +71,14 @@ enum cmdValue {
 # define ERR_NICKNAMEINUSE		"433"
 # define ERR_USERNOTINCHANNEL	"441"
 # define ERR_NOTONCHANNEL		"442"
-# define ERR_USERONCHANNEL		"443" //to-do
+# define ERR_USERONCHANNEL		"443"
 # define ERR_NOTREGISTERED		"451"
 # define ERR_NEEDMOREPARAMS		"461"
 # define ERR_ALREADYREGISTERED	"462"
 # define ERR_PASSWDMISMATCH		"464"
-# define ERR_CHANNELISFULL		"471" //to-do
-# define ERR_INVITEONLYCHAN		"473" //to-do
-# define ERR_BADCHANNELKEY		"475" //to-do
+# define ERR_CHANNELISFULL		"471"
+# define ERR_INVITEONLYCHAN		"473"
+# define ERR_BADCHANNELKEY		"475"
 # define ERR_CHANOPRIVSNEEDED	"482"
 # define ERR_UMODEUNKNOWNFLAG	"501"
 # define ERR_USERSDONTMATCH		"502"
@@ -132,13 +132,13 @@ class Message {
 		void	_pass(const std::string &arg);
 		void	_nick(const std::string &arg);
 		void	_user(const std::string &arg);
+		void	_pong(const std::string &arg);
 		void	_join(const std::string &arg);
 		void	_privmsg(const std::string &arg);
 		void	_kick(const std::string &arg);
 		void	_invite(const std::string &arg);
 		void	_topic(const std::string &arg);
 		void	_mode(const std::string &arg);
-		void	_ping(const std::string &arg);
 		void	_whois(const std::string &arg);
 };
 
