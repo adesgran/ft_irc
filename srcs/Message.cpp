@@ -6,7 +6,7 @@
 /*   By: mchassig <mchassig@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2023/07/13 12:21:22 by adesgran          #+#    #+#             */
-/*   Updated: 2023/08/10 14:15:29 by mchassig         ###   ########.fr       */
+/*   Updated: 2023/08/11 16:32:25 by mchassig         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -240,9 +240,7 @@ void	Message::_join(const std::string &arg)
 			}
 			std::vector<User *> users = channel->getUsers();
 			std::string			user_list;
-			for ( std::vector<User *>::iterator it = users.begin();
-					it != users.end();
-					it++)
+			FOREACH(User *, users, it)
 			{
 				(*it)->getMessage()->addMsg(_sender, "JOIN", chan_name[i]);
 				user_list += (*it)->getNickname() + " ";
@@ -273,9 +271,7 @@ void	Message::_privmsg(const std::string &arg)
 		if (target_name[0] == '#')
 		{
 			std::vector<User *> chan_users = _server->getChannel(target_name).getUsers();
-			for ( std::vector<User *>::iterator it = chan_users.begin();
-					it != chan_users.end();
-					it++)
+			FOREACH(User *, chan_users, it)
 			{
 				if (*it != _sender)
 					(*it)->getMessage()->addMsg(_sender, "PRIVMSG", target_name, text_to_send);
@@ -286,7 +282,7 @@ void	Message::_privmsg(const std::string &arg)
 			User	&target = _server->getUser(target_name);
 			if (target.getActiveModes().find('a') != std::string::npos)
 				addNumericMsg(RPL_AWAY, target_name);
-			target.getMessage()->_output << _sender->getNickname() << text_to_send << CRLF;
+			target.getMessage()->addMsg(_sender, "PRIVMSG", target_name, text_to_send);
 		}
 	}
 	catch(const NumericReply& e)
@@ -317,9 +313,7 @@ void	Message::_kick(const std::string &arg)
 		if (!channel.isChanop(_sender->getNickname()))
 			throw NumericReply(ERR_CHANOPRIVSNEEDED,chan_name + " :You're not channel operator");
 		std::vector<User *> chan_users = channel.getUsers();
-		for (std::vector<std::string>::iterator it = targets.begin();
-				it != targets.end();
-				it++)
+		FOREACH(std::string, targets, it)
 		{
 			if (!channel.isUserOnChannel(*it))
 				addNumericMsg(ERR_USERNOTINCHANNEL, *it + " " + channel.getName() + " :They aren't on that channel");
@@ -328,13 +322,9 @@ void	Message::_kick(const std::string &arg)
 				User	*rm_user = &_server->getUser(*it);
 				channel.removeUser(rm_user);
 				rm_user->getMessage()->addMsg(_sender, "KICK", rm_user->getNickname(), comment);
-				// rm_user->getMessage()->_output << USERTAG(_sender) << " KICK " << comment << CRLF;
 			}
-			for ( std::vector<User *>::iterator it = chan_users.begin();
-					it != chan_users.end();
-					it++)
-				(*it)->getMessage()->addMsg(_sender, "KICK", chan_name, (*it)->getNickname());
-				// (*it)->getMessage()->_output << USERTAG(_sender) << " KICK " << chan_name << " " << *it << CRLF;
+			FOREACH(User *, chan_users, it2)
+				(*it2)->getMessage()->addMsg(_sender, "KICK", chan_name, *it);
 		}
 	}
 	catch(const NumericReply& e)
@@ -388,11 +378,8 @@ void	Message::_topic(const std::string &arg)
 		}
 		channel.setTopic(_sender, new_topic);
 		std::vector<User *> chan_users = channel.getUsers();
-		for ( std::vector<User *>::iterator it = chan_users.begin();
-				it != chan_users.end();
-				it++)
+		FOREACH(User *, chan_users, it)
 			(*it)->getMessage()->addMsg(_sender, "TOPIC", target, new_topic);
-			// (*it)->getMessage()->_output << ":" << USERTAG(_sender) << " TOPIC " << target << " " << new_topic << CRLF;
 	}
 	catch (const NumericReply &e)
 	{
@@ -420,11 +407,8 @@ void	Message::_mode(const std::string &arg)
 				if (!new_modes.empty())
 				{
 					std::vector<User *> chan_users = channel.getUsers();
-					for ( std::vector<User *>::iterator it = chan_users.begin();
-							it != chan_users.end();
-							it++)
+					FOREACH(User *, chan_users, it)
 						(*it)->getMessage()->addMsg(_sender, "MODE", target, ":" + new_modes);
-						// (*it)->getMessage()->_output << "MODE " << target << " :" << new_modes << CRLF;
 				}
 			}
 		}
