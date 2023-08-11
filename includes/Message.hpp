@@ -6,7 +6,7 @@
 /*   By: mchassig <mchassig@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2023/07/13 12:20:36 by adesgran          #+#    #+#             */
-/*   Updated: 2023/08/10 14:45:46 by mchassig         ###   ########.fr       */
+/*   Updated: 2023/08/11 18:00:10 by mchassig         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -27,6 +27,7 @@ class User;
 class Server;
 
 enum cmdValue {
+	PASS,
 	NICK,
 	USER,
 	JOIN,
@@ -71,8 +72,10 @@ enum cmdValue {
 # define ERR_USERNOTINCHANNEL	"441"
 # define ERR_NOTONCHANNEL		"442"
 # define ERR_USERONCHANNEL		"443" //to-do
+# define ERR_NOTREGISTERED		"451"
 # define ERR_NEEDMOREPARAMS		"461"
 # define ERR_ALREADYREGISTERED	"462"
+# define ERR_PASSWDMISMATCH		"464"
 # define ERR_CHANNELISFULL		"471" //to-do
 # define ERR_INVITEONLYCHAN		"473" //to-do
 # define ERR_BADCHANNELKEY		"475" //to-do
@@ -102,12 +105,12 @@ class Message {
 				NumericReply(std::string code, std::string param) throw();
 				virtual ~NumericReply(void) throw();
 
+				virtual const char *code() const throw();
 				virtual const char *what() const throw();
-				virtual const char *param() const throw();
 
 			private:
 				std::string	_code;
-				std::string	_param;
+				std::string	_what;
 		};
 
 	private:
@@ -126,6 +129,7 @@ class Message {
 		// IRC commands -----------------------------------------
 		void	_welcomeNewUser();
 
+		void	_pass(const std::string &arg);
 		void	_nick(const std::string &arg);
 		void	_user(const std::string &arg);
 		void	_join(const std::string &arg);

@@ -6,7 +6,7 @@
 /*   By: mchassig <mchassig@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2023/07/02 11:59:06 by adesgran          #+#    #+#             */
-/*   Updated: 2023/08/06 17:07:02 by mchassig         ###   ########.fr       */
+/*   Updated: 2023/08/11 17:50:58 by mchassig         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -48,6 +48,8 @@ class Server {
 		~Server( void );
 		Server &operator=( const Server &server );
 
+		void				setPassword(const std::string &password);
+		const std::string	&getPassword() const;
 		
 		const std::vector<User *>	&getUsers( void ) const;
 		const std::vector<Channel *>	&getChannels( void ) const;
@@ -67,6 +69,7 @@ class Server {
 
 
 	private:
+		std::string				_password;
 		std::vector<User *>		_users;
 		std::vector<Channel *>	_channels;
 		int						_serverfd;
