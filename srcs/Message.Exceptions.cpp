@@ -1,9 +1,9 @@
 #include <Message.hpp>
 
-Message::NumericReply::NumericReply(std::string code, std::string param) throw()
+Message::NumericReply::NumericReply(std::string code, std::string what) throw()
 {
 	_code = code;
-	_param = param;
+	_what = what;
 }
 
 Message::NumericReply::~NumericReply(void) throw()
@@ -11,13 +11,12 @@ Message::NumericReply::~NumericReply(void) throw()
 	return ;
 }
 
-const char *Message::NumericReply::what() const throw()
+const char *Message::NumericReply::code() const throw()
 {
 	return (_code.c_str());
 }
 
-
-const char *Message::NumericReply::param() const throw()
+const char *Message::NumericReply::what() const throw()
 {
-	return (_param.c_str());
+	return (_what.c_str());
 }

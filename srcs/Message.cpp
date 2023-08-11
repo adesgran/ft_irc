@@ -6,7 +6,7 @@
 /*   By: mchassig <mchassig@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2023/07/13 12:21:22 by adesgran          #+#    #+#             */
-/*   Updated: 2023/08/11 16:32:25 by mchassig         ###   ########.fr       */
+/*   Updated: 2023/08/11 18:19:26 by mchassig         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -15,6 +15,7 @@
 
 Message::Message(void)
 {
+	_cmdMap["PASS"]		= &Message::_pass;
 	_cmdMap["NICK"]		= &Message::_nick;
 	_cmdMap["USER"]		= &Message::_user;
 	_cmdMap["JOIN"]		= &Message::_join;
@@ -29,6 +30,7 @@ Message::Message(void)
 
 Message::Message(User *sender): _sender(sender)
 {
+	_cmdMap["PASS"]		= &Message::_pass;
 	_cmdMap["NICK"]		= &Message::_nick;
 	_cmdMap["USER"]		= &Message::_user;
 	_cmdMap["JOIN"]		= &Message::_join;
@@ -112,7 +114,6 @@ void	Message::_parseInput(const std::vector<std::string> &input_lines)
 		std::string			cmd_name, cmd_arg;
 		std::getline(ss, cmd_name, ' ');
 		std::getline(ss, cmd_arg);
-
 		if (_cmdMap.find(cmd_name) != _cmdMap.end())
 			(this->*_cmdMap[cmd_name])(cmd_arg);
 		else if (!cmd_name.empty())
@@ -153,6 +154,24 @@ void	Message::_welcomeNewUser()
 	}
 }
 
+void	Message::_pass(const std::string &arg)
+{
+	try
+	{
+		if (arg.empty())
+			throw NumericReply(ERR_NEEDMOREPARAMS, "PASS :Not enough parameters");
+		if (_sender->authentificated)
+			throw NumericReply(ERR_ALREADYREGISTERED, ":You may not reregister");
+		if (arg.compare(_server->getPassword()))
+			throw NumericReply(ERR_PASSWDMISMATCH, ":Password incorrect");
+		_sender->authentificated = true;
+	}
+	catch(const NumericReply& e)
+	{
+		addNumericMsg(e.what(), e.what());
+	}	
+}
+
 void	Message::_nick(const std::string &arg)
 {
 	try
@@ -168,7 +187,7 @@ void	Message::_nick(const std::string &arg)
 	}
 	catch(const NumericReply& e)
 	{
-		addNumericMsg(e.what(), e.param());
+		addNumericMsg(e.what(), e.what());
 	}
 }
 
@@ -194,12 +213,17 @@ void	Message::_user(const std::string &arg)
 	}
 	catch(const NumericReply& e)
 	{
-		addNumericMsg(e.what(), e.param());
+		addNumericMsg(e.what(), e.what());
 	}
 }
 
 void	Message::_join(const std::string &arg)
 {
+	if (!_sender->authentificated || !_sender->isWelcomed())
+	{
+		addNumericMsg(ERR_NOTREGISTERED, ":You have not registered");
+		return ;
+	}
 	if (arg.empty())
 	{
 		addNumericMsg(ERR_NEEDMOREPARAMS, "JOIN :Not enough parameters");
@@ -251,7 +275,7 @@ void	Message::_join(const std::string &arg)
 		}
 		catch(const NumericReply& e)
 		{
-			addNumericMsg(e.what(), e.param());
+			addNumericMsg(e.what(), e.what());
 		}
 		i++;
 	}
@@ -259,6 +283,12 @@ void	Message::_join(const std::string &arg)
 
 void	Message::_privmsg(const std::string &arg)
 {
+	if (!_sender->authentificated || !_sender->isWelcomed())
+	{
+		addNumericMsg(ERR_NOTREGISTERED, ":You have not registered");
+		return ;
+	}
+
 	std::stringstream	ss(arg);
 	std::string			target_name, text_to_send;
 
@@ -287,7 +317,7 @@ void	Message::_privmsg(const std::string &arg)
 	}
 	catch(const NumericReply& e)
 	{
-		addNumericMsg(e.what(), e.param());
+		addNumericMsg(e.what(), e.what());
 	}
 	catch(const std::exception& e)
 	{
@@ -297,6 +327,12 @@ void	Message::_privmsg(const std::string &arg)
 
 void	Message::_kick(const std::string &arg)
 {
+	if (!_sender->authentificated || !_sender->isWelcomed())
+	{
+		addNumericMsg(ERR_NOTREGISTERED, ":You have not registered");
+		return ;
+	}
+
 	std::stringstream	ss(arg);
 	std::string			chan_name, comment, target_list;
 	std::vector<std::string>	targets;
@@ -329,12 +365,18 @@ void	Message::_kick(const std::string &arg)
 	}
 	catch(const NumericReply& e)
 	{
-		addNumericMsg(e.what(), e.param());
+		addNumericMsg(e.what(), e.what());
 	}
 }
 
 void	Message::_invite(const std::string &arg)
 {
+	if (!_sender->authentificated || !_sender->isWelcomed())
+	{
+		addNumericMsg(ERR_NOTREGISTERED, ":You have not registered");
+		return ;
+	}
+
 	std::stringstream	ss(arg);
 	std::string			target_nickname, target_chan;
 	try
@@ -353,12 +395,18 @@ void	Message::_invite(const std::string &arg)
 	}
 	catch (const NumericReply &e)
 	{
-		addNumericMsg(e.what(), e.param());
+		addNumericMsg(e.what(), e.what());
 	}
 }
 
 void	Message::_topic(const std::string &arg)
 {
+	if (!_sender->authentificated || !_sender->isWelcomed())
+	{
+		addNumericMsg(ERR_NOTREGISTERED, ":You have not registered");
+		return ;
+	}
+
 	std::stringstream	ss(arg);
 	std::string			target, new_topic;
 
@@ -383,12 +431,18 @@ void	Message::_topic(const std::string &arg)
 	}
 	catch (const NumericReply &e)
 	{
-		addNumericMsg(e.what(), e.param());
+		addNumericMsg(e.what(), e.what());
 	}
 }
 
 void	Message::_mode(const std::string &arg)
 {
+	if (!_sender->authentificated || !_sender->isWelcomed())
+	{
+		addNumericMsg(ERR_NOTREGISTERED, ":You have not registered");
+		return ;
+	}
+
 	std::stringstream	ss(arg);
 	std::string			target, modestring;
 	std::getline(ss, target, ' ');
@@ -428,12 +482,18 @@ void	Message::_mode(const std::string &arg)
 	}
 	catch (const NumericReply &e)
 	{
-		addNumericMsg(e.what(), e.param());
+		addNumericMsg(e.what(), e.what());
 	}
 }
 
 void	Message::_ping(const std::string &arg)
 {
+	if (!_sender->authentificated || !_sender->isWelcomed())
+	{
+		addNumericMsg(ERR_NOTREGISTERED, ":You have not registered");
+		return ;
+	}
+
 	std::stringstream	ss(arg);
 	std::string			ret, mode_list;
 	std::getline(ss, ret, ' ');
@@ -447,6 +507,12 @@ void	Message::_ping(const std::string &arg)
 
 void	Message::_whois(const std::string &arg)
 {
+	if (!_sender->authentificated || !_sender->isWelcomed())
+	{
+		addNumericMsg(ERR_NOTREGISTERED, ":You have not registered");
+		return ;
+	}
+
 	std::stringstream	ss(arg);
 	std::string			target_name, mode_list;
 	std::getline(ss, target_name, ' ');

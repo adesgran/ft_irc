@@ -6,7 +6,7 @@
 /*   By: mchassig <mchassig@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2023/07/01 13:43:30 by adesgran          #+#    #+#             */
-/*   Updated: 2023/08/10 14:39:14 by mchassig         ###   ########.fr       */
+/*   Updated: 2023/08/11 17:43:08 by mchassig         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -49,6 +49,8 @@ class User {
 		Message		*getMessage( void ) const;
 		bool		isWelcomed( void ) const;
 		void		welcome( void );
+
+		bool					authentificated;
 
 	private:
 		int						_sockfd;
