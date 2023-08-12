@@ -326,9 +326,9 @@ void	Message::_privmsg(const std::string &arg)
 	try
 	{
 		if (!std::getline(ss, target_name, ' '))
-			throw NumericReply(ERR_NORECIPIENT, ":No recipient given PRIVMSG");
+			throw NumericReply(ERR_NORECIPIENT, " :No recipient given PRIVMSG");
 		if (!std::getline(ss, text_to_send))
-			throw NumericReply(ERR_NOTEXTTOSEND, ":No text to send");
+			throw NumericReply(ERR_NOTEXTTOSEND, " :No text to send");
 		if (target_name[0] == '#')
 		{
 			std::vector<User *> chan_users = _server->getChannel(target_name).getUsers();

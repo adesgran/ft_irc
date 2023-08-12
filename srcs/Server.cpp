@@ -362,15 +362,11 @@ void	Server::run( void )
 					if ( this->_pfds[n].revents & POLLOUT )
 					{
 						Message *msg = this->getUser( this->_pfds[n].fd ).getMessage();
-						//std::stringstream	&outstream = msg->getOutputMsg();
 
 						std::string output = msg->getOutputMsg();
-						//std::string output;
-						//std::getline(msg->getOutputMsg(), output, '\n');
 						if ( !output.empty() )
 						{
-							this->_log->debug(">" + output);
-							// output += '\n';
+							this->_log->server(output, this->getUser( this->_pfds[n].fd ));
 							send( this->_pfds[n].fd, output.c_str(), output.size(), 0 );
 						}
 					}
