@@ -6,7 +6,7 @@
 /*   By: adesgran <marvin@42.fr>                    +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2023/07/19 09:07:27 by adesgran          #+#    #+#             */
-/*   Updated: 2023/07/27 17:40:43 by adesgran         ###   ########.fr       */
+/*   Updated: 2023/08/10 14:59:24 by adesgran         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -35,6 +35,7 @@ class Log {
 		void	warning( std::string str );
 		void	error( std::string str );
 		void	client( std::string str, User &user );
+		void	server( std::string str, User &user );
 
 		void	_writeFile( std::string str );
 

@@ -6,7 +6,7 @@
 /*   By: mchassig <mchassig@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2023/07/13 12:21:22 by adesgran          #+#    #+#             */
-/*   Updated: 2023/08/10 12:41:04 by mchassig         ###   ########.fr       */
+/*   Updated: 2023/08/10 15:34:48 by adesgran         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -283,9 +283,9 @@ void	Message::_privmsg(const std::string &arg)
 	try
 	{
 		if (!std::getline(ss, target_name, ' '))
-			throw NumericReply(ERR_NORECIPIENT, ":No recipient given PRIVMSG");
+			throw NumericReply(ERR_NORECIPIENT, " :No recipient given PRIVMSG");
 		if (!std::getline(ss, text_to_send))
-			throw NumericReply(ERR_NOTEXTTOSEND, ":No text to send");
+			throw NumericReply(ERR_NOTEXTTOSEND, " :No text to send");
 		if (target_name[0] == '#')
 		{
 			std::vector<User *> chan_users = _server->getChannel(target_name).getUsers();
@@ -302,7 +302,8 @@ void	Message::_privmsg(const std::string &arg)
 			User	&target = _server->getUser(target_name);
 			if (target.getActiveModes().find('a') != std::string::npos)
 				addNumericMsg(RPL_AWAY, target_name);
-			target.getMessage()->_output << _sender->getNickname() << text_to_send << CRLF;
+			target.getMessage()->addMsg(_sender, "PRIVMSG", target_name, text_to_send);
+			//target.getMessage()->_output << _sender->getNickname() << ' ' << text_to_send << CRLF;
 		}
 	}
 	catch(const NumericReply& e)

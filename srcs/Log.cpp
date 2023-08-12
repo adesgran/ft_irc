@@ -6,7 +6,7 @@
 /*   By: adesgran <marvin@42.fr>                    +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2023/07/19 09:08:13 by adesgran          #+#    #+#             */
-/*   Updated: 2023/07/27 17:58:26 by adesgran         ###   ########.fr       */
+/*   Updated: 2023/08/10 14:59:05 by adesgran         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -117,6 +117,24 @@ void	Log::client( std::string str, User &user )
 		ss >> tag;
 		std::cout << _getHour() << " \e[92m\[Client](" << tag << ")\e[0m " << line << std::endl;
 		this->_writeFile("[Client](" + tag + ") " + line);
+	}
+}
+
+void	Log::server( std::string str, User &user )
+{
+	std::stringstream	message(str);
+	std::string line;
+	while (std::getline(message, line, '\n'))
+	{
+		std::stringstream	ss;
+		if (user.getNickname().empty())
+			ss << user.getSockfd();
+		else
+			ss << user.getNickname();
+		std::string tag;
+		ss >> tag;
+		std::cout << _getHour() << " \e[92m\[Server](" << tag << ")\e[0m " << line << std::endl;
+		this->_writeFile("[Server](" + tag + ") " + line);
 	}
 }
 
