@@ -6,7 +6,7 @@
 /*   By: mchassig <mchassig@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2023/07/02 12:03:38 by adesgran          #+#    #+#             */
-/*   Updated: 2023/08/12 15:32:26 by adesgran         ###   ########.fr       */
+/*   Updated: 2023/08/13 00:00:10 by adesgran         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -38,7 +38,59 @@ Server::Server(void)
 
 	this->_sockaddr.sin_family = AF_INET;
 	this->_sockaddr.sin_addr.s_addr = INADDR_ANY;
-	this->_sockaddr.sin_port = htons(PORT);
+	this->_sockaddr.sin_port = htons(6667);
+
+	if ( bind(
+				this->_serverfd, 
+				(struct sockaddr*)&this->_sockaddr, 
+				sizeof(this->_sockaddr) ) < 0 )
+	{
+		this->_log->error("Error on binding socket");
+		this->_log->error(strerror(errno));
+		throw std::runtime_error(strerror(errno));
+	}
+
+	if ( listen(this->_serverfd, 10) < 0)
+	{
+		this->_log->error("Error on marking socket as passive socket");
+		this->_log->error(strerror(errno));
+		throw std::runtime_error(strerror(errno));
+	}
+
+	this->_pfds_init();
+
+	fcntl(this->_serverfd, F_SETFL, O_NONBLOCK);
+
+	_log->info("Server is ready");
+}
+
+Server::Server( int port )
+{
+	this->_log = new Log();
+	this->_opt = 1;
+	this->_addrlen = sizeof(this->_sockaddr);
+
+	if ( ( this->_serverfd = socket(AF_INET, SOCK_STREAM, 0) ) < 0 )
+	{
+		this->_log->error("Error on socket creation");
+		this->_log->error(strerror(errno));
+		throw std::runtime_error(strerror(errno));
+	}
+
+	if ( setsockopt(
+				this->_serverfd, 
+				SOL_SOCKET, SO_REUSEADDR | SO_REUSEPORT, 
+				&this->_opt, 
+				sizeof(this->_opt) ) )
+	{
+		this->_log->error("Error on socket options");
+		this->_log->error(strerror(errno));
+		throw std::runtime_error(strerror(errno));
+	}
+
+	this->_sockaddr.sin_family = AF_INET;
+	this->_sockaddr.sin_addr.s_addr = INADDR_ANY;
+	this->_sockaddr.sin_port = htons(port);
 
 	if ( bind(
 				this->_serverfd, 
