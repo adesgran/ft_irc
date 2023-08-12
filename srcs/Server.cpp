@@ -6,7 +6,7 @@
 /*   By: mchassig <mchassig@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2023/07/02 12:03:38 by adesgran          #+#    #+#             */
-/*   Updated: 2023/08/10 15:00:52 by adesgran         ###   ########.fr       */
+/*   Updated: 2023/08/11 18:19:58 by mchassig         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -81,6 +81,16 @@ Server &Server::operator=(const Server &server)
 	return (*this);
 }
 
+void		Server::setPassword(const std::string &password)
+{
+	_password = password;
+}
+
+const std::string	&Server::getPassword() const
+{
+	return (_password);
+}
+
 Log	*Server::getLog( void ) const
 {
 	return (this->_log);
@@ -138,6 +148,8 @@ bool	Server::isUser(const std::string nickname) const
 void	Server::_addUser( int fd )
 {
 	User *user = new User(fd);
+	if (_password.empty())
+		user->authentificated = true;
 	this->_users.push_back( user );
 }
 
