@@ -6,7 +6,7 @@
 /*   By: mchassig <mchassig@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2023/07/02 12:03:38 by adesgran          #+#    #+#             */
-/*   Updated: 2023/08/11 18:19:58 by mchassig         ###   ########.fr       */
+/*   Updated: 2023/08/12 15:32:26 by adesgran         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -72,6 +72,15 @@ Server::Server(const Server &server)
 Server::~Server(void)
 {
 	delete[] this->_pfds;
+	for ( std::vector<User *>::iterator it = this->_users.begin(); it != this->_users.end(); it++ )
+	{
+		delete *it;
+	}
+	for ( std::vector<Channel *>::iterator it = this->_channels.begin(); it != this->_channels.end(); it++ )
+	{
+		delete *it;
+	}
+	delete this->_log;
 };
 
 Server &Server::operator=(const Server &server)
@@ -282,7 +291,6 @@ int	Server::_listenMessage( int fd )
 			this->_log->client(input, client);
 			Message *msg = this->getUser( fd ).getMessage();
 			msg->setInputMsg( input, this );
-			(void)client;
 			return (0);
 		}
 		catch (std::exception const & e)
@@ -334,9 +342,7 @@ void	Server::run( void )
 					if ( this->_pfds[n].revents & POLLERR )
 					{
 						this->_log->debug("POLLERR");
-						throw Server::PollException();
 					}
-					else if ( this->_pfds[n].revents & POLLHUP )
 					{
 						this->_log->info("Connection closed");
 						this->_remove_user(this->_pfds[n].fd);
