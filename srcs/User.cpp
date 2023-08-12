@@ -6,7 +6,7 @@
 /*   By: mchassig <mchassig@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2023/07/01 13:44:20 by adesgran          #+#    #+#             */
-/*   Updated: 2023/08/09 13:52:42 by mchassig         ###   ########.fr       */
+/*   Updated: 2023/08/10 14:39:07 by mchassig         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -60,7 +60,6 @@ User &User::operator=(const User &user)
 	return (*this);
 }
 
-
 void	User::setSockfd( int sockfd )
 {
 	this->_sockfd = sockfd;
@@ -86,7 +85,7 @@ std::string	User::getUsername( void ) const
 	return (this->_username);
 }
 
-void		User::setUsername( const std::string username )
+void	User::setUsername( const std::string username )
 {
 	this->_username = username;
 }
@@ -96,7 +95,7 @@ std::string	User::getNickname( void ) const
 	return (this->_nickname);
 }
 
-void		User::setNickname( const std::string nickname )
+void	User::setNickname( const std::string nickname )
 {
 	this->_nickname = nickname;
 }
@@ -106,7 +105,7 @@ std::string	User::getRealname( void ) const
 	return (this->_realname);
 }
 
-void		User::setRealname( const std::string realname )
+void	User::setRealname( const std::string realname )
 {
 	this->_realname = realname;
 }
@@ -116,7 +115,7 @@ std::string	User::getHostname( void ) const
 	return (this->_hostname);
 }
 
-void		User::setHostname( const std::string hostname )
+void	User::setHostname( const std::string hostname )
 {
 	this->_hostname = hostname;
 }
@@ -135,11 +134,10 @@ std::string	User::getActiveModes( void ) const
 	return (ret);
 }
 
-bool	User::setModes(const std::string new_modes)
+std::string	User::setModes(const std::string new_modes)
 {
 	char	op = 0;
-	bool	err = false;
-
+	std::string	changed_modes;
 	for (std::string::const_iterator it = new_modes.begin(); it != new_modes.end(); it++)
 	{
 		if (*it == '+' || *it == '-')
@@ -149,17 +147,19 @@ bool	User::setModes(const std::string new_modes)
 		else if (op == '+' && _modes.find(*it) != _modes.end() && *it != 'o' && *it != 'O')
 		{
 			_modes[*it] = true;
+			changed_modes += *it;
 		}
 		else if (op == '-' && _modes.find(*it) != _modes.end())
 		{
 			_modes[*it] = false;
+			changed_modes += *it;
 		}
 		else if (*it != 'o' && *it != 'O')
 		{
 			_message->addNumericMsg(ERR_UMODEUNKNOWNFLAG, ":Unknown MODE flag");
 		}
 	}
-	return (err);
+	return (changed_modes);
 }
 
 Message	*User::getMessage( void ) const

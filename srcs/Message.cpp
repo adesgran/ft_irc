@@ -6,7 +6,7 @@
 /*   By: mchassig <mchassig@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2023/07/13 12:21:22 by adesgran          #+#    #+#             */
-/*   Updated: 2023/08/10 12:41:04 by mchassig         ###   ########.fr       */
+/*   Updated: 2023/08/11 18:55:07 by mchassig         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -15,29 +15,31 @@
 
 Message::Message(void)
 {
+	_cmdMap["PASS"]		= &Message::_pass;
 	_cmdMap["NICK"]		= &Message::_nick;
 	_cmdMap["USER"]		= &Message::_user;
+	_cmdMap["PING"]		= &Message::_pong;
 	_cmdMap["JOIN"]		= &Message::_join;
 	_cmdMap["PRIVMSG"]	= &Message::_privmsg;
 	_cmdMap["KICK"]		= &Message::_kick;
 	_cmdMap["INVITE"]	= &Message::_invite;
 	_cmdMap["TOPIC"]	= &Message::_topic;
 	_cmdMap["MODE"]		= &Message::_mode;
-	_cmdMap["PING"]		= &Message::_ping;
 	_cmdMap["WHOIS"]	= &Message::_whois;
 }
 
 Message::Message(User *sender): _sender(sender)
 {
+	_cmdMap["PASS"]		= &Message::_pass;
 	_cmdMap["NICK"]		= &Message::_nick;
 	_cmdMap["USER"]		= &Message::_user;
+	_cmdMap["PING"]		= &Message::_pong;
 	_cmdMap["JOIN"]		= &Message::_join;
 	_cmdMap["PRIVMSG"]	= &Message::_privmsg;
 	_cmdMap["KICK"]		= &Message::_kick;
 	_cmdMap["INVITE"]	= &Message::_invite;
 	_cmdMap["TOPIC"]	= &Message::_topic;
 	_cmdMap["MODE"]		= &Message::_mode;
-	_cmdMap["PING"]		= &Message::_ping;
 	_cmdMap["WHOIS"]	= &Message::_whois;
 }
 
@@ -112,27 +114,8 @@ void	Message::_parseInput(const std::vector<std::string> &input_lines)
 		std::string			cmd_name, cmd_arg;
 		std::getline(ss, cmd_name, ' ');
 		std::getline(ss, cmd_arg);
-
 		if (_cmdMap.find(cmd_name) != _cmdMap.end())
 			(this->*_cmdMap[cmd_name])(cmd_arg);
-		else if (!cmd_name.compare("PART"))
-		{
-			std::vector<Channel *>	chans = _server->getChannels();
-			std::cout << "	*number of channels: " << chans.size() << std::endl;
-			for (std::vector<Channel *>::iterator c = chans.begin();
-					c != chans.end(); c ++)
-			{
-				std::cout << "	| " << (*c)->getName();
-				std::vector<User *>	users = (*c)->getUsers();
-				std::cout << " (" << users.size() << " users):";
-				for (std::vector<User *>::iterator u = users.begin();
-						u != users.end(); u ++)
-				{
-					std::cout << " " << (*u)->getNickname();
-				}
-				std::cout << std::endl;
-			}
-		}
 		else if (!cmd_name.empty())
 			addNumericMsg(ERR_UNKNOWNCOMMAND, cmd_name + " :Unknown command");
 	}
@@ -165,33 +148,62 @@ void	Message::_welcomeNewUser()
 	{
 		_sender->welcome();
 		_output << ":" << std::string(SERVER_ADDRESS) << " " << RPL_WELCOME << " " << _sender->getNickname() 
-		<< " :Welcome to the <networkname> Network " 
-		<< USERTAG(_sender)
+		<< " :Welcome to the <networkname> Network " << USERTAG(_sender)
 		<< CRLF;
 	}
 }
 
-void	Message::_nick(const std::string &arg)
+void	Message::_pass(const std::string &arg)
 {
 	try
 	{
 		if (arg.empty())
+			throw NumericReply(ERR_NEEDMOREPARAMS, "PASS :Not enough parameters");
+		if (_sender->authentificated)
+			throw NumericReply(ERR_ALREADYREGISTERED, ":You may not reregister");
+		if (arg.compare(_server->getPassword()))
+			throw NumericReply(ERR_PASSWDMISMATCH, ":Password incorrect");
+		_sender->authentificated = true;
+	}
+	catch(const NumericReply& e)
+	{
+		addNumericMsg(e.code(), e.what());
+	}	
+}
+
+void	Message::_nick(const std::string &arg)
+{
+	if (!_sender->authentificated)
+	{
+		addNumericMsg(ERR_NOTREGISTERED, ":You have not registered");
+		return ;
+	}
+
+	try
+	{
+		if (arg.empty())
 			throw NumericReply(ERR_NONICKNAMEGIVEN, ":No nickname given");
-		if (arg.find_first_of("#:@ \t\n\r\v\f") != std::string::npos)
+		if (arg.find_first_of(",#:@ \t\n\r\v\f") != std::string::npos)
 			throw NumericReply(ERR_ERRONEUSNICKNAME, arg + " :Erroneus nickname");
 		if (_server->isUser(arg))
 			throw NumericReply(ERR_NICKNAMEINUSE, arg + " :Nickname is already in use");
-		_sender->setNickname(arg);		
+		_sender->setNickname(arg);
 		_welcomeNewUser();
 	}
 	catch(const NumericReply& e)
 	{
-		addNumericMsg(e.what(), e.param());
+		addNumericMsg(e.code(), e.what());
 	}
 }
 
 void	Message::_user(const std::string &arg)
 {
+	if (!_sender->authentificated)
+	{
+		addNumericMsg(ERR_NOTREGISTERED, ":You have not registered");
+		return ;
+	}
+
 	std::stringstream	ss(arg);
 	std::string			username, mode, unused, realName;
 	try
@@ -212,12 +224,36 @@ void	Message::_user(const std::string &arg)
 	}
 	catch(const NumericReply& e)
 	{
-		addNumericMsg(e.what(), e.param());
+		addNumericMsg(e.code(), e.what());
 	}
+}
+
+void	Message::_pong(const std::string &arg)
+{
+	if (!_sender->authentificated || !_sender->isWelcomed())
+	{
+		addNumericMsg(ERR_NOTREGISTERED, ":You have not registered");
+		return ;
+	}
+
+	std::stringstream	ss(arg);
+	std::string			ret, mode_list;
+	std::getline(ss, ret, ' ');
+	if (ret.empty())
+	{
+		addNumericMsg(ERR_NEEDMOREPARAMS, " PING :Not enough parameters");
+		return ;
+	}
+	_output << "PONG " << ret << CRLF;
 }
 
 void	Message::_join(const std::string &arg)
 {
+	if (!_sender->authentificated || !_sender->isWelcomed())
+	{
+		addNumericMsg(ERR_NOTREGISTERED, ":You have not registered");
+		return ;
+	}
 	if (arg.empty())
 	{
 		addNumericMsg(ERR_NEEDMOREPARAMS, "JOIN :Not enough parameters");
@@ -234,9 +270,11 @@ void	Message::_join(const std::string &arg)
 	//ERR_UNAVAILRESOURCE
 	
 	std::vector<std::string>	tmp = _split(arg, " ");
-	std::vector<std::string>	chan_name = _split (tmp[0], ","), key;
+	std::vector<std::string>	chan_name = _split(tmp[0], ","), key;
 	if (tmp.size() > 1)
 		key = _split(tmp[1], ",");
+	while (key.size() < chan_name.size())
+		key.push_back("");
 	
 	size_t	i = 0;
 	while (i < chan_name.size())
@@ -252,24 +290,23 @@ void	Message::_join(const std::string &arg)
 			else
 			{
 				channel = &_server->getChannel(chan_name[i]);
-				channel->addUser(_sender);
+				channel->addUser(_sender, NULL, key[i]);
 			}
 			std::vector<User *> users = channel->getUsers();
 			std::string			user_list;
-			for ( std::vector<User *>::iterator it = users.begin();
-					it != users.end();
-					it++)
+			FOREACH(User *, users, it)
 			{
 				(*it)->getMessage()->addMsg(_sender, "JOIN", chan_name[i]);
 				user_list += (*it)->getNickname() + " ";
 			}
-			addNumericMsg(RPL_TOPIC, channel->getTopic());
-			addNumericMsg(RPL_NAMREPLY, ":" + user_list);
+			if (!channel->getTopic().empty())
+				addNumericMsg(RPL_TOPIC, chan_name[i] + " " + channel->getTopic());
+			addNumericMsg(RPL_NAMREPLY, chan_name[i] + " :" + user_list);
 			addNumericMsg(RPL_ENDOFNAMES);
 		}
 		catch(const NumericReply& e)
 		{
-			addNumericMsg(e.what(), e.param());
+			addNumericMsg(e.code(), e.what());
 		}
 		i++;
 	}
@@ -277,21 +314,25 @@ void	Message::_join(const std::string &arg)
 
 void	Message::_privmsg(const std::string &arg)
 {
+	if (!_sender->authentificated || !_sender->isWelcomed())
+	{
+		addNumericMsg(ERR_NOTREGISTERED, ":You have not registered");
+		return ;
+	}
+
 	std::stringstream	ss(arg);
 	std::string			target_name, text_to_send;
 
 	try
 	{
 		if (!std::getline(ss, target_name, ' '))
-			throw NumericReply(ERR_NORECIPIENT, ":No recipient given PRIVMSG");
+			throw NumericReply(ERR_NORECIPIENT, " :No recipient given PRIVMSG");
 		if (!std::getline(ss, text_to_send))
-			throw NumericReply(ERR_NOTEXTTOSEND, ":No text to send");
+			throw NumericReply(ERR_NOTEXTTOSEND, " :No text to send");
 		if (target_name[0] == '#')
 		{
 			std::vector<User *> chan_users = _server->getChannel(target_name).getUsers();
-			for ( std::vector<User *>::iterator it = chan_users.begin();
-					it != chan_users.end();
-					it++)
+			FOREACH(User *, chan_users, it)
 			{
 				if (*it != _sender)
 					(*it)->getMessage()->addMsg(_sender, "PRIVMSG", target_name, text_to_send);
@@ -302,12 +343,12 @@ void	Message::_privmsg(const std::string &arg)
 			User	&target = _server->getUser(target_name);
 			if (target.getActiveModes().find('a') != std::string::npos)
 				addNumericMsg(RPL_AWAY, target_name);
-			target.getMessage()->_output << _sender->getNickname() << text_to_send << CRLF;
+			target.getMessage()->addMsg(_sender, "PRIVMSG", target_name, text_to_send);
 		}
 	}
 	catch(const NumericReply& e)
 	{
-		addNumericMsg(e.what(), e.param());
+		addNumericMsg(e.code(), e.what());
 	}
 	catch(const std::exception& e)
 	{
@@ -317,6 +358,12 @@ void	Message::_privmsg(const std::string &arg)
 
 void	Message::_kick(const std::string &arg)
 {
+	if (!_sender->authentificated || !_sender->isWelcomed())
+	{
+		addNumericMsg(ERR_NOTREGISTERED, ":You have not registered");
+		return ;
+	}
+
 	std::stringstream	ss(arg);
 	std::string			chan_name, comment, target_list;
 	std::vector<std::string>	targets;
@@ -333,9 +380,7 @@ void	Message::_kick(const std::string &arg)
 		if (!channel.isChanop(_sender->getNickname()))
 			throw NumericReply(ERR_CHANOPRIVSNEEDED,chan_name + " :You're not channel operator");
 		std::vector<User *> chan_users = channel.getUsers();
-		for (std::vector<std::string>::iterator it = targets.begin();
-				it != targets.end();
-				it++)
+		FOREACH(std::string, targets, it)
 		{
 			if (!channel.isUserOnChannel(*it))
 				addNumericMsg(ERR_USERNOTINCHANNEL, *it + " " + channel.getName() + " :They aren't on that channel");
@@ -344,23 +389,25 @@ void	Message::_kick(const std::string &arg)
 				User	*rm_user = &_server->getUser(*it);
 				channel.removeUser(rm_user);
 				rm_user->getMessage()->addMsg(_sender, "KICK", rm_user->getNickname(), comment);
-				// rm_user->getMessage()->_output << USERTAG(_sender) << " KICK " << comment << CRLF;
 			}
-			for ( std::vector<User *>::iterator it = chan_users.begin();
-					it != chan_users.end();
-					it++)
-				(*it)->getMessage()->addMsg(_sender, "KICK", chan_name, (*it)->getNickname());
-				// (*it)->getMessage()->_output << USERTAG(_sender) << " KICK " << chan_name << " " << *it << CRLF;
+			FOREACH(User *, chan_users, it2)
+				(*it2)->getMessage()->addMsg(_sender, "KICK", chan_name, *it);
 		}
 	}
 	catch(const NumericReply& e)
 	{
-		addNumericMsg(e.what(), e.param());
+		addNumericMsg(e.code(), e.what());
 	}
 }
 
 void	Message::_invite(const std::string &arg)
 {
+	if (!_sender->authentificated || !_sender->isWelcomed())
+	{
+		addNumericMsg(ERR_NOTREGISTERED, ":You have not registered");
+		return ;
+	}
+
 	std::stringstream	ss(arg);
 	std::string			target_nickname, target_chan;
 	try
@@ -379,12 +426,18 @@ void	Message::_invite(const std::string &arg)
 	}
 	catch (const NumericReply &e)
 	{
-		addNumericMsg(e.what(), e.param());
+		addNumericMsg(e.code(), e.what());
 	}
 }
 
 void	Message::_topic(const std::string &arg)
 {
+	if (!_sender->authentificated || !_sender->isWelcomed())
+	{
+		addNumericMsg(ERR_NOTREGISTERED, ":You have not registered");
+		return ;
+	}
+
 	std::stringstream	ss(arg);
 	std::string			target, new_topic;
 
@@ -394,7 +447,7 @@ void	Message::_topic(const std::string &arg)
 			throw NumericReply(ERR_NEEDMOREPARAMS, "TOPIC :Not enough parameters");
 		Channel	&channel = _server->getChannel(target);
 		if (!channel.isUserOnChannel(_sender->getNickname()))
-			throw NumericReply(ERR_NOTONCHANNEL, target + " :!!You're not on that channel"); // ERR optionnelle
+			throw NumericReply(ERR_NOTONCHANNEL, target + " :You're not on that channel"); // ERR optionnelle
 		if (!std::getline(ss, new_topic))
 		{
 			if (channel.getTopic().empty())
@@ -404,20 +457,23 @@ void	Message::_topic(const std::string &arg)
 		}
 		channel.setTopic(_sender, new_topic);
 		std::vector<User *> chan_users = channel.getUsers();
-		for ( std::vector<User *>::iterator it = chan_users.begin();
-				it != chan_users.end();
-				it++)
+		FOREACH(User *, chan_users, it)
 			(*it)->getMessage()->addMsg(_sender, "TOPIC", target, new_topic);
-			// (*it)->getMessage()->_output << ":" << USERTAG(_sender) << " TOPIC " << target << " " << new_topic << CRLF;
 	}
 	catch (const NumericReply &e)
 	{
-		addNumericMsg(e.what(), e.param());
+		addNumericMsg(e.code(), e.what());
 	}
 }
 
 void	Message::_mode(const std::string &arg)
 {
+	if (!_sender->authentificated || !_sender->isWelcomed())
+	{
+		addNumericMsg(ERR_NOTREGISTERED, ":You have not registered");
+		return ;
+	}
+
 	std::stringstream	ss(arg);
 	std::string			target, modestring;
 	std::getline(ss, target, ' ');
@@ -432,12 +488,13 @@ void	Message::_mode(const std::string &arg)
 			{
 				if (!channel.isChanop(_sender->getNickname()))
 					throw NumericReply(ERR_CHANOPRIVSNEEDED, target + " :You're not a channel operator");
-				channel.setModes(_sender, modestring, ss);
-				std::vector<User *> chan_users = channel.getUsers();
-				for ( std::vector<User *>::iterator it = chan_users.begin();
-						it != chan_users.end();
-						it++)
-					(*it)->getMessage()->_output << "MODE " << target << " :" << channel.getActiveModes() << CRLF;
+				std::string	new_modes = channel.setModes(_sender, modestring, ss);
+				if (!new_modes.empty())
+				{
+					std::vector<User *> chan_users = channel.getUsers();
+					FOREACH(User *, chan_users, it)
+						(*it)->getMessage()->addMsg(_sender, "MODE", target, ":" + new_modes);
+				}
 			}
 		}
 		else
@@ -450,33 +507,24 @@ void	Message::_mode(const std::string &arg)
 				throw NumericReply(RPL_UMODEIS, _sender->getActiveModes());
 			else
 			{
-				_sender->setModes(modestring);
-				addMsg(_sender, "MODE", target, _sender->getActiveModes());
-				// _output << ":" << USERTAG(_sender) << " MODE " << target << " " << _sender->getActiveModes() << CRLF;	
+				addMsg(_sender, "MODE", target, _sender->setModes(modestring));
 			}
 		}
 	}
 	catch (const NumericReply &e)
 	{
-		addNumericMsg(e.what(), e.param());
+		addNumericMsg(e.code(), e.what());
 	}
-}
-
-void	Message::_ping(const std::string &arg)
-{
-	std::stringstream	ss(arg);
-	std::string			ret, mode_list;
-	std::getline(ss, ret, ' ');
-	if (ret.empty())
-	{
-		addNumericMsg(ERR_NEEDMOREPARAMS, " PING :Not enough parameters");
-		return ;
-	}
-	_output << "PONG " << ret << CRLF;
 }
 
 void	Message::_whois(const std::string &arg)
 {
+	if (!_sender->authentificated || !_sender->isWelcomed())
+	{
+		addNumericMsg(ERR_NOTREGISTERED, ":You have not registered");
+		return ;
+	}
+
 	std::stringstream	ss(arg);
 	std::string			target_name, mode_list;
 	std::getline(ss, target_name, ' ');
