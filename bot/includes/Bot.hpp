@@ -6,7 +6,7 @@
 /*   By: adesgran <marvin@42.fr>                    +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2023/08/01 16:50:33 by adesgran          #+#    #+#             */
-/*   Updated: 2023/08/01 19:52:44 by adesgran         ###   ########.fr       */
+/*   Updated: 2023/08/13 01:53:59 by adesgran         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -31,6 +31,7 @@
 # include <signal.h>
 # include <poll.h>
 # include <utils.hpp>
+# include <map>
 
 # define BUFFER_SIZE 2001
 
@@ -41,17 +42,24 @@ class Bot {
 		~Bot( void );
 		Bot &operator=( const Bot &bot );
 
+		void	setCmd(std::string const &filename);
+		void	setPass( std::string const &pass);
+		void	setName( std::string const &name);
 		int		conf( std::string filename );
 		void	run( void );
 
 
 	private:
-		int					_fd;
-		struct sockaddr_in	_sockaddr;
-		socklen_t			_addrlen;
-		int					_opt;
-		struct pollfd		_pfds;
-		std::stringstream	_output;
+		int									_fd;
+		struct sockaddr_in					_sockaddr;
+		socklen_t							_addrlen;
+		int									_opt;
+		struct pollfd						_pfds;
+		std::stringstream					_output;
+		std::string							_name;
+		std::string							_pass;
+		int									_logged;
+		std::map<std::string, std::string>	_cmd;
 
 		void				_readline( std::string line );
 		void				_listenMessage( void );

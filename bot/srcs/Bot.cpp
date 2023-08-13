@@ -6,7 +6,7 @@
 /*   By: adesgran <marvin@42.fr>                    +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2023/08/01 16:50:23 by adesgran          #+#    #+#             */
-/*   Updated: 2023/08/08 04:17:55 by adesgran         ###   ########.fr       */
+/*   Updated: 2023/08/13 02:29:00 by adesgran         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -14,6 +14,7 @@
 
 Bot::Bot(void)
 {
+	this->_logged = 0;
 	this->_opt = 1;
 	this->_addrlen = sizeof(this->_sockaddr);
 
@@ -57,8 +58,32 @@ Bot &Bot::operator=(const Bot &bot)
 
 }
 
-void	Bot::_readline( std::string line )
+void	Bot::setCmd(std::string const &filename)
 {
+	std::ifstream file;
+	file.open(filename.c_str());
+	std::string line;
+	while (std::getline(file, line))
+	{
+		std::string key = line.substr(0, line.find(' '));
+		std::string value = line.substr(line.find(' ') + 1);
+		_cmd[key] = value;
+	}
+}
+
+void	Bot::setPass(std::string const &pass)
+{
+	_pass = pass;
+}
+
+void	Bot::setName(std::string const &name)
+{
+	_name = name;
+}
+
+void	Bot::_readline( std::string str )
+{
+	std::string line(str);
 	std::vector<std::string> tokens;
 	while (line.size())
 	{
@@ -78,27 +103,42 @@ void	Bot::_readline( std::string line )
 		}
 	}
 
-	for (std::vector<std::string>::iterator it = tokens.begin(); it != tokens.end(); it++)
-		std::cout << "["<< *it << "] " << std::endl;
-
-	std::stringstream ss(tokens[1]);
-	int code;
-	ss >> code;
-	switch (code)
+	if (!_logged)
 	{
-		case 1 : 
-			std::cout << "Code 001" << std::endl;
+		if ( tokens[1] == "001" )
+		{
+			_logged = 1;
+			std::cout << "Logged on irc server" << std::endl;
 			_output << "JOIN #bot\r\n";
-			break;
-		default :
-			std::cout << "Unknonwn code : " << code << std::endl;
+		}
+		else
+		{
+			throw std::runtime_error("Can't log in");
+		}
 	}
-	std::cout << std::endl;
-
+	else
+	{
+		std::string	sender;
+		sender = tokens[0].substr(0, tokens[0].find('!'));
+		if (sender.size() < 1)
+			sender = "#bot";
+		if ( tokens[1] == std::string("PRIVMSG") )
+		{
+			std::string dest;
+			if (tokens[2] == _name)
+				dest = sender;
+			else
+				dest = tokens[2];
+			std::string key = tokens[3].substr(1);
+			key = key.substr(0, key.find('\r'));
+			std::string res = _cmd[key];
+			if (res.size() > 1)
+				_output << "PRIVMSG " << dest << " :" << res << "\r\n";
+			else if (key[0] == '!')
+				_output << "PRIVMSG " << dest << " :Unknown command\r\n";
 			
-			
-
-
+		}
+	}
 }
 
 void	Bot::_listenMessage( void )
@@ -152,7 +192,9 @@ void	Bot::run( void )
 		throw std::runtime_error(strerror(errno));
 	}
 
-	_output << "NICK fillbot\r\n" << "USER fillbot fillbot irc.adesgran.ovh :fillbot\r\n";
+	if (_pass.size() > 0)
+		_output << "PASS " << _pass << "\r\n";
+	_output << "NICK " << _name << "\r\n" << "USER " << _name << " " << _name << " irc.adesgran.ovh :fillbot\r\n";
 	this->_pfds.fd = this->_fd;
 	this->_pfds.events = POLLIN | POLLOUT;
 
