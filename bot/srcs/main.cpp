@@ -6,7 +6,7 @@
 /*   By: adesgran <marvin@42.fr>                    +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2023/08/01 16:43:26 by adesgran          #+#    #+#             */
-/*   Updated: 2023/08/13 02:03:11 by adesgran         ###   ########.fr       */
+/*   Updated: 2023/08/13 02:44:32 by adesgran         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -26,9 +26,15 @@ int main(int ac, char **av)
 	bot.setName(av[1]);
 	if (ac == 3)
 		bot.setPass(av[2]);
-	bot.conf(av[1]);
 	bot.setCmd("test.cmd");
-	bot.run();
+	try
+	{
+		bot.run();
+	}
+	catch (std::exception const &e)
+	{
+		std::cout << e.what() << std::endl;
+	}
 
 
 	return (0);

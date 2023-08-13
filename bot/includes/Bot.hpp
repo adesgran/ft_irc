@@ -6,7 +6,7 @@
 /*   By: adesgran <marvin@42.fr>                    +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2023/08/01 16:50:33 by adesgran          #+#    #+#             */
-/*   Updated: 2023/08/13 01:53:59 by adesgran         ###   ########.fr       */
+/*   Updated: 2023/08/13 02:42:44 by adesgran         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -48,6 +48,8 @@ class Bot {
 		int		conf( std::string filename );
 		void	run( void );
 
+		static void	stop( void );
+
 
 	private:
 		int									_fd;
@@ -72,6 +74,15 @@ class Bot {
 				virtual const char *what() const throw()
 				{
 					return ("Invalid File");
+				}
+		};
+
+		class	SigintException: public std::exception
+		{
+			public :
+				virtual const char *what() const throw()
+				{
+					return ("SigInt");
 				}
 		};
 
