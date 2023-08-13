@@ -6,7 +6,7 @@
 /*   By: adesgran <marvin@42.fr>                    +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2023/08/01 16:50:23 by adesgran          #+#    #+#             */
-/*   Updated: 2023/08/13 02:29:00 by adesgran         ###   ########.fr       */
+/*   Updated: 2023/08/13 02:44:14 by adesgran         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -172,8 +172,21 @@ void	Bot::_sendMessage( void )
 
 }
 
+void	Bot::stop( void )
+{
+	throw Bot::SigintException();
+}
+
+void	sigintHandle( int sig )
+{
+	std::cout << std::endl;
+	(void)sig;
+	Bot::stop();
+}
+
 void	Bot::run( void )
 {
+	signal(SIGINT, sigintHandle);
 	this->_sockaddr.sin_family = AF_INET;
 	this->_sockaddr.sin_addr.s_addr = INADDR_ANY;
 	this->_sockaddr.sin_port = htons(6667);//read file
@@ -231,13 +244,6 @@ void	Bot::run( void )
 			}
 		}
 	}
-}
-
-
-int	Bot::conf( std::string filename )
-{
-	(void)filename;
-	return (0);
 }
 
 
