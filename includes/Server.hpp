@@ -6,7 +6,7 @@
 /*   By: mchassig <mchassig@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2023/07/02 11:59:06 by adesgran          #+#    #+#             */
-/*   Updated: 2023/08/12 23:59:54 by adesgran         ###   ########.fr       */
+/*   Updated: 2023/08/14 14:05:34 by mchassig         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -39,6 +39,7 @@
 class User;
 class Channel;
 class Log;
+bool isEquals(const std::string& a, const std::string& b);
 
 class Server {
 	public:

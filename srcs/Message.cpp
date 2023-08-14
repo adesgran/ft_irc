@@ -6,7 +6,7 @@
 /*   By: mchassig <mchassig@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2023/07/13 12:21:22 by adesgran          #+#    #+#             */
-/*   Updated: 2023/08/14 12:49:19 by mchassig         ###   ########.fr       */
+/*   Updated: 2023/08/14 14:28:52 by mchassig         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -184,7 +184,7 @@ void	Message::_nick(const std::string &arg)
 			throw NumericReply(ERR_NONICKNAMEGIVEN, ":No nickname given");
 		if (arg.find_first_of(",#:@ \t\n\r\v\f") != std::string::npos)
 			throw NumericReply(ERR_ERRONEUSNICKNAME, arg + " :Erroneus nickname");
-		if (_server->isUser(arg))
+		if (!isEquals(arg, _sender->getNickname()) && _server->isUser(arg))
 			throw NumericReply(ERR_NICKNAMEINUSE, arg + " :Nickname is already in use");
 		_sender->setNickname(arg);
 		_welcomeNewUser();
@@ -290,12 +290,12 @@ void	Message::_join(const std::string &arg)
 			std::string			user_list;
 			FOREACH(User *, users, it)
 			{
-				(*it)->getMessage()->addMsg(_sender, "JOIN", chan_name[i]);
+				(*it)->getMessage()->addMsg(_sender, "JOIN", channel->getName());
 				user_list += (*it)->getNickname() + " ";
 			}
 			if (!channel->getTopic().empty())
-				addNumericMsg(RPL_TOPIC, chan_name[i] + " " + channel->getTopic());
-			addNumericMsg(RPL_NAMREPLY, chan_name[i] + " :" + user_list);
+				addNumericMsg(RPL_TOPIC, channel->getName() + " " + channel->getTopic());
+			addNumericMsg(RPL_NAMREPLY, channel->getName() + " :" + user_list);
 			addNumericMsg(RPL_ENDOFNAMES);
 		}
 		catch(const NumericReply& e)
@@ -323,18 +323,18 @@ void	Message::_topic(const std::string &arg)
 			throw NumericReply(ERR_NEEDMOREPARAMS, "TOPIC :Not enough parameters");
 		Channel	&channel = _server->getChannel(target);
 		if (!channel.isUserOnChannel(_sender->getNickname()))
-			throw NumericReply(ERR_NOTONCHANNEL, target + " :You're not on that channel"); // ERR optionnelle
+			throw NumericReply(ERR_NOTONCHANNEL, channel.getName() + " :You're not on that channel"); // ERR optionnelle
 		if (!std::getline(ss, new_topic))
 		{
 			if (channel.getTopic().empty())
-				throw NumericReply(RPL_NOTOPIC, target + ":No topic is set");
+				throw NumericReply(RPL_NOTOPIC, channel.getName() + ":No topic is set");
 			else
-				throw NumericReply(RPL_TOPIC, target + channel.getTopic());
+				throw NumericReply(RPL_TOPIC, channel.getName() + channel.getTopic());
 		}
 		channel.setTopic(_sender, new_topic);
 		std::vector<User *> chan_users = channel.getUsers();
 		FOREACH(User *, chan_users, it)
-			(*it)->getMessage()->addMsg(_sender, "TOPIC", target, new_topic);
+			(*it)->getMessage()->addMsg(_sender, "TOPIC", channel.getName(), new_topic);
 	}
 	catch (const NumericReply &e)
 	{
@@ -356,16 +356,15 @@ void	Message::_invite(const std::string &arg)
 	{
 		if (!std::getline(ss, target_nickname, ' ') || !std::getline(ss, target_chan, ' '))
 			throw NumericReply(ERR_NEEDMOREPARAMS, "INVITE :Not enough parameters");
-		if (!_server->isUser(target_nickname))
-			throw NumericReply(ERR_NOSUCHNICK, target_nickname + " :No such nick/channel");
+		User	&target = _server->getUser(target_nickname);
 		Channel &channel = _server->getChannel(target_chan);
 		if (!channel.isUserOnChannel(_sender->getNickname()))
-			throw NumericReply(ERR_NOTONCHANNEL, target_chan + " :You're not on that channel");
-		User	&invited = _server->getUser(target_nickname);
+			throw NumericReply(ERR_NOTONCHANNEL, channel.getName() + " :You're not on that channel");
+		User	&invited = _server->getUser(target.getNickname());
 		channel.addUser(&invited, _sender);
-		addNumericMsg(RPL_INVITING, target_nickname + " " + target_chan);
-		invited.getMessage()->addMsg(_sender, "INVITE", target_nickname, target_chan);
-		invited.getMessage()->addMsg(&invited, "JOIN", target_chan);
+		addNumericMsg(RPL_INVITING, target.getNickname() + " " + channel.getName());
+		invited.getMessage()->addMsg(_sender, "INVITE", target.getNickname(), channel.getName());
+		invited.getMessage()->addMsg(&invited, "JOIN", channel.getName());
 	}
 	catch (const NumericReply &e)
 	{
@@ -407,7 +406,7 @@ void	Message::_kick(const std::string &arg)
 				rm_user->getMessage()->addMsg(_sender, "KICK", chan_name, rm_user->getNickname() + " " + comment);
 				channel.removeUser(rm_user);
 				FOREACH(User *, chan_users, it2)
-					(*it2)->getMessage()->addMsg(_sender, "KICK", chan_name, *it + " " + comment);
+					(*it2)->getMessage()->addMsg(_sender, "KICK", chan_name, rm_user->getNickname() + " " + comment);
 			}
 		}
 	}
@@ -434,16 +433,16 @@ void	Message::_mode(const std::string &arg)
 		{
 			Channel	&channel = _server->getChannel(target);
 			if (!std::getline(ss, modestring, ' '))
-				throw NumericReply(RPL_CHANNELMODEIS, target + " " + channel.getActiveModes() + " " + channel.getModesDiffArg());
+				throw NumericReply(RPL_CHANNELMODEIS, channel.getName() + " " + channel.getActiveModes() + " " + channel.getModesDiffArg());
 			else
 			{
 				if (!channel.isChanop(_sender->getNickname()))
-					throw NumericReply(ERR_CHANOPRIVSNEEDED, target + " :You're not a channel operator");
+					throw NumericReply(ERR_CHANOPRIVSNEEDED, channel.getName() + " :You're not a channel operator");
 				if (channel.setModes(_sender, modestring, ss))
 				{
 					std::vector<User *> chan_users = channel.getUsers();
 					FOREACH(User *, chan_users, it)
-						(*it)->getMessage()->addMsg(_sender, "MODE", target, ":" + channel.getModesDiff() + " " + channel.getModesDiffArg());
+						(*it)->getMessage()->addMsg(_sender, "MODE", channel.getName(), ":" + channel.getModesDiff() + " " + channel.getModesDiffArg());
 				}
 			}
 		}
@@ -451,13 +450,13 @@ void	Message::_mode(const std::string &arg)
 		{
 			if (!_server->isUser(target))
 				throw NumericReply(ERR_NOSUCHNICK, target + " :No such nick/channel");
-			if (target.compare(_sender->getNickname()))
+			if (!isEquals(target, _sender->getNickname()))
 				throw NumericReply(ERR_USERSDONTMATCH, ":Cant change/view mode for other users");
 			if (!std::getline(ss, modestring, ' '))
 				throw NumericReply(RPL_UMODEIS, _sender->getActiveModes());
 			else
 				if (_sender->setModes(modestring))
-					addMsg(_sender, "MODE", target, _sender->getModesDiff());
+					addMsg(_sender, "MODE", _sender->getNickname(), _sender->getModesDiff());
 		}
 	}
 	catch (const NumericReply &e)
@@ -495,18 +494,12 @@ void	Message::_privmsg(const std::string &arg)
 		else
 		{
 			User	&target = _server->getUser(target_name);
-			if (target.getActiveModes().find('a') != std::string::npos)
-				addNumericMsg(RPL_AWAY, target_name);
-			target.getMessage()->addMsg(_sender, "PRIVMSG", target_name, text_to_send);
+			target.getMessage()->addMsg(_sender, "PRIVMSG", target.getNickname(), text_to_send);
 		}
 	}
 	catch(const NumericReply& e)
 	{
 		addNumericMsg(e.code(), e.what());
-	}
-	catch(const std::exception& e)
-	{
-		addNumericMsg(ERR_NOSUCHNICK, target_name + " :No such nick/channel");
 	}
 }
 

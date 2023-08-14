@@ -6,7 +6,7 @@
 /*   By: mchassig <mchassig@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2023/07/02 12:03:38 by adesgran          #+#    #+#             */
-/*   Updated: 2023/08/13 00:00:10 by adesgran         ###   ########.fr       */
+/*   Updated: 2023/08/14 14:16:15 by mchassig         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -180,27 +180,27 @@ User	&Server::getUser( const int sockfd ) const
 	throw (Server::UserDoesNotExistException());
 }
 
-User	&Server::getUser( const std::string name ) const
+User	&Server::getUser( const std::string nick ) const
 {
 	for ( 
 			std::vector<User *>::const_iterator it = this->_users.begin(); 
 			it != this->_users.end(); 
 			it++ )
 	{
-		if ( (*it)->getNickname() == name )
+		if ( isEquals((*it)->getNickname(), nick) )
 			return (**it);
 	}
-	throw (Server::UserDoesNotExistException());
+	throw (Message::NumericReply(ERR_NOSUCHNICK, nick + " :No such nick/channel"));
 }
 
-bool	Server::isUser(const std::string nickname) const
+bool	Server::isUser(const std::string nick) const
 {
 	for ( 
 			std::vector<User *>::const_iterator it = this->_users.begin(); 
 			it != this->_users.end(); 
 			it++ )
 	{
-		if ( (*it)->getNickname() == nickname )
+		if ( isEquals((*it)->getNickname(), nick) )
 			return (true);
 	}
 	return (false);
@@ -247,7 +247,7 @@ Channel	&Server::getChannel( const std::string name ) const
 			it != this->_channels.end(); 
 			it++ )
 	{
-		if ( (*it)->getName() == name )
+		if ( isEquals((*it)->getName(), name) )
 			return (**it);
 	}
 	throw Message::NumericReply(ERR_NOSUCHCHANNEL, name + " :No such channel");
@@ -260,7 +260,7 @@ bool	Server::isChannel(const std::string name) const
 			it != this->_channels.end(); 
 			it++ )
 	{
-		if ( (*it)->getName() == name )
+		if ( isEquals((*it)->getName(), name) )
 			return (true);
 	}
 	return (false);

@@ -6,7 +6,7 @@
 /*   By: mchassig <mchassig@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2023/07/02 12:59:54 by adesgran          #+#    #+#             */
-/*   Updated: 2023/08/14 13:31:10 by mchassig         ###   ########.fr       */
+/*   Updated: 2023/08/14 15:10:25 by mchassig         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -105,7 +105,7 @@ bool	Channel::isUserOnChannel(const std::string &nickname) const
 {
 	for (std::vector<User *>::const_iterator it = _users.begin(); it != _users.end(); it++)
 	{
-		if (!nickname.compare((*it)->getNickname()))
+		if (isEquals(nickname, (*it)->getNickname()))
 			return (true);
 	}
 	return (false);
@@ -156,7 +156,7 @@ bool	Channel::setModes(const User *sender, const std::string &modestring, std::s
 						if (!std::getline(ss, new_key, ' ') || new_key.empty())
 							sender->getMessage()->addNumericMsg(ERR_INVALIDMODEPARAM, _name + " " + *it + " :Missing key");
 						else if (new_key.find_first_of(" ,") != std::string::npos)
-							sender->getMessage()->addNumericMsg(ERR_INVALIDMODEPARAM, _name + " " + *it + " " + new_key + " :Not a valid key");						
+							sender->getMessage()->addNumericMsg(ERR_INVALIDKEY, _name + " :Key is not well-formed");						
 						else
 							changes['k'] = true;
 					}
