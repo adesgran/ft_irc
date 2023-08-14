@@ -6,7 +6,7 @@
 /*   By: mchassig <mchassig@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2023/07/13 12:21:22 by adesgran          #+#    #+#             */
-/*   Updated: 2023/08/14 18:31:21 by mchassig         ###   ########.fr       */
+/*   Updated: 2023/08/14 18:40:38 by mchassig         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -283,6 +283,8 @@ void	Message::_join(const std::string &arg)
 			FOREACH(chan_users, it)
 			{
 				it->first->getMessage()->addReply(_sender, "JOIN", channel->getName());
+				if (channel->isChanop(it->first->getNickname()))
+					user_list += "@";
 				user_list += it->first->getNickname() + " ";
 			}
 			if (!channel->getTopic().empty())
