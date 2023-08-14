@@ -6,7 +6,7 @@
 /*   By: mchassig <mchassig@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2023/07/02 12:59:54 by adesgran          #+#    #+#             */
-/*   Updated: 2023/08/11 18:47:39 by mchassig         ###   ########.fr       */
+/*   Updated: 2023/08/14 13:31:10 by mchassig         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -18,7 +18,6 @@ Channel::Channel(void)
 	_modes['i'] = false;
 	_modes['t'] = false;
 	_modes['k'] = false;
-	_modes['o'] = false;
 	_modes['l'] = false;
 }
 
@@ -30,7 +29,6 @@ Channel::Channel( const std::string name, User *founder )
 	_modes['i'] = false;
 	_modes['t'] = false;
 	_modes['k'] = false;
-	_modes['o'] = false;
 	_modes['l'] = false;
 }
 
@@ -59,8 +57,10 @@ const std::vector<User *>	Channel::getUsers( void ) const
 
 void	Channel::addUser( User *target, User *sender, const std::string &key )
 {
-	if (_modes['i'] && (sender == NULL || !_chanops[sender->getNickname()]))
+	if (_modes['i'] && sender == NULL)
 		throw Message::NumericReply(ERR_INVITEONLYCHAN, _name + " :Cannot join channel (+i)");
+	if (_modes['i'] && !_chanops[sender->getNickname()])
+		throw Message::NumericReply(ERR_CHANOPRIVSNEEDED, _name + " :You're not channel operator");
 	if (!_modes['i'] && _modes['k'] && _key.compare(key))
 		throw Message::NumericReply(ERR_BADCHANNELKEY, _name + " :Cannot join channel (+k)");
 	if (isUserOnChannel(target->getNickname()))
@@ -121,79 +121,80 @@ std::string	Channel::getName( void ) const
 	return (this->_name);
 }
 
-std::string	Channel::setModes(const User *sender, const std::string &modestring, std::stringstream &ss)
+bool	Channel::setModes(const User *sender, const std::string &modestring, std::stringstream &ss)
 {
 	char	sign = 0;
-	std::string	changed_modes;
+	std::map<char, bool>	changes(_modes);
+	std::map<std::string, bool>	changes_chanops(_chanops);
+	std::string	new_key;
+	size_t		new_lim = 0;
 	for (std::string::const_iterator it = modestring.begin(); it != modestring.end(); it++)
 	{
 		if (*it == '+' || *it == '-')
-		{
 			sign = *it;
-		}
-		else if((sign == '+' || sign == '-') && _modes.find(*it) != _modes.end())
+		else if(sign != 0 && (_modes.find(*it) != _modes.end() || *it == 'o'))
 		{
-			bool	b;
-			if (sign == '+')
-				b = true;
-			else
-				b = false;
 			switch (*it)
 			{
-				case 'i': {
-					_modes['i'] = b;
-					changed_modes += "i";
-					break;
+				case 'i' : {
+					if (sign == '+')
+						changes['i'] = true;
+					else
+						changes['i'] = false;
+					break;					
 				}
-				case 't': {
-					_modes['t'] = b;
-					changed_modes += "t";
+				case 't' : {
+					if (sign == '+')
+						changes['t'] = true;
+					else
+						changes['t'] = false;
 					break;
 				}
 				case 'k': {
-					_modes['k'] = b;
-					if (_modes['k'])
+					if (sign == '+')
 					{
-						std::string	new_key;
-						if (!std::getline(ss, new_key, ','))
+						if (!std::getline(ss, new_key, ' ') || new_key.empty())
 							sender->getMessage()->addNumericMsg(ERR_INVALIDMODEPARAM, _name + " " + *it + " :Missing key");
 						else if (new_key.find_first_of(" ,") != std::string::npos)
 							sender->getMessage()->addNumericMsg(ERR_INVALIDMODEPARAM, _name + " " + *it + " " + new_key + " :Not a valid key");						
 						else
-						{
-							_key = new_key;
-							changed_modes += "k";
-						}
+							changes['k'] = true;
 					}
+					else
+						changes['k'] = false;
 					break;
 				}
 				case 'o': {
 					std::string	nickname;
-					if (!std::getline(ss, nickname, ','))
+					if (!std::getline(ss, nickname, ' ') || nickname.empty())
 						sender->getMessage()->addNumericMsg(ERR_INVALIDMODEPARAM, _name + " " + *it + " :Missing user nickname");
 					else if (!isUserOnChannel(nickname))
 						sender->getMessage()->addNumericMsg(ERR_INVALIDMODEPARAM, _name + " " + *it + " " + nickname + " :User is not on channel");
 					else
 					{
-						_chanops[nickname] = b;
-						changed_modes += "o";
+						if (sign == '+')
+							changes_chanops[nickname] = true;
+						else
+							changes_chanops[nickname] = false;
 					}
 					break;
 				}
 				case 'l': {
-					_modes['l'] = b;
-					if (_modes['l'])
+					if (sign == '+')
 					{
-						std::string	new_lim;
-						if (!std::getline(ss, new_lim, ','))
+						std::string	tmp;
+						if (!std::getline(ss, tmp, ' ') || tmp.empty())
 							sender->getMessage()->addNumericMsg(ERR_INVALIDMODEPARAM, _name + " " + *it + " :Missing client limit");
+						else if (atoi(tmp.c_str()) == 0)
+							sender->getMessage()->addNumericMsg(ERR_INVALIDMODEPARAM, _name + " " + *it + " :Client limit cannot be 0");
 						else
 						{
-							std::stringstream tmpss(new_lim);
-							tmpss >> _client_limit;
-							changed_modes += "l";
+							new_lim = atoi(tmp.c_str());
+							changes['l'] = true;
 						}
 					}
+					else
+						changes['l'] = false;
 					break;
 				}
 				default:
@@ -201,22 +202,58 @@ std::string	Channel::setModes(const User *sender, const std::string &modestring,
 			}
 		}
 	}
-	return (changed_modes);
+	if (!new_key.empty() && changes['k'] && new_key.compare(_key))
+	{
+		_modes['k'] = false;
+		_key = new_key;
+	}
+	if (new_lim != 0 && changes['l'] && new_lim != _client_limit)
+	{
+		_modes['l'] = false;
+		_client_limit = new_lim;
+	}
+	_setModesDiff(changes, changes_chanops);
+	_modes = changes;
+	_chanops = changes_chanops;
+	return (!_modes_diff.empty());
 }
 
-std::string	Channel::getActiveModes() const
+std::string	Channel::getModesDiff( void ) const
 {
+	return (_modes_diff);
+}
+
+std::string	Channel::getModesDiffArg( void ) const
+{
+	return (_modes_diff_arg);
+}
+
+std::string	Channel::getActiveModes()
+{
+	_modes_diff_arg.clear();
 	std::string ret;
-	if (_modes.at('i'))
+	if (_modes['i'])
+	{
 		ret += 'i';
-	if (_modes.at('t'))
+	}
+	if (_modes['t'])
+	{
 		ret += 't';
-	if (_modes.at('k'))
+	}
+	if (_modes['k'])
+	{
 		ret += 'k';
-	if (_modes.at('o'))
-		ret += 'o';
-	if (_modes.at('l'))
+		_modes_diff_arg += _key + " ";
+	}
+	if (_modes['l'])
+	{
 		ret += 'l';
+		std::stringstream	ss;
+		ss << _client_limit;
+		_modes_diff_arg += ss.str() + " ";			
+	}
+	if (!_modes_diff_arg.empty())
+		_modes_diff_arg.erase(_modes_diff_arg.end()-1, _modes_diff_arg.end());
 	return (ret);
 }
 
@@ -250,4 +287,60 @@ bool	Channel::isChanop(const std::string &nickname) const
 size_t	Channel::getClientLimit() const
 {
 	return (_client_limit);
+}
+
+void	Channel::_setModesDiff( std::map<char, bool> &changes, std::map<std::string, bool> &changes_chanops)
+{
+	_modes_diff.clear();
+	_modes_diff_arg.clear();
+	_modes_diff = "+";
+	for (std::map<char, bool>::iterator it = _modes.begin(); it != _modes.end(); it++)
+	{
+		if ((*it).second != changes[(*it).first] && (*it).second == false)
+		{
+			_modes_diff += (*it).first;
+			if ((*it).first == 'k')
+				_modes_diff_arg += _key + " ";
+			else if ((*it).first == 'l')
+			{
+				std::stringstream	ss;
+				ss << _client_limit;
+				_modes_diff_arg += ss.str() + " ";	
+			}
+		}
+	}
+	std::cout << "+diff:" << _modes_diff << "|arg:" << _modes_diff_arg << "|\n";
+	for (std::map<std::string, bool>::iterator it = _chanops.begin(); it != _chanops.end(); it++)
+	{
+		
+		if ((*it).second != changes_chanops[(*it).first] && (*it).second == false)
+		{
+			_modes_diff += "o";
+			_modes_diff_arg += (*it).first + " ";
+		}
+	}
+	std::cout << "+diff:" << _modes_diff << "|arg:" << _modes_diff_arg << "|\n";
+	if (*(_modes_diff.end() - 1) == '+')
+		_modes_diff.erase(_modes_diff.end()-1, _modes_diff.end());
+	_modes_diff += "-";
+	for (std::map<char, bool>::iterator it = _modes.begin(); it != _modes.end(); it++)
+	{
+		if ((*it).second != changes[(*it).first] && (*it).second == true)
+			_modes_diff += (*it).first;
+	}
+	std::cout << "-diff:" << _modes_diff << "|arg:" << _modes_diff_arg << "|\n";
+	for (std::map<std::string, bool>::iterator it = _chanops.begin(); it != _chanops.end(); it++)
+	{
+		
+		if ((*it).second != changes_chanops[(*it).first] && (*it).second == true)
+		{
+			_modes_diff += "o";
+			_modes_diff_arg += (*it).first + " ";
+		}
+	}
+	std::cout << "-diff:" << _modes_diff << "|arg:" << _modes_diff_arg << "|\n";
+	if (*(_modes_diff.end() - 1) == '-')
+		_modes_diff.erase(_modes_diff.end()-1, _modes_diff.end());
+	if (!_modes_diff_arg.empty())
+		_modes_diff_arg.erase(_modes_diff_arg.end()-1, _modes_diff_arg.end());
 }

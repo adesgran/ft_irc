@@ -6,7 +6,7 @@
 /*   By: mchassig <mchassig@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2023/07/13 12:20:36 by adesgran          #+#    #+#             */
-/*   Updated: 2023/08/11 18:46:49 by mchassig         ###   ########.fr       */
+/*   Updated: 2023/08/13 16:43:27 by mchassig         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -32,11 +32,11 @@ enum cmdValue {
 	USER,
 	PING,
 	JOIN,
-	PRIVMSG,
-	KICK,
-	INVITE,
 	TOPIC,
+	INVITE,
+	KICK,
 	MODE,
+	PRIVMSG,
 	WHOIS,
 };
 
@@ -134,11 +134,11 @@ class Message {
 		void	_user(const std::string &arg);
 		void	_pong(const std::string &arg);
 		void	_join(const std::string &arg);
-		void	_privmsg(const std::string &arg);
-		void	_kick(const std::string &arg);
-		void	_invite(const std::string &arg);
 		void	_topic(const std::string &arg);
+		void	_invite(const std::string &arg);
+		void	_kick(const std::string &arg);
 		void	_mode(const std::string &arg);
+		void	_privmsg(const std::string &arg);
 		void	_whois(const std::string &arg);
 };
 

@@ -6,7 +6,7 @@
 /*   By: mchassig <mchassig@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2023/07/01 13:44:20 by adesgran          #+#    #+#             */
-/*   Updated: 2023/08/10 14:39:07 by mchassig         ###   ########.fr       */
+/*   Updated: 2023/08/14 12:16:27 by mchassig         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -134,32 +134,29 @@ std::string	User::getActiveModes( void ) const
 	return (ret);
 }
 
-std::string	User::setModes(const std::string new_modes)
+bool	User::setModes(const std::string modestring)
 {
 	char	op = 0;
-	std::string	changed_modes;
-	for (std::string::const_iterator it = new_modes.begin(); it != new_modes.end(); it++)
+	std::map<char, bool>	changes(_modes);
+	for (std::string::const_iterator it = modestring.begin(); it != modestring.end(); it++)
 	{
 		if (*it == '+' || *it == '-')
-		{
 			op = *it;
-		}
 		else if (op == '+' && _modes.find(*it) != _modes.end() && *it != 'o' && *it != 'O')
-		{
-			_modes[*it] = true;
-			changed_modes += *it;
-		}
+			changes[*it] = true;
 		else if (op == '-' && _modes.find(*it) != _modes.end())
-		{
-			_modes[*it] = false;
-			changed_modes += *it;
-		}
+			changes[*it] = false;
 		else if (*it != 'o' && *it != 'O')
-		{
 			_message->addNumericMsg(ERR_UMODEUNKNOWNFLAG, ":Unknown MODE flag");
-		}
 	}
-	return (changed_modes);
+	_setModesDiff(changes);
+	_modes = changes;
+	return (!_modes_diff.empty());
+}
+
+std::string	User::getModesDiff( void ) const
+{
+	return (_modes_diff);
 }
 
 Message	*User::getMessage( void ) const
@@ -175,4 +172,20 @@ bool	User::isWelcomed( void ) const
 void		User::welcome( void )
 {
 	_welcomed = true;
+}
+
+void	User::_setModesDiff( std::map<char, bool> &changes)
+{
+	_modes_diff = "+";
+	for (std::map<char, bool>::iterator it = _modes.begin(); it != _modes.end(); it++)
+		if ((*it).second != changes[(*it).first] && (*it).second == false)
+			_modes_diff += (*it).first;
+	if (*(_modes_diff.end() - 1) == '+')
+		_modes_diff.erase(_modes_diff.end()-1, _modes_diff.end());
+	_modes_diff += "-";
+	for (std::map<char, bool>::iterator it = _modes.begin(); it != _modes.end(); it++)
+		if ((*it).second != changes[(*it).first] && (*it).second == true)
+			_modes_diff += (*it).first;
+	if (*(_modes_diff.end() - 1) == '-')
+		_modes_diff.erase(_modes_diff.end()-1, _modes_diff.end());
 }
