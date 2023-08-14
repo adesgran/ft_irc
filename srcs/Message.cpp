@@ -6,7 +6,7 @@
 /*   By: mchassig <mchassig@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2023/07/13 12:21:22 by adesgran          #+#    #+#             */
-/*   Updated: 2023/08/14 17:03:41 by mchassig         ###   ########.fr       */
+/*   Updated: 2023/08/14 18:14:18 by mchassig         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -20,6 +20,7 @@ Message::Message(void)
 	_cmdMap["USER"]		= &Message::_user;
 	_cmdMap["PING"]		= &Message::_pong;
 	_cmdMap["JOIN"]		= &Message::_join;
+	_cmdMap["PART"]		= &Message::_part;
 	_cmdMap["TOPIC"]	= &Message::_topic;
 	_cmdMap["INVITE"]	= &Message::_invite;
 	_cmdMap["KICK"]		= &Message::_kick;
@@ -35,6 +36,7 @@ Message::Message(User *sender): _sender(sender)
 	_cmdMap["USER"]		= &Message::_user;
 	_cmdMap["PING"]		= &Message::_pong;
 	_cmdMap["JOIN"]		= &Message::_join;
+	_cmdMap["PART"]		= &Message::_part;
 	_cmdMap["TOPIC"]	= &Message::_topic;
 	_cmdMap["INVITE"]	= &Message::_invite;
 	_cmdMap["KICK"]		= &Message::_kick;
@@ -295,14 +297,54 @@ void	Message::_join(const std::string &arg)
 			}
 			if (!channel->getTopic().empty())
 				addNumericMsg(RPL_TOPIC, channel->getName() + " " + channel->getTopic());
-			addNumericMsg(RPL_NAMREPLY, channel->getName() + " :" + user_list);
-			addNumericMsg(RPL_ENDOFNAMES);
+			user_list.erase(user_list.end()-1, user_list.end());
+			addNumericMsg(RPL_NAMREPLY, "= " + channel->getName() + " :" + user_list);
+			addNumericMsg(RPL_ENDOFNAMES, channel->getName() + " :End of /NAMES list");
 		}
 		catch(const NumericReply& e)
 		{
 			addNumericMsg(e.code(), e.what());
 		}
 		i++;
+	}
+}
+
+void	Message::_part(const std::string &arg)
+{
+	if (!_sender->authentificated || !_sender->isWelcomed())
+	{
+		addNumericMsg(ERR_NOTREGISTERED, ":You have not registered");
+		return ;
+	}
+	
+	std::stringstream	ss(arg);
+	std::string			tmp, reason;
+	if (!std::getline(ss, tmp, ' '))
+	{
+		addNumericMsg(ERR_NEEDMOREPARAMS, "PART :Not enough parameters");
+		return ;
+	}
+	std::vector<std::string>	chan_names = _split(tmp, ",");
+	if (!std::getline(ss, reason) || (reason.size() <= 1 && !reason.compare(":")))
+		reason = ":Leaving\r\n";
+	for (std::vector<std::string>::iterator it = chan_names.begin(); it != chan_names.end(); it++)
+	{
+		try
+		{
+			Channel	&channel = _server->getChannel(*it);
+			if (!channel.isUserOnChannel(_sender->getNickname()))
+				throw NumericReply(ERR_NOTONCHANNEL, channel.getName() + " :You're not on that channel");
+			std::map<User*,bool>	members = channel.getUsers();
+			FOREACH(members, it)
+			{
+				it->first->getMessage()->addMsg(_sender, "PART", channel.getName(), reason);
+			}
+			channel.removeUser(_sender);
+		}
+		catch(const NumericReply& e)
+		{
+			addNumericMsg(e.code(), e.what());
+		}
 	}
 }
 
