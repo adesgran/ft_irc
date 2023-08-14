@@ -6,7 +6,7 @@
 /*   By: mchassig <mchassig@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2023/07/01 13:44:20 by adesgran          #+#    #+#             */
-/*   Updated: 2023/08/14 12:16:27 by mchassig         ###   ########.fr       */
+/*   Updated: 2023/08/14 18:28:29 by mchassig         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -147,7 +147,7 @@ bool	User::setModes(const std::string modestring)
 		else if (op == '-' && _modes.find(*it) != _modes.end())
 			changes[*it] = false;
 		else if (*it != 'o' && *it != 'O')
-			_message->addNumericMsg(ERR_UMODEUNKNOWNFLAG, ":Unknown MODE flag");
+			_message->addReply(this, ERR_UMODEUNKNOWNFLAG, _nickname,":Unknown MODE flag");
 	}
 	_setModesDiff(changes);
 	_modes = changes;

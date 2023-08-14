@@ -6,7 +6,7 @@
 /*   By: mchassig <mchassig@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2023/07/02 12:59:54 by adesgran          #+#    #+#             */
-/*   Updated: 2023/08/14 17:04:39 by mchassig         ###   ########.fr       */
+/*   Updated: 2023/08/14 18:29:46 by mchassig         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -143,9 +143,9 @@ bool	Channel::setModes(const User *sender, const std::string &modestring, std::s
 					if (sign == '+')
 					{
 						if (!std::getline(ss, new_key, ' ') || new_key.empty())
-							sender->getMessage()->addNumericMsg(ERR_INVALIDMODEPARAM, _name + " " + *it + " :Missing key");
+							sender->getMessage()->addReply(sender, ERR_INVALIDMODEPARAM, sender->getNickname(), _name + " " + *it + " :Missing key");
 						else if (new_key.find_first_of(" ,") != std::string::npos)
-							sender->getMessage()->addNumericMsg(ERR_INVALIDKEY, _name + " :Key is not well-formed");						
+							sender->getMessage()->addReply(sender, ERR_INVALIDKEY, sender->getNickname(), _name + " :Key is not well-formed");						
 						else
 							changes['k'] = true;
 					}
@@ -156,9 +156,9 @@ bool	Channel::setModes(const User *sender, const std::string &modestring, std::s
 				case 'o': {
 					std::string	nickname;
 					if (!std::getline(ss, nickname, ' ') || nickname.empty())
-						sender->getMessage()->addNumericMsg(ERR_INVALIDMODEPARAM, _name + " " + *it + " :Missing user nickname");
+						sender->getMessage()->addReply(sender, ERR_INVALIDMODEPARAM, sender->getNickname(), _name + " " + *it + " :Missing user nickname");
 					else if (!isUserOnChannel(nickname))
-						sender->getMessage()->addNumericMsg(ERR_USERNOTINCHANNEL, _name + " " + *it + " " + nickname + " :User is not on channel");
+						sender->getMessage()->addReply(sender, ERR_USERNOTINCHANNEL, sender->getNickname(), _name + " " + *it + " " + nickname + " :User is not on channel");
 					else
 					{
 						if (sign == '+')
@@ -173,9 +173,9 @@ bool	Channel::setModes(const User *sender, const std::string &modestring, std::s
 					{
 						std::string	tmp;
 						if (!std::getline(ss, tmp, ' ') || tmp.empty())
-							sender->getMessage()->addNumericMsg(ERR_INVALIDMODEPARAM, _name + " " + *it + " :Missing client limit");
+							sender->getMessage()->addReply(sender, ERR_INVALIDMODEPARAM, sender->getNickname(), _name + " " + *it + " :Missing client limit");
 						else if (atoi(tmp.c_str()) == 0)
-							sender->getMessage()->addNumericMsg(ERR_INVALIDMODEPARAM, _name + " " + *it + " :Client limit cannot be 0");
+							sender->getMessage()->addReply(sender, ERR_INVALIDMODEPARAM, sender->getNickname(), _name + " " + *it + " :Client limit cannot be 0");
 						else
 						{
 							new_lim = atoi(tmp.c_str());
