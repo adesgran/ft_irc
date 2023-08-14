@@ -6,7 +6,7 @@
 /*   By: mchassig <mchassig@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2023/07/13 12:21:22 by adesgran          #+#    #+#             */
-/*   Updated: 2023/08/14 14:28:52 by mchassig         ###   ########.fr       */
+/*   Updated: 2023/08/14 17:03:41 by mchassig         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -286,12 +286,12 @@ void	Message::_join(const std::string &arg)
 				channel = &_server->getChannel(chan_name[i]);
 				channel->addUser(_sender, NULL, key[i]);
 			}
-			std::vector<User *> users = channel->getUsers();
+			std::map<User*, bool> chan_users = channel->getUsers();
 			std::string			user_list;
-			FOREACH(User *, users, it)
+			FOREACH(chan_users, it)
 			{
-				(*it)->getMessage()->addMsg(_sender, "JOIN", channel->getName());
-				user_list += (*it)->getNickname() + " ";
+				it->first->getMessage()->addMsg(_sender, "JOIN", channel->getName());
+				user_list += it->first->getNickname() + " ";
 			}
 			if (!channel->getTopic().empty())
 				addNumericMsg(RPL_TOPIC, channel->getName() + " " + channel->getTopic());
@@ -332,9 +332,9 @@ void	Message::_topic(const std::string &arg)
 				throw NumericReply(RPL_TOPIC, channel.getName() + channel.getTopic());
 		}
 		channel.setTopic(_sender, new_topic);
-		std::vector<User *> chan_users = channel.getUsers();
-		FOREACH(User *, chan_users, it)
-			(*it)->getMessage()->addMsg(_sender, "TOPIC", channel.getName(), new_topic);
+		std::map<User*, bool> chan_users = channel.getUsers();
+		FOREACH(chan_users, it)
+			it->first->getMessage()->addMsg(_sender, "TOPIC", channel.getName(), new_topic);
 	}
 	catch (const NumericReply &e)
 	{
@@ -395,8 +395,8 @@ void	Message::_kick(const std::string &arg)
 			throw NumericReply(ERR_NOTONCHANNEL, chan_name + " :You're not on that channel");
 		if (!channel.isChanop(_sender->getNickname()))
 			throw NumericReply(ERR_CHANOPRIVSNEEDED,chan_name + " :You're not channel operator");
-		std::vector<User *> chan_users = channel.getUsers();
-		FOREACH(std::string, targets, it)
+		std::map<User*, bool> chan_users = channel.getUsers();
+		for (std::vector<std::string>::iterator it = targets.begin(); it != targets.end(); it++)
 		{
 			if (!channel.isUserOnChannel(*it))
 				addNumericMsg(ERR_USERNOTINCHANNEL, *it + " " + channel.getName() + " :They aren't on that channel");
@@ -405,8 +405,8 @@ void	Message::_kick(const std::string &arg)
 				User	*rm_user = &_server->getUser(*it);
 				rm_user->getMessage()->addMsg(_sender, "KICK", chan_name, rm_user->getNickname() + " " + comment);
 				channel.removeUser(rm_user);
-				FOREACH(User *, chan_users, it2)
-					(*it2)->getMessage()->addMsg(_sender, "KICK", chan_name, rm_user->getNickname() + " " + comment);
+				FOREACH(chan_users, it2)
+					it2->first->getMessage()->addMsg(_sender, "KICK", chan_name, rm_user->getNickname() + " " + comment);
 			}
 		}
 	}
@@ -440,9 +440,9 @@ void	Message::_mode(const std::string &arg)
 					throw NumericReply(ERR_CHANOPRIVSNEEDED, channel.getName() + " :You're not a channel operator");
 				if (channel.setModes(_sender, modestring, ss))
 				{
-					std::vector<User *> chan_users = channel.getUsers();
-					FOREACH(User *, chan_users, it)
-						(*it)->getMessage()->addMsg(_sender, "MODE", channel.getName(), ":" + channel.getModesDiff() + " " + channel.getModesDiffArg());
+					std::map<User*, bool> chan_users = channel.getUsers();
+					FOREACH(chan_users, it)
+						it->first->getMessage()->addMsg(_sender, "MODE", channel.getName(), ":" + channel.getModesDiff() + " " + channel.getModesDiffArg());
 				}
 			}
 		}
@@ -484,11 +484,11 @@ void	Message::_privmsg(const std::string &arg)
 			throw NumericReply(ERR_NOTEXTTOSEND, " :No text to send");
 		if (target_name[0] == '#')
 		{
-			std::vector<User *> chan_users = _server->getChannel(target_name).getUsers();
-			FOREACH(User *, chan_users, it)
+			std::map<User*,bool> chan_users = _server->getChannel(target_name).getUsers();
+			FOREACH(chan_users, it)
 			{
-				if (*it != _sender)
-					(*it)->getMessage()->addMsg(_sender, "PRIVMSG", target_name, text_to_send);
+				if (it->first != _sender)
+					it->first->getMessage()->addMsg(_sender, "PRIVMSG", target_name, text_to_send);
 			}
 		}
 		else

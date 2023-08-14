@@ -6,7 +6,7 @@
 /*   By: mchassig <mchassig@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2023/07/13 12:20:36 by adesgran          #+#    #+#             */
-/*   Updated: 2023/08/14 13:50:44 by mchassig         ###   ########.fr       */
+/*   Updated: 2023/08/14 16:17:37 by mchassig         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -43,7 +43,7 @@ enum cmdValue {
 # define USERTAG( u ) u->getNickname() << '!' << u->getUsername() \
 		<< "@localhost"
 
-# define FOREACH(type, name, it) for (std::vector<type>::iterator it = name.begin();\
+# define FOREACH(name, it) for (std::map<User*, bool>::iterator it = name.begin();\
 							it != name.end();\
 							it++)
 
