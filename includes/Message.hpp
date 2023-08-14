@@ -6,7 +6,7 @@
 /*   By: mchassig <mchassig@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2023/07/13 12:20:36 by adesgran          #+#    #+#             */
-/*   Updated: 2023/08/14 17:50:48 by mchassig         ###   ########.fr       */
+/*   Updated: 2023/08/14 18:30:41 by mchassig         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -97,8 +97,7 @@ class Message {
 		void				setInputMsg(const std::string &input_buffer, Server *server);
 		std::string			getInputMsg() const;
 		std::string			getOutputMsg();
-		void				addNumericMsg(const std::string code, const std::string arg = "");
-		void				addMsg(const User *source, const std::string cmd, const std::string target, const std::string arg = "");
+		void				addReply(const User *source, const std::string cmd, const std::string target, const std::string arg = "");
 
 		// Exception ------------------------------------------
 		class NumericReply : public std::exception
