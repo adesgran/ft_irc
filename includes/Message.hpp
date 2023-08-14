@@ -6,7 +6,7 @@
 /*   By: mchassig <mchassig@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2023/07/13 12:20:36 by adesgran          #+#    #+#             */
-/*   Updated: 2023/08/13 16:43:27 by mchassig         ###   ########.fr       */
+/*   Updated: 2023/08/14 16:17:37 by mchassig         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -43,7 +43,7 @@ enum cmdValue {
 # define USERTAG( u ) u->getNickname() << '!' << u->getUsername() \
 		<< "@localhost"
 
-# define FOREACH(type, name, it) for (std::vector<type>::iterator it = name.begin();\
+# define FOREACH(name, it) for (std::map<User*, bool>::iterator it = name.begin();\
 							it != name.end();\
 							it++)
 
@@ -82,6 +82,7 @@ enum cmdValue {
 # define ERR_CHANOPRIVSNEEDED	"482"
 # define ERR_UMODEUNKNOWNFLAG	"501"
 # define ERR_USERSDONTMATCH		"502"
+# define ERR_INVALIDKEY			"525"
 # define ERR_INVALIDMODEPARAM	"696"
 
 class Message {
