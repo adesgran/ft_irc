@@ -6,7 +6,7 @@
 /*   By: mchassig <mchassig@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2023/07/13 12:18:05 by adesgran          #+#    #+#             */
-/*   Updated: 2023/08/14 14:05:22 by mchassig         ###   ########.fr       */
+/*   Updated: 2023/08/14 17:16:05 by mchassig         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -16,13 +16,28 @@
 #include <sstream>
 #include <Server.hpp>
 
+int	tolowerIRC(int c)
+{
+	if (c >= 'A' && c <= 'Z')
+		return (c + 32);
+	else if (c == '[')
+		return ('{');
+	else if (c == ']')
+		return ('}');
+	else if (c == '\\')
+		return ('|');
+	else if (c == '~')
+		return ('^');
+	return (c);
+}
+
 bool isEquals(const std::string& a, const std::string& b)
 {
     unsigned int sz = a.size();
     if (b.size() != sz)
         return false;
     for (unsigned int i = 0; i < sz; ++i)
-        if (tolower(a[i]) != tolower(b[i]))
+        if (tolowerIRC(a[i]) != tolowerIRC(b[i]))
             return false;
     return true;
 }

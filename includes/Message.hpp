@@ -6,7 +6,7 @@
 /*   By: mchassig <mchassig@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2023/07/13 12:20:36 by adesgran          #+#    #+#             */
-/*   Updated: 2023/08/14 16:17:37 by mchassig         ###   ########.fr       */
+/*   Updated: 2023/08/14 17:50:48 by mchassig         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -32,6 +32,7 @@ enum cmdValue {
 	USER,
 	PING,
 	JOIN,
+	PART,
 	TOPIC,
 	INVITE,
 	KICK,
@@ -135,6 +136,7 @@ class Message {
 		void	_user(const std::string &arg);
 		void	_pong(const std::string &arg);
 		void	_join(const std::string &arg);
+		void	_part(const std::string &arg);
 		void	_topic(const std::string &arg);
 		void	_invite(const std::string &arg);
 		void	_kick(const std::string &arg);
