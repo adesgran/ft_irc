@@ -6,7 +6,7 @@
 /*   By: mchassig <mchassig@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2023/07/13 12:21:22 by adesgran          #+#    #+#             */
-/*   Updated: 2023/08/15 14:28:39 by mchassig         ###   ########.fr       */
+/*   Updated: 2023/08/15 15:18:33 by mchassig         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -149,7 +149,7 @@ void	Message::_pass(const std::string &arg)
 	{
 		if (arg.empty())
 			throw NumericReply(ERR_NEEDMOREPARAMS, "PASS :Not enough parameters");
-		if (_sender->authentificated)
+		if (_sender->isAuthenticated())
 			throw NumericReply(ERR_ALREADYREGISTERED, ":You may not reregister");
 	}
 	catch(const NumericReply& e)
@@ -164,15 +164,15 @@ void	Message::_pass(const std::string &arg)
 		addReply(_sender, ERR_PASSWDMISMATCH, _sender->getNickname(), ":Password incorrect");
 		throw Disconnect();
 	}
-	_sender->authentificated = true;
+	_sender->setAuthenticated(true);
 }
 
 void	Message::_nick(const std::string &arg)
 {
-	if (!_sender->authentificated)
+	if (!_sender->isAuthenticated())
 	{
 		addReply(_sender, ERR_NOTREGISTERED, _sender->getNickname(), ":You have not registered");
-		return ;
+		throw Disconnect();
 	}
 
 	try
@@ -199,10 +199,10 @@ void	Message::_nick(const std::string &arg)
 
 void	Message::_user(const std::string &arg)
 {
-	if (!_sender->authentificated)
+	if (!_sender->isAuthenticated())
 	{
 		addReply(_sender, ERR_NOTREGISTERED, _sender->getNickname(), ":You have not registered");
-		return ;
+		throw Disconnect();
 	}
 
 	std::stringstream	ss(arg);
@@ -234,12 +234,6 @@ void	Message::_user(const std::string &arg)
 
 void	Message::_pong(const std::string &arg)
 {
-	if (!_sender->authentificated || !_sender->isWelcomed())
-	{
-		addReply(_sender, ERR_NOTREGISTERED, _sender->getNickname(), ":You have not registered");
-		return ;
-	}
-
 	std::stringstream	ss(arg);
 	std::string			ret, mode_list;
 	std::getline(ss, ret, ' ');
@@ -253,7 +247,7 @@ void	Message::_pong(const std::string &arg)
 
 void	Message::_join(const std::string &arg)
 {
-	if (!_sender->authentificated || !_sender->isWelcomed())
+	if (!_sender->isAuthenticated() || !_sender->isWelcomed())
 	{
 		addReply(_sender, ERR_NOTREGISTERED, _sender->getNickname(), ":You have not registered");
 		return ;
@@ -322,7 +316,7 @@ void	Message::_join(const std::string &arg)
 
 void	Message::_part(const std::string &arg)
 {
-	if (!_sender->authentificated || !_sender->isWelcomed())
+	if (!_sender->isAuthenticated() || !_sender->isWelcomed())
 	{
 		addReply(_sender, ERR_NOTREGISTERED, _sender->getNickname(), ":You have not registered");
 		return ;
@@ -361,7 +355,7 @@ void	Message::_part(const std::string &arg)
 
 void	Message::_topic(const std::string &arg)
 {
-	if (!_sender->authentificated || !_sender->isWelcomed())
+	if (!_sender->isAuthenticated() || !_sender->isWelcomed())
 	{
 		addReply(_sender, ERR_NOTREGISTERED, _sender->getNickname(), ":You have not registered");
 		return ;
@@ -397,7 +391,7 @@ void	Message::_topic(const std::string &arg)
 
 void	Message::_invite(const std::string &arg)
 {
-	if (!_sender->authentificated || !_sender->isWelcomed())
+	if (!_sender->isAuthenticated() || !_sender->isWelcomed())
 	{
 		addReply(_sender, ERR_NOTREGISTERED, _sender->getNickname(), ":You have not registered");
 		return ;
@@ -427,7 +421,7 @@ void	Message::_invite(const std::string &arg)
 
 void	Message::_kick(const std::string &arg)
 {
-	if (!_sender->authentificated || !_sender->isWelcomed())
+	if (!_sender->isAuthenticated() || !_sender->isWelcomed())
 	{
 		addReply(_sender, ERR_NOTREGISTERED, _sender->getNickname(), ":You have not registered");
 		return ;
@@ -471,7 +465,7 @@ void	Message::_kick(const std::string &arg)
 
 void	Message::_mode(const std::string &arg)
 {
-	if (!_sender->authentificated || !_sender->isWelcomed())
+	if (!_sender->isAuthenticated() || !_sender->isWelcomed())
 	{
 		addReply(_sender, ERR_NOTREGISTERED, _sender->getNickname(), ":You have not registered");
 		return ;
@@ -520,7 +514,7 @@ void	Message::_mode(const std::string &arg)
 
 void	Message::_privmsg(const std::string &arg)
 {
-	if (!_sender->authentificated || !_sender->isWelcomed())
+	if (!_sender->isAuthenticated() || !_sender->isWelcomed())
 	{
 		addReply(_sender, ERR_NOTREGISTERED, _sender->getNickname(), ":You have not registered");
 		return ;
@@ -559,4 +553,5 @@ void	Message::_privmsg(const std::string &arg)
 void	Message::_quit(const std::string &arg)
 {
 	addReply(_sender, "QUIT", arg);
+	throw Disconnect();
 }

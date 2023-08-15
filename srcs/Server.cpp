@@ -6,7 +6,7 @@
 /*   By: mchassig <mchassig@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2023/07/02 12:03:38 by adesgran          #+#    #+#             */
-/*   Updated: 2023/08/15 14:46:00 by adesgran         ###   ########.fr       */
+/*   Updated: 2023/08/15 15:18:49 by mchassig         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -187,7 +187,7 @@ User	&Server::getUser( const int sockfd ) const
 		if ( (*it)->getSockfd() == sockfd )
 			return (**it);
 	}
-	throw (Message::NumericReply(ERR_NOSUCHNICK, " :No such nick/channel"));
+	throw (Message::NumericReply("400", ":No such user"));
 }
 
 User	&Server::getUser( const std::string nick ) const
@@ -220,7 +220,7 @@ void	Server::_addUser( int fd )
 {
 	User *user = new User(fd);
 	if (_password.empty())
-		user->authentificated = true;
+		user->setAuthenticated(true);
 	this->_users.push_back( user );
 }
 
@@ -316,7 +316,6 @@ void	Server::_pfds_remove( int fd )
 	this->_nfds -= 1;
 }
 
-
 void	Server::_listenConnect( void )
 {
 	int	new_sock;
@@ -390,7 +389,6 @@ void	Server::_disconnect( struct pollfd &pfd )
 	close(pfd.fd);
 	this->_pfds_remove(pfd.fd);
 }
-
 
 void	Server::run( void )
 {

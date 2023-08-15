@@ -22,17 +22,7 @@ const char *Message::NumericReply::what() const throw()
 }
 
 
-Message::Disconnect::Disconnect() throw()
-{
-	_what = "User was disconnected";
-}
-
-Message::Disconnect::~Disconnect(void) throw()
-{
-	return ;
-}
-
 const char *Message::Disconnect::what() const throw()
 {
-	return (_what.c_str());
+	return ("User has been disconnected");
 }
