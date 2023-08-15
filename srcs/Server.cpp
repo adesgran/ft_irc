@@ -6,7 +6,7 @@
 /*   By: mchassig <mchassig@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2023/07/02 12:03:38 by adesgran          #+#    #+#             */
-/*   Updated: 2023/08/15 12:31:07 by mchassig         ###   ########.fr       */
+/*   Updated: 2023/08/15 14:46:00 by adesgran         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -175,7 +175,7 @@ void	Server::removeChannel( Channel &chan )
 	_channels.erase(to_remove);
 	delete &(chan);
 }
-	
+
 
 User	&Server::getUser( const int sockfd ) const
 {
@@ -187,7 +187,7 @@ User	&Server::getUser( const int sockfd ) const
 		if ( (*it)->getSockfd() == sockfd )
 			return (**it);
 	}
-	throw (Server::UserDoesNotExistException());
+	throw (Message::NumericReply(ERR_NOSUCHNICK, " :No such nick/channel"));
 }
 
 User	&Server::getUser( const std::string nick ) const
@@ -355,7 +355,7 @@ int	Server::_listenMessage( int fd )
 			msg->setInputMsg( input, this );
 			return (0);
 		}
-		catch (std::exception const & e)
+		catch (Message::NumericReply const & e)
 		{
 			this->_log->error(e.what());
 			return (1);
@@ -418,26 +418,45 @@ void	Server::run( void )
 				}
 				else
 				{
-					if ( this->_pfds[n].revents & POLLIN )
+					try
 					{
-						this->_log->debug("Listen message");
-						if (this->_listenMessage(this->_pfds[n].fd))
+						if ( this->_pfds[n].revents & POLLIN )
 						{
-							this->_disconnect(_pfds[n]);
-							n = len;
+							this->_log->debug("Listen message");
+							if (this->_listenMessage(this->_pfds[n].fd))
+							{
+								this->_disconnect(_pfds[n]);
+								n = len;
+							}
 						}
-					}
-					if ( this->_pfds[n].revents & POLLOUT )
-					{
-						Message *msg = this->getUser( this->_pfds[n].fd ).getMessage();
+						if ( this->_pfds[n].revents & POLLOUT )
+						{
+							Message *msg = this->getUser( this->_pfds[n].fd ).getMessage();
 
-						std::string output = msg->getOutputMsg();
-						if ( !output.empty() )
-						{
-							this->_log->server(output, this->getUser( this->_pfds[n].fd ));
-							send( this->_pfds[n].fd, output.c_str(), output.size(), 0 );
+							std::string output = msg->getOutputMsg();
+							if ( !output.empty() )
+							{
+								this->_log->server(output, this->getUser( this->_pfds[n].fd ));
+								send( this->_pfds[n].fd, output.c_str(), output.size(), 0 );
+							}
 						}
 					}
+					catch (Message::Disconnect const & e)
+					{
+						if ( this->_pfds[n].revents & POLLOUT )
+						{
+							Message *msg = this->getUser( this->_pfds[n].fd ).getMessage();
+
+							std::string output = msg->getOutputMsg();
+							if ( !output.empty() )
+							{
+								this->_log->server(output, this->getUser( this->_pfds[n].fd ));
+								send( this->_pfds[n].fd, output.c_str(), output.size(), 0 );
+							}
+						}
+						_disconnect(_pfds[n]);
+					}
+
 				}
 			}
 		}
