@@ -6,7 +6,7 @@
 /*   By: mchassig <mchassig@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2023/07/01 13:43:30 by adesgran          #+#    #+#             */
-/*   Updated: 2023/08/14 12:19:53 by mchassig         ###   ########.fr       */
+/*   Updated: 2023/08/15 15:15:57 by mchassig         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -36,6 +36,8 @@ class User {
 		bool	getIsop( void ) const;
 		void	setIsop( bool isop );
 
+		bool		isAuthenticated() const;
+		void		setAuthenticated(bool status);
 		std::string	getUsername( void ) const;
 		void		setUsername( const std::string username );
 		std::string	getNickname( void ) const;
@@ -51,11 +53,11 @@ class User {
 		bool		isWelcomed( void ) const;
 		void		welcome( void );
 
-		bool					authentificated;
 
 	private:
 		int						_sockfd;
 		bool					_isop;
+		bool					_authenticated;
 		std::string				_username;
 		std::string				_nickname;
 		std::string				_realname;

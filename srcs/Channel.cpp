@@ -6,7 +6,7 @@
 /*   By: mchassig <mchassig@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2023/07/02 12:59:54 by adesgran          #+#    #+#             */
-/*   Updated: 2023/08/15 12:49:19 by mchassig         ###   ########.fr       */
+/*   Updated: 2023/08/15 15:10:36 by mchassig         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -46,8 +46,14 @@ Channel &Channel::operator=(const Channel &channel)
 {
 	if ( this == &channel )
 		return (*this);
-	this->_name = channel.getName();
+	this->_name = channel._name;
 	this->_members = channel._members;
+	this->_modes = channel._modes;
+	this->_modes_diff = channel._modes_diff;
+	this->_modes_diff_arg = channel._modes_diff_arg;
+	this->_topic = channel._topic;
+	this->_key = channel._key;
+	this->_client_limit = channel._client_limit;
 	return (*this);
 }
 

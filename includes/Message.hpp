@@ -6,7 +6,7 @@
 /*   By: mchassig <mchassig@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2023/07/13 12:20:36 by adesgran          #+#    #+#             */
-/*   Updated: 2023/08/15 14:28:00 by mchassig         ###   ########.fr       */
+/*   Updated: 2023/08/15 15:07:17 by mchassig         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -117,13 +117,7 @@ class Message {
 		class Disconnect : public std::exception
 		{
 			public:
-				Disconnect() throw();
-				virtual ~Disconnect(void) throw();
-
 				virtual const char *what() const throw();
-
-			private:
-				std::string	_what;
 		};
 
 	private:

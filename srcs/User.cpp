@@ -6,7 +6,7 @@
 /*   By: mchassig <mchassig@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2023/07/01 13:44:20 by adesgran          #+#    #+#             */
-/*   Updated: 2023/08/14 18:28:29 by mchassig         ###   ########.fr       */
+/*   Updated: 2023/08/15 15:16:28 by mchassig         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -53,9 +53,16 @@ User &User::operator=(const User &user)
 		return (*this);
 	if (this->_message != NULL)
 		delete this->_message;
+	this->_sockfd = user._sockfd;
+	this->_isop = user._isop;
+	this->_authenticated = user._authenticated;
+	this->_username = user._username;
+	this->_nickname = user._nickname;
+	this->_realname = user._realname;
+	this->_hostname = user._hostname;
+	this->_modes = user._modes;
+	this->_modes_diff = user._modes_diff;
 	this->_message = new Message(*(user._message));
-	this->_sockfd = user.getSockfd();
-	this->_isop = user.getIsop();
 	this->_welcomed = user._welcomed;
 	return (*this);
 }
@@ -78,6 +85,16 @@ void	User::setIsop( bool isop )
 bool	User::getIsop( void ) const
 {
 	return (this->_isop);
+}
+
+bool	User::isAuthenticated() const
+{
+	return (_authenticated);
+}
+
+void	User::setAuthenticated(bool status)
+{
+	_authenticated = status;
 }
 
 std::string	User::getUsername( void ) const
