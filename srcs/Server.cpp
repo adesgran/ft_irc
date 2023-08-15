@@ -6,7 +6,7 @@
 /*   By: mchassig <mchassig@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2023/07/02 12:03:38 by adesgran          #+#    #+#             */
-/*   Updated: 2023/08/15 17:29:01 by adesgran         ###   ########.fr       */
+/*   Updated: 2023/08/15 17:48:35 by mchassig         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -422,7 +422,7 @@ void	Server::run( void )
 				{
 					{
 						this->_disconnect(_pfds[n]);
-						n = len;
+						break ;
 					}
 				}
 				else
@@ -434,7 +434,7 @@ void	Server::run( void )
 							if (this->_listenMessage(this->_pfds[n].fd))
 							{
 								this->_disconnect(_pfds[n]);
-								n = len;
+								break ;
 							}
 						}
 						if ( this->_pfds[n].revents & POLLOUT )
@@ -463,7 +463,7 @@ void	Server::run( void )
 							}
 						}
 						this->_disconnect(_pfds[n]);
-						n = len;
+						break ;
 					}
 
 				}
