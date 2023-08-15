@@ -6,7 +6,7 @@
 /*   By: adesgran <marvin@42.fr>                    +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2023/08/01 16:50:23 by adesgran          #+#    #+#             */
-/*   Updated: 2023/08/13 02:44:14 by adesgran         ###   ########.fr       */
+/*   Updated: 2023/08/15 17:21:12 by adesgran         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -207,7 +207,7 @@ void	Bot::run( void )
 
 	if (_pass.size() > 0)
 		_output << "PASS " << _pass << "\r\n";
-	_output << "NICK " << _name << "\r\n" << "USER " << _name << " " << _name << " irc.adesgran.ovh :fillbot\r\n";
+	_output << "NICK " << _name << "\r\n" << "USER " << _name << " " << _name << " localhost :fillbot\r\n";
 	this->_pfds.fd = this->_fd;
 	this->_pfds.events = POLLIN | POLLOUT;
 
