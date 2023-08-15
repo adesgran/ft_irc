@@ -6,7 +6,7 @@
 /*   By: mchassig <mchassig@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2023/07/13 12:21:22 by adesgran          #+#    #+#             */
-/*   Updated: 2023/08/14 18:31:21 by mchassig         ###   ########.fr       */
+/*   Updated: 2023/08/15 11:32:18 by adesgran         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -27,6 +27,7 @@ Message::Message(void)
 	_cmdMap["MODE"]		= &Message::_mode;
 	_cmdMap["PRIVMSG"]	= &Message::_privmsg;
 	_cmdMap["WHOIS"]	= &Message::_whois;
+	_cmdMap["QUIT"]		= &Message::_quit;
 }
 
 Message::Message(User *sender): _sender(sender)
@@ -43,6 +44,7 @@ Message::Message(User *sender): _sender(sender)
 	_cmdMap["MODE"]		= &Message::_mode;
 	_cmdMap["PRIVMSG"]	= &Message::_privmsg;
 	_cmdMap["WHOIS"]	= &Message::_whois;
+	_cmdMap["QUIT"]		= &Message::_quit;
 }
 
 Message::Message(const Message &message)
@@ -552,4 +554,9 @@ void	Message::_whois(const std::string &arg)
 		addReply(_sender, ERR_NOSUCHNICK, _sender->getNickname(), target_name + " :No such nick/channel");
 	else
 		addReply(_sender, RPL_ENDOFWHOIS, _sender->getNickname(), target_name + " :End of /WHOIS list");
+}
+
+void	Message::_quit(const std::string &arg)
+{
+	_output << "GOOD BY\r\n";
 }
