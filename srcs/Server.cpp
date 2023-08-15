@@ -6,7 +6,7 @@
 /*   By: mchassig <mchassig@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2023/07/02 12:03:38 by adesgran          #+#    #+#             */
-/*   Updated: 2023/08/14 14:16:15 by mchassig         ###   ########.fr       */
+/*   Updated: 2023/08/15 12:22:22 by adesgran         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -166,6 +166,16 @@ const std::vector<Channel *>	&Server::getChannels( void ) const
 {
 	return (this->_channels);
 }
+
+void	Server::removeChannel( Channel &chan )
+{
+	std::vector<Channel *>::iterator to_remove = std::find(_channels.begin(), _channels.end(), &chan);
+	if (to_remove == _channels.end())
+		return ;
+	_channels.erase(to_remove);
+	delete &(*to_remove);
+}
+	
 
 User	&Server::getUser( const int sockfd ) const
 {
