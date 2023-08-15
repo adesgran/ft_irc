@@ -6,7 +6,7 @@
 /*   By: mchassig <mchassig@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2023/07/02 11:59:06 by adesgran          #+#    #+#             */
-/*   Updated: 2023/08/15 12:06:10 by adesgran         ###   ########.fr       */
+/*   Updated: 2023/08/15 13:26:42 by adesgran         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -90,6 +90,7 @@ class Server {
 		void	_pfds_init( void );
 		void	_pfds_add( int fd );
 		void	_pfds_remove( int fd );
+		void	_disconnect( struct pollfd &pfd );
 
 
 		class	UserDoesNotExistException : public std::exception
