@@ -6,7 +6,7 @@
 /*   By: mchassig <mchassig@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2023/07/01 13:44:20 by adesgran          #+#    #+#             */
-/*   Updated: 2023/08/15 15:16:28 by mchassig         ###   ########.fr       */
+/*   Updated: 2023/08/15 15:21:34 by mchassig         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -17,7 +17,7 @@ User::User(void)
 	this->_sockfd = 1;
 	this->_isop = false;
 	this->_welcomed = false;
-	this->authentificated = false;
+	this->_authenticated = false;
 	this->_message = new Message(this);
 	_modes['i'] = false;
 	_modes['w'] = false;
@@ -30,7 +30,7 @@ User::User(int sockfd)
 	this->_sockfd = sockfd;
 	this->_isop = false;
 	this->_welcomed = false;
-	this->authentificated = false;
+	this->_authenticated = false;
 	this->_message = new Message(this);
 	_modes['i'] = false;
 	_modes['w'] = false;
