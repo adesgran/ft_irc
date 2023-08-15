@@ -6,7 +6,7 @@
 /*   By: mchassig <mchassig@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2023/07/02 12:03:38 by adesgran          #+#    #+#             */
-/*   Updated: 2023/08/14 14:16:15 by mchassig         ###   ########.fr       */
+/*   Updated: 2023/08/15 13:29:42 by adesgran         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -167,6 +167,16 @@ const std::vector<Channel *>	&Server::getChannels( void ) const
 	return (this->_channels);
 }
 
+void	Server::removeChannel( Channel &chan )
+{
+	std::vector<Channel *>::iterator to_remove = std::find(_channels.begin(), _channels.end(), &chan);
+	if (to_remove == _channels.end())
+		return ;
+	_channels.erase(to_remove);
+	delete &(*to_remove);
+}
+	
+
 User	&Server::getUser( const int sockfd ) const
 {
 	for ( 
@@ -220,7 +230,7 @@ void	Server::_remove_user( int fd )
 			std::vector<Channel *>::iterator it = this->_channels.begin(); 
 			it != this->_channels.end(); 
 			it++ )
-		(*it)->removeUser(fd);
+		(*it)->removeMember(fd);
 	for ( 
 			std::vector<User *>::iterator it = this->_users.begin(); 
 			it != this->_users.end(); 
@@ -372,6 +382,16 @@ void	sigintHandle( int sig )
 	Server::stop();
 }
 
+void	Server::_disconnect( struct pollfd &pfd )
+{
+	this->_log->info("Connection closed");
+	this->getUser(pfd.fd).getMessage()->setInputMsg("JOIN 0\r\n", this); //JOIN 0
+	this->_remove_user(pfd.fd);
+	close(pfd.fd);
+	this->_pfds_remove(pfd.fd);
+}
+
+
 void	Server::run( void )
 {
 	signal(SIGINT, sigintHandle);
@@ -391,15 +411,8 @@ void	Server::run( void )
 			{
 				if ( this->_pfds[n].revents & POLLERR || this->_pfds[n].revents & POLLHUP )
 				{
-					if ( this->_pfds[n].revents & POLLERR )
 					{
-						this->_log->debug("POLLERR");
-					}
-					{
-						this->_log->info("Connection closed");
-						this->_remove_user(this->_pfds[n].fd);
-						close(this->_pfds[n].fd);
-						this->_pfds_remove(this->_pfds[n].fd);
+						this->_disconnect(_pfds[n]);
 						n = len;
 					}
 				}
@@ -410,10 +423,7 @@ void	Server::run( void )
 						this->_log->debug("Listen message");
 						if (this->_listenMessage(this->_pfds[n].fd))
 						{
-							this->_log->info("Connection closed");
-							this->_remove_user(this->_pfds[n].fd);
-							close(this->_pfds[n].fd);
-							this->_pfds_remove(this->_pfds[n].fd);
+							this->_disconnect(_pfds[n]);
 							n = len;
 						}
 					}

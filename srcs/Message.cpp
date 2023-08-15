@@ -252,10 +252,15 @@ void	Message::_join(const std::string &arg)
 		addReply(_sender, ERR_NEEDMOREPARAMS, _sender->getNickname(), "JOIN :Not enough parameters");
 		return ;
 	}
-	// if (!arg.compare("0"))
-	// {
-	// 	// client leaves all joined channel, equivalent to the PART command"
-	// }
+	if (!arg.compare("0"))
+	{
+		std::vector<Channel*>	list_channels = _server->getChannels();
+		for (std::vector<Channel*>::iterator it = list_channels.begin(); it != list_channels.end(); it++)
+		{
+			if ((*it)->isMember(_sender->getNickname()))
+				_part((*it)->getName());
+		}
+	}
 	
 	std::vector<std::string>	tmp = _split(arg, " ");
 	std::vector<std::string>	chan_name = _split(tmp[0], ","), key;
@@ -278,13 +283,15 @@ void	Message::_join(const std::string &arg)
 			else
 			{
 				channel = &_server->getChannel(chan_name[i]);
-				channel->addUser(_sender, NULL, key[i]);
+				channel->addMember(_sender, NULL, key[i]);
 			}
-			std::map<User*, bool> chan_users = channel->getUsers();
+			std::map<User*, bool> members = channel->getMembers();
 			std::string			user_list;
-			FOREACH(chan_users, it)
+			FOREACH(members, it)
 			{
 				it->first->getMessage()->addReply(_sender, "JOIN", channel->getName());
+				if (channel->isChanop(it->first->getNickname()))
+					user_list += "@";
 				user_list += it->first->getNickname() + " ";
 			}
 			if (!channel->getTopic().empty())
@@ -324,14 +331,16 @@ void	Message::_part(const std::string &arg)
 		try
 		{
 			Channel	&channel = _server->getChannel(*it);
-			if (!channel.isUserOnChannel(_sender->getNickname()))
+			if (!channel.isMember(_sender->getNickname()))
 				throw NumericReply(ERR_NOTONCHANNEL, channel.getName() + " :You're not on that channel");
-			std::map<User*,bool>	members = channel.getUsers();
+			std::map<User*,bool>	members = channel.getMembers();
 			FOREACH(members, it)
 			{
 				it->first->getMessage()->addReply(_sender, "PART", channel.getName(), reason);
 			}
-			channel.removeUser(_sender);
+			channel.removeMember(_sender);
+			// if (channel.getMembers().size() == 0)
+			// 	_server->removeChannel(&channel);
 		}
 		catch(const NumericReply& e)
 		{
@@ -356,7 +365,7 @@ void	Message::_topic(const std::string &arg)
 		if (!std::getline(ss, target, ' '))
 			throw NumericReply(ERR_NEEDMOREPARAMS, "TOPIC :Not enough parameters");
 		Channel	&channel = _server->getChannel(target);
-		if (!channel.isUserOnChannel(_sender->getNickname()))
+		if (!channel.isMember(_sender->getNickname()))
 			throw NumericReply(ERR_NOTONCHANNEL, channel.getName() + " :You're not on that channel"); // ERR optionnelle
 		if (!std::getline(ss, new_topic))
 		{
@@ -366,8 +375,8 @@ void	Message::_topic(const std::string &arg)
 				throw NumericReply(RPL_TOPIC, channel.getName() + channel.getTopic());
 		}
 		channel.setTopic(_sender, new_topic);
-		std::map<User*, bool> chan_users = channel.getUsers();
-		FOREACH(chan_users, it)
+		std::map<User*, bool> members = channel.getMembers();
+		FOREACH(members, it)
 			it->first->getMessage()->addReply(_sender, "TOPIC", channel.getName(), new_topic);
 	}
 	catch (const NumericReply &e)
@@ -392,10 +401,10 @@ void	Message::_invite(const std::string &arg)
 			throw NumericReply(ERR_NEEDMOREPARAMS, "INVITE :Not enough parameters");
 		User	&target = _server->getUser(target_nickname);
 		Channel &channel = _server->getChannel(target_chan);
-		if (!channel.isUserOnChannel(_sender->getNickname()))
+		if (!channel.isMember(_sender->getNickname()))
 			throw NumericReply(ERR_NOTONCHANNEL, channel.getName() + " :You're not on that channel");
 		User	&invited = _server->getUser(target.getNickname());
-		channel.addUser(&invited, _sender);
+		channel.addMember(&invited, _sender);
 		addReply(_sender, RPL_INVITING, _sender->getNickname(), target.getNickname() + " " + channel.getName());
 		invited.getMessage()->addReply(_sender, "INVITE", target.getNickname(), channel.getName());
 		invited.getMessage()->addReply(&invited, "JOIN", channel.getName());
@@ -425,21 +434,21 @@ void	Message::_kick(const std::string &arg)
 		if (!std::getline(ss, comment) || (comment.size() <= 1 && !comment.compare(":")))
 			comment = ":User kicked from chan\r\n";
 		Channel	&channel = _server->getChannel(chan_name);
-		if (!channel.isUserOnChannel(_sender->getNickname()))
+		if (!channel.isMember(_sender->getNickname()))
 			throw NumericReply(ERR_NOTONCHANNEL, chan_name + " :You're not on that channel");
 		if (!channel.isChanop(_sender->getNickname()))
 			throw NumericReply(ERR_CHANOPRIVSNEEDED,chan_name + " :You're not channel operator");
-		std::map<User*, bool> chan_users = channel.getUsers();
+		std::map<User*, bool> members = channel.getMembers();
 		for (std::vector<std::string>::iterator it = targets.begin(); it != targets.end(); it++)
 		{
-			if (!channel.isUserOnChannel(*it))
+			if (!channel.isMember(*it))
 				addReply(_sender, ERR_USERNOTINCHANNEL, _sender->getNickname(), *it + " " + channel.getName() + " :They aren't on that channel");
 			else
 			{
 				User	*rm_user = &_server->getUser(*it);
 				rm_user->getMessage()->addReply(_sender, "KICK", chan_name, rm_user->getNickname() + " " + comment);
-				channel.removeUser(rm_user);
-				FOREACH(chan_users, it2)
+				channel.removeMember(rm_user);
+				FOREACH(members, it2)
 					it2->first->getMessage()->addReply(_sender, "KICK", chan_name, rm_user->getNickname() + " " + comment);
 			}
 		}
@@ -474,8 +483,8 @@ void	Message::_mode(const std::string &arg)
 					throw NumericReply(ERR_CHANOPRIVSNEEDED, channel.getName() + " :You're not a channel operator");
 				if (channel.setModes(_sender, modestring, ss))
 				{
-					std::map<User*, bool> chan_users = channel.getUsers();
-					FOREACH(chan_users, it)
+					std::map<User*, bool> members = channel.getMembers();
+					FOREACH(members, it)
 						it->first->getMessage()->addReply(_sender, "MODE", channel.getName(), ":" + channel.getModesDiff() + " " + channel.getModesDiffArg());
 				}
 			}
@@ -518,8 +527,8 @@ void	Message::_privmsg(const std::string &arg)
 			throw NumericReply(ERR_NOTEXTTOSEND, " :No text to send");
 		if (target_name[0] == '#')
 		{
-			std::map<User*,bool> chan_users = _server->getChannel(target_name).getUsers();
-			FOREACH(chan_users, it)
+			std::map<User*,bool> members = _server->getChannel(target_name).getMembers();
+			FOREACH(members, it)
 			{
 				if (it->first != _sender)
 					it->first->getMessage()->addReply(_sender, "PRIVMSG", target_name, text_to_send);
