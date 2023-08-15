@@ -431,7 +431,6 @@ void	Server::run( void )
 					{
 						if ( this->_pfds[n].revents & POLLIN )
 						{
-							this->_log->debug("Listen message");
 							if (this->_listenMessage(this->_pfds[n].fd))
 							{
 								this->_disconnect(_pfds[n]);
