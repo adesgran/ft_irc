@@ -6,7 +6,7 @@
 /*   By: mchassig <mchassig@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2023/07/13 12:21:22 by adesgran          #+#    #+#             */
-/*   Updated: 2023/08/15 15:45:41 by adesgran         ###   ########.fr       */
+/*   Updated: 2023/08/15 17:21:11 by mchassig         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -370,7 +370,7 @@ void	Message::_topic(const std::string &arg)
 			throw NumericReply(ERR_NEEDMOREPARAMS, "TOPIC :Not enough parameters");
 		Channel	&channel = _server->getChannel(target);
 		if (!channel.isMember(_sender->getNickname()))
-			throw NumericReply(ERR_NOTONCHANNEL, channel.getName() + " :You're not on that channel"); // ERR optionnelle
+			throw NumericReply(ERR_NOTONCHANNEL, channel.getName() + " :You're not on that channel");
 		if (!std::getline(ss, new_topic))
 		{
 			if (channel.getTopic().empty())
