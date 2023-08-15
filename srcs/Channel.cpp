@@ -6,7 +6,7 @@
 /*   By: mchassig <mchassig@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2023/07/02 12:59:54 by adesgran          #+#    #+#             */
-/*   Updated: 2023/08/15 12:24:14 by mchassig         ###   ########.fr       */
+/*   Updated: 2023/08/15 12:49:19 by mchassig         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -23,6 +23,8 @@ Channel::Channel(void)
 
 Channel::Channel( const std::string name, User *founder )
 {
+	if (name.size() < 2 || name[0] != '#')
+		throw Message::NumericReply("448", name + " :Cannot join channel: Channel name must start with a hash mark (#)");
 	_name = name;
 	_members.insert(std::make_pair(founder, true));
 	_modes['i'] = false;

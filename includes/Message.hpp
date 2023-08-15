@@ -6,7 +6,7 @@
 /*   By: mchassig <mchassig@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2023/07/13 12:20:36 by adesgran          #+#    #+#             */
-/*   Updated: 2023/08/14 18:30:41 by mchassig         ###   ########.fr       */
+/*   Updated: 2023/08/15 13:31:49 by mchassig         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -38,11 +38,10 @@ enum cmdValue {
 	KICK,
 	MODE,
 	PRIVMSG,
-	WHOIS,
 };
 
-# define USERTAG( u ) u->getNickname() << '!' << u->getUsername() \
-		<< "@localhost"
+# define SOURCE( u ) u->getNickname() << '!' << u->getUsername() \
+		<< "@" << u->getHostname()
 
 # define FOREACH(name, it) for (std::map<User*, bool>::iterator it = name.begin();\
 							it != name.end();\
@@ -141,7 +140,6 @@ class Message {
 		void	_kick(const std::string &arg);
 		void	_mode(const std::string &arg);
 		void	_privmsg(const std::string &arg);
-		void	_whois(const std::string &arg);
 };
 
 #endif
