@@ -6,7 +6,7 @@
 /*   By: mchassig <mchassig@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2023/07/01 13:44:20 by adesgran          #+#    #+#             */
-/*   Updated: 2023/08/15 15:40:56 by mchassig         ###   ########.fr       */
+/*   Updated: 2023/08/15 17:14:11 by mchassig         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -176,7 +176,7 @@ bool	User::isWelcomed( void ) const
 	return (_welcomed);
 }
 
-void		User::welcome( void )
+void	User::welcome( void )
 {
 	_welcomed = true;
 }

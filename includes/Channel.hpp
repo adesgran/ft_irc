@@ -6,7 +6,7 @@
 /*   By: mchassig <mchassig@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2023/07/02 12:53:07 by adesgran          #+#    #+#             */
-/*   Updated: 2023/08/15 16:57:22 by adesgran         ###   ########.fr       */
+/*   Updated: 2023/08/15 17:12:13 by mchassig         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -36,7 +36,6 @@ class Channel {
 		const std::map<User*, bool>	getMembers( void ) const;
 		void	addMember( User *target, User *sender = NULL, const std::string &key = "");
 		void	removeMember( User *target );
-		//void	removeMember( int fd );
 		bool	isMember(const std::string &nickname) const;
 
 		void		setName( const std::string &name );

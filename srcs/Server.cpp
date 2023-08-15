@@ -6,7 +6,7 @@
 /*   By: mchassig <mchassig@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2023/07/02 12:03:38 by adesgran          #+#    #+#             */
-/*   Updated: 2023/08/15 17:02:47 by adesgran         ###   ########.fr       */
+/*   Updated: 2023/08/15 17:21:21 by mchassig         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -384,8 +384,7 @@ void	sigintHandle( int sig )
 void	Server::_disconnect( struct pollfd &pfd )
 {
 	this->_log->info("Connection closed");
-	this->getUser(pfd.fd).getMessage()->setInputMsg("JOIN 0\r\n", this); //JOIN 0
-	//this->_remove_user(pfd.fd);
+	this->getUser(pfd.fd).getMessage()->setInputMsg("JOIN 0\r\n", this);
 	for ( 
 			std::vector<User *>::iterator it = this->_users.begin(); 
 			it != this->_users.end(); 
