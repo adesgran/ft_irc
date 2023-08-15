@@ -167,6 +167,16 @@ const std::vector<Channel *>	&Server::getChannels( void ) const
 	return (this->_channels);
 }
 
+void	Server::removeChannel( Channel &chan )
+{
+	std::vector<Channel *>::iterator to_remove = std::find(_channels.begin(), _channels.end(), &chan);
+	if (to_remove == _channels.end())
+		return ;
+	_channels.erase(to_remove);
+	delete &(*to_remove);
+}
+	
+
 User	&Server::getUser( const int sockfd ) const
 {
 	for ( 
