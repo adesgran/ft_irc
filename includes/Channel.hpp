@@ -6,7 +6,7 @@
 /*   By: mchassig <mchassig@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2023/07/02 12:53:07 by adesgran          #+#    #+#             */
-/*   Updated: 2023/08/14 17:04:47 by mchassig         ###   ########.fr       */
+/*   Updated: 2023/08/15 12:24:10 by mchassig         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -33,11 +33,11 @@ class Channel {
 		~Channel( void );
 		Channel &operator=( const Channel &channel );
 
-		const std::map<User*, bool>	getUsers( void ) const;
-		void	addUser( User *target, User *sender = NULL, const std::string &key = "");
-		void	removeUser( User *target );
-		void	removeUser( int fd );
-		bool	isUserOnChannel(const std::string &nickname) const;
+		const std::map<User*, bool>	getMembers( void ) const;
+		void	addMember( User *target, User *sender = NULL, const std::string &key = "");
+		void	removeMember( User *target );
+		void	removeMember( int fd );
+		bool	isMember(const std::string &nickname) const;
 
 		void		setName( const std::string &name );
 		std::string	getName( void ) const;
@@ -56,7 +56,7 @@ class Channel {
 
 	private:
 		std::string				_name;
-		std::map<User*, bool>	_users;
+		std::map<User*, bool>	_members;
 	
 		std::map<char, bool>	_modes;
 		std::string				_modes_diff;

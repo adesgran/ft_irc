@@ -6,7 +6,7 @@
 /*   By: mchassig <mchassig@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2023/07/02 12:59:54 by adesgran          #+#    #+#             */
-/*   Updated: 2023/08/14 18:29:46 by mchassig         ###   ########.fr       */
+/*   Updated: 2023/08/15 12:24:14 by mchassig         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -24,7 +24,7 @@ Channel::Channel(void)
 Channel::Channel( const std::string name, User *founder )
 {
 	_name = name;
-	_users.insert(std::make_pair(founder, true));
+	_members.insert(std::make_pair(founder, true));
 	_modes['i'] = false;
 	_modes['t'] = false;
 	_modes['k'] = false;
@@ -45,16 +45,16 @@ Channel &Channel::operator=(const Channel &channel)
 	if ( this == &channel )
 		return (*this);
 	this->_name = channel.getName();
-	this->_users = channel._users;
+	this->_members = channel._members;
 	return (*this);
 }
 
-const std::map<User*,bool>	Channel::getUsers( void ) const
+const std::map<User*,bool>	Channel::getMembers( void ) const
 {
-	return (this->_users);
+	return (this->_members);
 }
 
-void	Channel::addUser( User *target, User *sender, const std::string &key )
+void	Channel::addMember( User *target, User *sender, const std::string &key )
 {
 	if (_modes['i'] && sender == NULL)
 		throw Message::NumericReply(ERR_INVITEONLYCHAN, _name + " :Cannot join channel (+i)");
@@ -62,37 +62,67 @@ void	Channel::addUser( User *target, User *sender, const std::string &key )
 		throw Message::NumericReply(ERR_CHANOPRIVSNEEDED, _name + " :You're not channel operator");
 	if (!_modes['i'] && _modes['k'] && _key.compare(key))
 		throw Message::NumericReply(ERR_BADCHANNELKEY, _name + " :Cannot join channel (+k)");
-	if (isUserOnChannel(target->getNickname()))
+	if (isMember(target->getNickname()))
 		throw Message::NumericReply(ERR_USERONCHANNEL, target->getNickname() + " " + _name + ":is already on channel");
-	if (_modes['l'] && _users.size() == _client_limit)
+	if (_modes['l'] && _members.size() == _client_limit)
 		throw Message::NumericReply(ERR_CHANNELISFULL, _name + ":Cannot join channel (+l)");
-	_users.insert(std::make_pair(target, false));
+	_members.insert(std::make_pair(target, false));
 }
 
-void	Channel::removeUser( User *target )
+void	Channel::removeMember( User *target )
 {
-	std::map<User*, bool>::iterator	to_remove = _users.find(target);
-	if (to_remove != _users.end())
-		_users.erase(to_remove);
+	std::map<User*, bool>::iterator	to_remove = _members.find(target);
+	if (to_remove != _members.end())
+		_members.erase(to_remove);
+	if (_members.size() == 0)
+		return ;
+	size_t	nb_chanop = 0;
+	FOREACH(_members, it)
+		if (it->second)
+			nb_chanop++;
+	if (nb_chanop == 0)
+	{
+		std::map<User*, bool>::iterator	new_chanop = _members.begin();
+		if (!new_chanop->second)
+			new_chanop->second = true;
+		FOREACH(_members, it)
+			it->first->getMessage()->addReply(to_remove->first, "MODE", _name, ":+o " + new_chanop->first->getNickname());
+	}
 }
 
-void	Channel::removeUser( int fd )
+void	Channel::removeMember( int fd )
 {
-	for ( std::map<User*, bool>::iterator it = this->_users.begin();
-			it != this->_users.end();
+	std::map<User*, bool>::iterator	to_remove;
+	for ( std::map<User*, bool>::iterator it = this->_members.begin();
+			it != this->_members.end();
 			it++)
 	{
 		if ( it->first->getSockfd() == fd )
 		{
-			this->_users.erase(it);
-			return ;
+			to_remove = it;
+			break ;
 		}
+	}
+	_members.erase(to_remove);
+	if (_members.size() == 0)
+		return ;
+	size_t	nb_chanop = 0;
+	FOREACH(_members, it)
+		if (it->second)
+			nb_chanop++;
+	if (nb_chanop == 0)
+	{
+		std::map<User*, bool>::iterator	new_chanop = _members.begin();
+		if (!new_chanop->second)
+			new_chanop->second = true;
+		FOREACH(_members, it)
+			it->first->getMessage()->addReply(to_remove->first, "MODE", _name, ":+o " + new_chanop->first->getNickname());
 	}
 }
 
-bool	Channel::isUserOnChannel(const std::string &nickname) const
+bool	Channel::isMember(const std::string &nickname) const
 {
-	for (std::map<User*, bool>::const_iterator it = _users.begin(); it != _users.end(); it++)
+	for (std::map<User*, bool>::const_iterator it = _members.begin(); it != _members.end(); it++)
 	{
 		if (isEquals(nickname, it->first->getNickname()))
 			return (true);
@@ -157,7 +187,7 @@ bool	Channel::setModes(const User *sender, const std::string &modestring, std::s
 					std::string	nickname;
 					if (!std::getline(ss, nickname, ' ') || nickname.empty())
 						sender->getMessage()->addReply(sender, ERR_INVALIDMODEPARAM, sender->getNickname(), _name + " " + *it + " :Missing user nickname");
-					else if (!isUserOnChannel(nickname))
+					else if (!isMember(nickname))
 						sender->getMessage()->addReply(sender, ERR_USERNOTINCHANNEL, sender->getNickname(), _name + " " + *it + " " + nickname + " :User is not on channel");
 					else
 					{
@@ -278,9 +308,9 @@ std::string	Channel::getKey() const
 
 void	Channel::setChanop(const std::string &nickname, bool status)
 {
-	if (!isUserOnChannel(nickname))
+	if (!isMember(nickname))
 		return ;
-	for (std::map<User*, bool>::iterator it = _users.begin(); it != _users.end(); it++)
+	for (std::map<User*, bool>::iterator it = _members.begin(); it != _members.end(); it++)
 	{
 		if (isEquals(nickname, it->first->getNickname()))
 		{
@@ -292,7 +322,7 @@ void	Channel::setChanop(const std::string &nickname, bool status)
 
 bool	Channel::isChanop(const std::string &nickname) const
 {
-	for (std::map<User*, bool>::const_iterator it = _users.begin(); it != _users.end(); it++)
+	for (std::map<User*, bool>::const_iterator it = _members.begin(); it != _members.end(); it++)
 	{
 		if (isEquals(nickname, it->first->getNickname()))
 			return (it->second);
@@ -327,7 +357,7 @@ void	Channel::_setModesDiff( std::map<char, bool> &changes, std::vector<std::str
 	}
 	for (std::vector<std::string>::iterator it = new_chanops.begin(); it != new_chanops.end(); it++)
 	{
-		if (isUserOnChannel(*it) && !isChanop(*it))
+		if (isMember(*it) && !isChanop(*it))
 		{
 			_modes_diff += "o";
 			_modes_diff_arg += *it + " ";
@@ -344,7 +374,7 @@ void	Channel::_setModesDiff( std::map<char, bool> &changes, std::vector<std::str
 	}
 	for (std::vector<std::string>::iterator it = old_chanops.begin(); it != old_chanops.end(); it++)
 	{
-		if (isUserOnChannel(*it) && isChanop(*it))
+		if (isMember(*it) && isChanop(*it))
 		{
 			_modes_diff += "o";
 			_modes_diff_arg += *it + " ";

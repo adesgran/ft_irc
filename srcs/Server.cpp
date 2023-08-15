@@ -230,9 +230,7 @@ void	Server::_remove_user( int fd )
 			std::vector<Channel *>::iterator it = this->_channels.begin(); 
 			it != this->_channels.end(); 
 			it++ )
-	{
-		(*it)->removeUser(fd);
-	}
+		(*it)->removeMember(fd);
 	for ( 
 			std::vector<User *>::iterator it = this->_users.begin(); 
 			it != this->_users.end(); 
