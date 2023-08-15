@@ -6,7 +6,7 @@
 /*   By: mchassig <mchassig@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2023/07/13 12:21:22 by adesgran          #+#    #+#             */
-/*   Updated: 2023/08/15 13:32:12 by mchassig         ###   ########.fr       */
+/*   Updated: 2023/08/15 13:46:03 by adesgran         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -26,6 +26,7 @@ Message::Message(void)
 	_cmdMap["KICK"]		= &Message::_kick;
 	_cmdMap["MODE"]		= &Message::_mode;
 	_cmdMap["PRIVMSG"]	= &Message::_privmsg;
+	_cmdMap["QUIT"]		= &Message::_quit;
 }
 
 Message::Message(User *sender): _sender(sender)
@@ -41,6 +42,7 @@ Message::Message(User *sender): _sender(sender)
 	_cmdMap["KICK"]		= &Message::_kick;
 	_cmdMap["MODE"]		= &Message::_mode;
 	_cmdMap["PRIVMSG"]	= &Message::_privmsg;
+	_cmdMap["QUIT"]		= &Message::_quit;
 }
 
 Message::Message(const Message &message)
@@ -538,4 +540,9 @@ void	Message::_privmsg(const std::string &arg)
 	{
 		addReply(_sender, e.code(), _sender->getNickname(), e.what());
 	}
+}
+
+void	Message::_quit(const std::string &arg)
+{
+	addReply(_sender, "QUIT", arg);
 }
