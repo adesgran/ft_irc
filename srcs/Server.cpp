@@ -6,7 +6,7 @@
 /*   By: mchassig <mchassig@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2023/07/02 12:03:38 by adesgran          #+#    #+#             */
-/*   Updated: 2023/08/14 14:16:15 by mchassig         ###   ########.fr       */
+/*   Updated: 2023/08/15 12:24:24 by mchassig         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -220,7 +220,7 @@ void	Server::_remove_user( int fd )
 			std::vector<Channel *>::iterator it = this->_channels.begin(); 
 			it != this->_channels.end(); 
 			it++ )
-		(*it)->removeUser(fd);
+		(*it)->removeMember(fd);
 	for ( 
 			std::vector<User *>::iterator it = this->_users.begin(); 
 			it != this->_users.end(); 
