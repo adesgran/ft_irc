@@ -6,7 +6,7 @@
 /*   By: mchassig <mchassig@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2023/07/13 12:21:22 by adesgran          #+#    #+#             */
-/*   Updated: 2023/08/15 13:46:03 by adesgran         ###   ########.fr       */
+/*   Updated: 2023/08/15 13:57:33 by mchassig         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -177,6 +177,8 @@ void	Message::_nick(const std::string &arg)
 			throw NumericReply(ERR_ERRONEUSNICKNAME, arg + " :Erroneus nickname");
 		if (!isEquals(arg, _sender->getNickname()) && _server->isUser(arg))
 			throw NumericReply(ERR_NICKNAMEINUSE, arg + " :Nickname is already in use");
+		if (!_sender->getNickname().empty())
+			addReply(_sender, "NICK", arg);
 		_sender->setNickname(arg);
 		_welcomeNewUser();
 	}
