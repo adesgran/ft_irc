@@ -38,11 +38,11 @@ enum cmdValue {
 	KICK,
 	MODE,
 	PRIVMSG,
-	WHOIS,
+  QUIT
 };
 
-# define USERTAG( u ) u->getNickname() << '!' << u->getUsername() \
-		<< "@localhost"
+# define SOURCE( u ) u->getNickname() << '!' << u->getUsername() \
+		<< "@" << u->getHostname()
 
 # define FOREACH(name, it) for (std::map<User*, bool>::iterator it = name.begin();\
 							it != name.end();\
@@ -141,7 +141,6 @@ class Message {
 		void	_kick(const std::string &arg);
 		void	_mode(const std::string &arg);
 		void	_privmsg(const std::string &arg);
-		void	_whois(const std::string &arg);
 		void	_quit(const std::string &arg);
 };
 

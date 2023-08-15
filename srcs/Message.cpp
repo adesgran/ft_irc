@@ -26,7 +26,6 @@ Message::Message(void)
 	_cmdMap["KICK"]		= &Message::_kick;
 	_cmdMap["MODE"]		= &Message::_mode;
 	_cmdMap["PRIVMSG"]	= &Message::_privmsg;
-	_cmdMap["WHOIS"]	= &Message::_whois;
 	_cmdMap["QUIT"]		= &Message::_quit;
 }
 
@@ -43,7 +42,6 @@ Message::Message(User *sender): _sender(sender)
 	_cmdMap["KICK"]		= &Message::_kick;
 	_cmdMap["MODE"]		= &Message::_mode;
 	_cmdMap["PRIVMSG"]	= &Message::_privmsg;
-	_cmdMap["WHOIS"]	= &Message::_whois;
 	_cmdMap["QUIT"]		= &Message::_quit;
 }
 
@@ -89,7 +87,7 @@ std::string	Message::getOutputMsg()
 
 void	Message::addReply(const User *source, const std::string cmd, const std::string target, const std::string arg)
 {
-	_output << ':' << USERTAG(source);
+	_output << ':' << SOURCE(source);
 	_output << " " << cmd;
 	_output << " " << target;
 	if (!arg.empty())
@@ -141,8 +139,7 @@ void	Message::_welcomeNewUser()
 	{
 		_sender->welcome();
 		_output << ":" << std::string(SERVER_ADDRESS) << " " << RPL_WELCOME << " " << _sender->getNickname() 
-		<< " :Welcome to the <networkname> Network " << USERTAG(_sender)
-		<< CRLF;
+		<< " :Welcome to the ft_IRC Network " << SOURCE(_sender) << CRLF;
 	}
 }
 
@@ -198,17 +195,17 @@ void	Message::_user(const std::string &arg)
 	}
 
 	std::stringstream	ss(arg);
-	std::string			username, mode, unused, realName;
+	std::string			username, mode, hostname, realName;
 	try
 	{
 		if (_sender->isWelcomed())
 			throw NumericReply(ERR_ALREADYREGISTERED, ":You may not reregister");
 		if (!std::getline(ss, username, ' ') || !std::getline(ss, mode, ' ') \
-				|| !std::getline(ss, unused, ' ') || !std::getline(ss, realName))
+				|| !std::getline(ss, hostname, ' ') || !std::getline(ss, realName))
 			throw NumericReply(ERR_NEEDMOREPARAMS, "USER :Not enough parameters");
 		_sender->setUsername(username);
 		(void)mode;
-		(void)unused;
+		_sender->setHostname(hostname);
 		if (realName[0] == ':')
 			realName.erase(0, 1);
 		_sender->setRealname(realName);
@@ -260,6 +257,7 @@ void	Message::_join(const std::string &arg)
 			if ((*it)->isMember(_sender->getNickname()))
 				_part((*it)->getName());
 		}
+		return ;
 	}
 	
 	std::vector<std::string>	tmp = _split(arg, " ");
@@ -335,12 +333,10 @@ void	Message::_part(const std::string &arg)
 				throw NumericReply(ERR_NOTONCHANNEL, channel.getName() + " :You're not on that channel");
 			std::map<User*,bool>	members = channel.getMembers();
 			FOREACH(members, it)
-			{
 				it->first->getMessage()->addReply(_sender, "PART", channel.getName(), reason);
-			}
 			channel.removeMember(_sender);
-			// if (channel.getMembers().size() == 0)
-			// 	_server->removeChannel(&channel);
+			if (channel.getMembers().size() == 0)
+				_server->removeChannel(channel);
 		}
 		catch(const NumericReply& e)
 		{
@@ -544,25 +540,6 @@ void	Message::_privmsg(const std::string &arg)
 	{
 		addReply(_sender, e.code(), _sender->getNickname(), e.what());
 	}
-}
-
-void	Message::_whois(const std::string &arg)
-{
-	if (!_sender->authentificated || !_sender->isWelcomed())
-	{
-		addReply(_sender, ERR_NOTREGISTERED, _sender->getNickname(), ":You have not registered");
-		return ;
-	}
-
-	std::stringstream	ss(arg);
-	std::string			target_name, mode_list;
-	std::getline(ss, target_name, ' ');
-	// check aussi si target = nom du server
-	// sinon => ERR_NOSUCHSERVER 
-	if (!_server->isUser(target_name))
-		addReply(_sender, ERR_NOSUCHNICK, _sender->getNickname(), target_name + " :No such nick/channel");
-	else
-		addReply(_sender, RPL_ENDOFWHOIS, _sender->getNickname(), target_name + " :End of /WHOIS list");
 }
 
 void	Message::_quit(const std::string &arg)

@@ -6,7 +6,7 @@
 /*   By: mchassig <mchassig@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2023/07/02 12:03:38 by adesgran          #+#    #+#             */
-/*   Updated: 2023/08/15 13:29:42 by adesgran         ###   ########.fr       */
+/*   Updated: 2023/08/15 12:31:07 by mchassig         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -173,7 +173,7 @@ void	Server::removeChannel( Channel &chan )
 	if (to_remove == _channels.end())
 		return ;
 	_channels.erase(to_remove);
-	delete &(*to_remove);
+	delete &(chan);
 }
 	
 
