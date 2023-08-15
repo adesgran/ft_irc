@@ -6,7 +6,7 @@
 /*   By: mchassig <mchassig@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2023/07/01 13:44:20 by adesgran          #+#    #+#             */
-/*   Updated: 2023/08/15 15:21:34 by mchassig         ###   ########.fr       */
+/*   Updated: 2023/08/15 15:40:56 by mchassig         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -20,9 +20,6 @@ User::User(void)
 	this->_authenticated = false;
 	this->_message = new Message(this);
 	_modes['i'] = false;
-	_modes['w'] = false;
-	_modes['o'] = false;
-	_modes['O'] = false;
 }
 
 User::User(int sockfd)
@@ -33,9 +30,6 @@ User::User(int sockfd)
 	this->_authenticated = false;
 	this->_message = new Message(this);
 	_modes['i'] = false;
-	_modes['w'] = false;
-	_modes['o'] = false;
-	_modes['O'] = false;
 }
 
 User::User(const User &user)
@@ -144,12 +138,6 @@ std::string	User::getActiveModes( void ) const
 	std::string ret;
 	if (_modes.at('i'))
 		ret += 'i';
-	if (_modes.at('w'))
-		ret += 'w';
-	if (_modes.at('o'))
-		ret += 'o';
-	if (_modes.at('O'))
-		ret += 'O';
 	return (ret);
 }
 
