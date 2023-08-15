@@ -17,6 +17,7 @@ User::User(void)
 	this->_sockfd = 1;
 	this->_isop = false;
 	this->_welcomed = false;
+	this->authentificated = false;
 	this->_message = new Message(this);
 	_modes['i'] = false;
 	_modes['w'] = false;
@@ -29,6 +30,7 @@ User::User(int sockfd)
 	this->_sockfd = sockfd;
 	this->_isop = false;
 	this->_welcomed = false;
+	this->authentificated = false;
 	this->_message = new Message(this);
 	_modes['i'] = false;
 	_modes['w'] = false;
