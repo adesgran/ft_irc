@@ -6,7 +6,7 @@
 /*   By: mchassig <mchassig@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2023/07/02 12:59:54 by adesgran          #+#    #+#             */
-/*   Updated: 2023/08/15 16:06:45 by adesgran         ###   ########.fr       */
+/*   Updated: 2023/08/15 16:56:28 by adesgran         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -98,9 +98,9 @@ void	Channel::removeMember( User *target )
 	}
 }
 
+/*
 void	Channel::removeMember( int fd )
 {
-	User *target;
 	std::map<User*, bool>::iterator	to_remove;
 	for ( std::map<User*, bool>::iterator it = this->_members.begin();
 			it != this->_members.end();
@@ -109,11 +109,11 @@ void	Channel::removeMember( int fd )
 		if ( it->first->getSockfd() == fd )
 		{
 			to_remove = it;
-			target = to_remove->first;
 			break ;
 		}
 	}
-	return;
+	//
+	User target(to_remove->first);
 	std::cout << "SIZE = " << _members.size() << std::endl;
 	if (to_remove == _members.end())
 		return ;
@@ -130,9 +130,10 @@ void	Channel::removeMember( int fd )
 		if (!new_chanop->second)
 			new_chanop->second = true;
 		FOREACH(_members, it)
-			it->first->getMessage()->addReply(target, "MODE", _name, ":+o " + new_chanop->first->getNickname());
+			it->first->getMessage()->addReply(&target, "MODE", _name, ":+o " + new_chanop->first->getNickname());
 	}
 }
+*/
 
 bool	Channel::isMember(const std::string &nickname) const
 {
