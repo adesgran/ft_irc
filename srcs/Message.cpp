@@ -6,7 +6,7 @@
 /*   By: mchassig <mchassig@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2023/07/13 12:21:22 by adesgran          #+#    #+#             */
-/*   Updated: 2023/08/15 11:32:18 by adesgran         ###   ########.fr       */
+/*   Updated: 2023/08/15 13:46:03 by adesgran         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -558,5 +558,5 @@ void	Message::_whois(const std::string &arg)
 
 void	Message::_quit(const std::string &arg)
 {
-	_output << "GOOD BY\r\n";
+	addReply(_sender, "QUIT", arg);
 }

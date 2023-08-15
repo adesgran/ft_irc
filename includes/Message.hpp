@@ -6,7 +6,7 @@
 /*   By: mchassig <mchassig@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2023/07/13 12:20:36 by adesgran          #+#    #+#             */
-/*   Updated: 2023/08/14 18:30:41 by mchassig         ###   ########.fr       */
+/*   Updated: 2023/08/15 13:46:33 by adesgran         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -142,6 +142,7 @@ class Message {
 		void	_mode(const std::string &arg);
 		void	_privmsg(const std::string &arg);
 		void	_whois(const std::string &arg);
+		void	_quit(const std::string &arg);
 };
 
 #endif
