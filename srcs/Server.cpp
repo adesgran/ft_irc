@@ -6,7 +6,7 @@
 /*   By: mchassig <mchassig@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2023/07/02 12:03:38 by adesgran          #+#    #+#             */
-/*   Updated: 2023/08/15 15:18:49 by mchassig         ###   ########.fr       */
+/*   Updated: 2023/08/15 16:37:44 by adesgran         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -452,7 +452,8 @@ void	Server::run( void )
 								send( this->_pfds[n].fd, output.c_str(), output.size(), 0 );
 							}
 						}
-						_disconnect(_pfds[n]);
+						this->_disconnect(_pfds[n]);
+						n = len;
 					}
 
 				}

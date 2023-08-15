@@ -6,7 +6,7 @@
 /*   By: mchassig <mchassig@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2023/07/02 12:59:54 by adesgran          #+#    #+#             */
-/*   Updated: 2023/08/15 15:10:36 by mchassig         ###   ########.fr       */
+/*   Updated: 2023/08/15 16:06:45 by adesgran         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -80,8 +80,9 @@ void	Channel::addMember( User *target, User *sender, const std::string &key )
 void	Channel::removeMember( User *target )
 {
 	std::map<User*, bool>::iterator	to_remove = _members.find(target);
-	if (to_remove != _members.end())
-		_members.erase(to_remove);
+	if (to_remove == _members.end())
+		return ;
+	_members.erase(to_remove);
 	if (_members.size() == 0)
 		return ;
 	size_t	nb_chanop = 0;
@@ -91,15 +92,15 @@ void	Channel::removeMember( User *target )
 	if (nb_chanop == 0)
 	{
 		std::map<User*, bool>::iterator	new_chanop = _members.begin();
-		if (!new_chanop->second)
-			new_chanop->second = true;
+		new_chanop->second = true;
 		FOREACH(_members, it)
-			it->first->getMessage()->addReply(to_remove->first, "MODE", _name, ":+o " + new_chanop->first->getNickname());
+			it->first->getMessage()->addReply(target, "MODE", _name, ":+o " + new_chanop->first->getNickname());
 	}
 }
 
 void	Channel::removeMember( int fd )
 {
+	User *target;
 	std::map<User*, bool>::iterator	to_remove;
 	for ( std::map<User*, bool>::iterator it = this->_members.begin();
 			it != this->_members.end();
@@ -108,9 +109,14 @@ void	Channel::removeMember( int fd )
 		if ( it->first->getSockfd() == fd )
 		{
 			to_remove = it;
+			target = to_remove->first;
 			break ;
 		}
 	}
+	return;
+	std::cout << "SIZE = " << _members.size() << std::endl;
+	if (to_remove == _members.end())
+		return ;
 	_members.erase(to_remove);
 	if (_members.size() == 0)
 		return ;
@@ -124,7 +130,7 @@ void	Channel::removeMember( int fd )
 		if (!new_chanop->second)
 			new_chanop->second = true;
 		FOREACH(_members, it)
-			it->first->getMessage()->addReply(to_remove->first, "MODE", _name, ":+o " + new_chanop->first->getNickname());
+			it->first->getMessage()->addReply(target, "MODE", _name, ":+o " + new_chanop->first->getNickname());
 	}
 }
 
