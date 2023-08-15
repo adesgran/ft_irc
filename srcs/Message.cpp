@@ -6,7 +6,7 @@
 /*   By: mchassig <mchassig@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2023/07/13 12:21:22 by adesgran          #+#    #+#             */
-/*   Updated: 2023/08/15 13:57:33 by mchassig         ###   ########.fr       */
+/*   Updated: 2023/08/15 14:28:39 by mchassig         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -151,14 +151,20 @@ void	Message::_pass(const std::string &arg)
 			throw NumericReply(ERR_NEEDMOREPARAMS, "PASS :Not enough parameters");
 		if (_sender->authentificated)
 			throw NumericReply(ERR_ALREADYREGISTERED, ":You may not reregister");
-		if (arg.compare(_server->getPassword()))
-			throw NumericReply(ERR_PASSWDMISMATCH, ":Password incorrect");
-		_sender->authentificated = true;
 	}
 	catch(const NumericReply& e)
 	{
-		addReply(_sender, e.code(), _sender->getNickname(), e.what());
+		if (_sender->getNickname().empty())
+			addReply(_sender, e.code(), "*", e.what());
+		else
+			addReply(_sender, e.code(), _sender->getNickname(), e.what());
 	}	
+	if (arg.compare(_server->getPassword()))
+	{
+		addReply(_sender, ERR_PASSWDMISMATCH, _sender->getNickname(), ":Password incorrect");
+		throw Disconnect();
+	}
+	_sender->authentificated = true;
 }
 
 void	Message::_nick(const std::string &arg)
@@ -184,7 +190,10 @@ void	Message::_nick(const std::string &arg)
 	}
 	catch(const NumericReply& e)
 	{
-		addReply(_sender, e.code(), _sender->getNickname(), e.what());
+		if (_sender->getNickname().empty())
+			addReply(_sender, e.code(), "*", e.what());
+		else
+			addReply(_sender, e.code(), _sender->getNickname(), e.what());
 	}
 }
 
@@ -216,7 +225,10 @@ void	Message::_user(const std::string &arg)
 	}
 	catch(const NumericReply& e)
 	{
-		addReply(_sender, e.code(), _sender->getNickname(), e.what());
+		if (_sender->getNickname().empty())
+			addReply(_sender, e.code(), "*", e.what());
+		else
+			addReply(_sender, e.code(), _sender->getNickname(), e.what());
 	}
 }
 
