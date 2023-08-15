@@ -20,3 +20,19 @@ const char *Message::NumericReply::what() const throw()
 {
 	return (_what.c_str());
 }
+
+
+Message::Disconnect::Disconnect() throw()
+{
+	_what = "User was disconnected";
+}
+
+Message::Disconnect::~Disconnect(void) throw()
+{
+	return ;
+}
+
+const char *Message::Disconnect::what() const throw()
+{
+	return (_what.c_str());
+}
